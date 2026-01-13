@@ -1,59 +1,76 @@
-# ListaCompraFrontend
+# Projeto Angular - Lista de Compras
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.19.
+Este projeto é uma aplicação Angular para gerenciar uma lista de compras. Ele foi estruturado seguindo as melhores práticas de arquitetura de software, com foco em escalabilidade e manutenibilidade.
 
-## Development server
+## Arquitetura do Projeto
 
-To start a local development server, run:
+A estrutura de pastas é baseada em funcionalidades (*feature-based*), o que significa que o código é organizado em torno das funcionalidades que ele implementa, e não pelo tipo de arquivo.
 
-```bash
-ng serve
+A estrutura principal dentro de `src/app` é:
+
+```
+src/app/
+├── core/
+│   └── (services, interceptors, guards)
+├── features/
+│   └── lista/
+│       ├── components/
+│       ├── models/
+│       ├── pages/
+│       └── services/
+└── shared/
+    └── (components, directives, pipes)
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+### Pasta `core`
 
-## Code scaffolding
+Contém a lógica central e serviços que são únicos em toda a aplicação (*singletons*).
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+- **`services`**: Serviços como `auth.service.ts` ou `analytics.service.ts`.
+- **`interceptors`**: Interceptadores de requisições HTTP para adicionar cabeçalhos (como tokens de autenticação) ou para tratar erros de forma global.
+- **`guards`**: Guardas de rota para proteger o acesso a certas partes da aplicação.
 
-```bash
-ng generate component component-name
-```
+### Pasta `shared`
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Contém elementos que são reutilizados em diferentes funcionalidades. Se um componente, pipe ou diretiva precisa ser usado em mais de uma *feature*, ele deve morar aqui para evitar duplicação de código.
 
-```bash
-ng generate --help
-```
+- **`components`**: Componentes reutilizáveis como botões customizados, modais, spinners de loading, etc.
+- **`pipes`**: Pipes customizados para formatação de dados (ex: `moeda.pipe.ts`).
+- **`directives`**: Diretivas customizadas para manipulação do DOM.
 
-## Building
+### Pasta `features`
 
-To build the project run:
+Esta é a pasta mais importante. Cada subpasta aqui dentro representa uma funcionalidade da aplicação. No nosso caso, começamos com a feature `lista`.
 
-```bash
-ng build
-```
+Dentro de `features/lista`:
+- **`models`**: Define a estrutura dos dados (DTOs) para esta funcionalidade. O arquivo `item.model.ts` é a interface que representa um item da lista de compras.
+- **`services`**: Contém os serviços específicos desta funcionalidade. O `lista-compra.service.ts` é responsável por toda a comunicação com a API para obter, criar, atualizar e deletar itens.
+- **`pages` ou `containers`**: Componentes "inteligentes" que representam uma página. Eles utilizam os serviços para buscar e enviar dados.
+- **`components`**: Componentes "burros" ou de apresentação. Eles apenas exibem os dados recebidos via `@Input` e não têm lógica de negócio.
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Camada de Serviço (Consumo de API)
 
-## Running unit tests
+A comunicação com a API é centralizada nos serviços. O `lista-compra.service.ts` usa o `HttpClient` do Angular para interagir com o backend. Ele abstrai a lógica HTTP, de modo que os componentes apenas precisam chamar métodos como `getItens()` ou `addItem()`, sem se preocupar com os detalhes da requisição.
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+## Próximos Passos
 
-```bash
-ng test
-```
+1.  **Configurar o `HttpClientModule`**: Para que o `HttpClient` funcione, você precisa fornecer os provedores dele para a aplicação. Em aplicações standalone (Angular 17+), você faz isso no arquivo `app.config.ts`, adicionando `provideHttpClient()` ao array de `providers`.
 
-## Running end-to-end tests
+    ```typescript
+    // src/app/app.config.ts
+    import { ApplicationConfig } from '@angular/core';
+    import { provideRouter } from '@angular/router';
+    import { provideHttpClient } from '@angular/common/http'; // Importe aqui
+    import { routes } from './app.routes';
 
-For end-to-end (e2e) testing, run:
+    export const appConfig: ApplicationConfig = {
+      providers: [
+        provideRouter(routes),
+        provideHttpClient() // Adicione aqui
+      ]
+    };
+    ```
 
-```bash
-ng e2e
-```
+2.  **Criar o Componente da Página**: Crie um componente na pasta `features/lista/pages/`, por exemplo, `lista-compra.component.ts`. Este componente irá injetar o `ListaCompraService`, chamar seus métodos (ex: `getItens()`) e exibir os dados no template.
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+3.  **Configurar Rotas**: No arquivo `app.routes.ts`, crie uma rota para o seu novo componente de página para que ele seja acessível através de uma URL (ex: `/lista`).

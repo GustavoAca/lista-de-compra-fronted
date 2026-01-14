@@ -38,10 +38,21 @@ export class ListaCompraService {
     });
   }
 
-  removerDaLista(listaId: string, itensLista: string[]): Observable<boolean> {
-    const url = `${this.apiPath}/${listaId}/remover-itens`;
-    return this.http.delete<boolean>(url, { body: itensLista });
+  getListaById(listaId: string): Observable<Lista> {
+    const url = `${this.apiPath}/${listaId}`;
+    return this.http.get<Lista>(url);
   }
+
+  removerDaLista(listaId: string, itemIds: string[]): Observable<any> {
+    const url = `${this.apiPath}/${listaId}/remover-itens`;
+    return this.http.post(url, itemIds); // Assuming POST with body for removal
+  }
+
+  adicionarItensALista(listaId: string, itensParaAdicionar: { itemOfertaId: string, quantidade: number }[]): Observable<any> {
+    const url = `${this.apiPath}/${listaId}/adicionar-itens`;
+    return this.http.post(url, itensParaAdicionar);
+  }
+
 
   atualizarQuantidadeItem(listaId: string, itemId: string, novaQuantidade: number): Observable<any> {
     const url = `${this.apiPath}/${listaId}/itens/${itemId}`;

@@ -1,0 +1,54 @@
+<div class="lista-edit-container">
+  <app-loading-spinner *ngIf="loading" size="md"></app-loading-spinner>
+
+  <app-alert-message
+    (closed)="onAlertClosed()"
+    *ngIf="deveExibirMensagem"
+    [message]="mensagemErro"
+    type="error"
+    [autoClose]="true"
+  >
+  </app-alert-message>
+
+  <div *ngIf="!loading && !deveExibirMensagem && lista">
+    <h2>Editar Lista: {{ lista.nome }}</h2>
+
+    <div class="actions">
+      <button mat-flat-button color="primary" [routerLink]="['/listas', lista.id, 'adicionar-itens']">
+        Adicionar Mais Itens
+      </button>
+      <!-- Add other list-level actions here if needed -->
+    </div>
+
+    <div *ngIf="itens.length > 0; else noItems">
+      <ul class="item-list">
+        <li *ngFor="let item of itens">
+          <div class="item-details">
+            <span class="item-name">Item: {{ item.itemOferta.item.nome }}</span>
+            <span class="item-seller">Vendedor: {{ item.itemOferta.vendedor.nome }}</span>
+            <span class="item-price">Preço: {{ item.itemOferta.preco | currency:'BRL' }}</span>
+            <span class="item-promotion" [class.on-promotion]="item.itemOferta.hasPromocaoAtiva">
+              Promoção: {{ item.itemOferta.hasPromocaoAtiva ? 'Sim' : 'Não' }}
+            </span>
+            <div class="quantity-controls">
+              <button mat-icon-button (click)="decrementarQuantidade(item)">
+                <mat-icon>remove</mat-icon>
+              </button>
+              <span>{{ item.quantidade }}</span>
+              <button mat-icon-button (click)="incrementarQuantidade(item)">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+            <button mat-icon-button color="warn" (click)="removerItem(item)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <ng-template #noItems>
+      <p><i>Esta lista não possui itens. Adicione alguns!</i></p>
+    </ng-template>
+  </div>
+</div>

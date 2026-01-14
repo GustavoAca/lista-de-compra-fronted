@@ -13,8 +13,11 @@
   <div *ngIf="!loadingItens && !deveExibirMensagem" class="content-wrapper">
     <div *ngIf="page && !page.empty; else noItems" class="list-display-container">
       <div class="actions">
-        <button mat-icon-button (click)="removerItens()" [disabled]="selectedItems.size === 0" class="remove-button">
-          <mat-icon>delete</mat-icon>
+        <button mat-flat-button color="primary" [routerLink]="['/listas', lista.id, 'adicionar-itens']">
+          Adicionar Itens
+        </button>
+        <button mat-icon-button [routerLink]="['/lista/editar', lista.id]">
+          <mat-icon>edit</mat-icon>
         </button>
       </div>
       <ul class="item-list">

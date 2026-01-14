@@ -1,20 +1,36 @@
 <div class="login-container">
   <div class="login-box">
     <h2>Login</h2>
-
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="form-group">
       <div class="input-group">
         <label for="username">Usuário</label>
-        <input id="username" type="text" formControlName="username" placeholder="Digite seu usuário">
+        <input
+          id="username"
+          type="text"
+          formControlName="username"
+          placeholder="Digite seu usuário"
+        />
       </div>
 
       <div class="input-group">
         <label for="password">Senha</label>
-        <input id="password" type="password" formControlName="password" placeholder="Digite sua senha">
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          placeholder="Digite sua senha"
+        />
       </div>
 
-      <button type="submit" class="btn btn-primary" [disabled]="loginForm.invalid">
-        Entrar
+      <button
+        type="submit"
+        class="btn btn-primary"
+        [disabled]="loginForm.invalid || loading"
+      >
+        <span class="btn-content">
+          <app-loading-spinner *ngIf="loading" size="md" color="warn"></app-loading-spinner>
+          <span *ngIf="!loading">Entrar</span>
+        </span>
       </button>
     </form>
 
@@ -23,14 +39,36 @@
     </div>
 
     <div class="social-login">
-      <button type="button" class="btn btn-social btn-google" (click)="loginComGoogle()">
-        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMjIuNTYgMTIuMjVjMC0uNzgtLjA3LTEuNTMtLjItMi4yNUgxMnY0LjI2aDUuOTJjLS4yNiAxLjM3LTEuMDQgMi41My0yLjIxIDMuMzFsMy41IDMuNSBjMi4wNC0xLjg4IDMuMi00LjcxIDMuMi04LjI1eiIvPjxwYXRoIGQ9Ik0xMiAyM2M0LjQyIDAgOC4wNy0yLjE4IDguMDctMi4xOEwxNi41NSAxOS4zYy0xLjQ0LjY4LTMuMjIgMS4yMS01LjU1IDEtMy44NyAwLTcuMjEtMi41OC04LjM4LTYuMDlMMCAxNC4wN3YtLjA0QzIuNDYgMjAuMDYgNi44NCAyMyAxMiAyM3oiIGZpbGw9IiNmYmJjMDQiLz48cGF0aCBkPSJNNCA4LjdjLS4yMy42Ny0uMzUgMS4zOS0uMzUgMi4xNHMuMTIgMS40Ny4zNSAyLjE0TDAgMTRDMS4wMyA5LjQzIDYgOC4xMiA2IDguMTJsMi40My0yLjQyQzUuNDYgMy45NiAyLjQ2IDYuMDQgMCA4LjEybC4wMy4wM3oiIGZpbGw9IiNlYTQzMzUiLz48cGF0aCBkPSJNNCA4LjdjLS4yMy42Ny0uMzUgMS4zOS0uMzUgMi4xNHMuMTIgMS40Ny4zNSAyLjE0TDAgMTRDMS4wMyA5LjQzIDYgOC4xMiA2IDguMTJsMi40My0yLjQyQzUuNDYgMy45NiAyLjQ2IDYuMDQgMCA4LjEybC4wMy4wM3oiIGZpbGw9IiNlYTQzMzUiLz48cGF0aCBkPSJNMjQgMTJjMCAuNzgtLjA3IDEuNTMtLjIgMi4yNUgxMnY0LjI2aDUuOTJjLS4yNiAxLjM3LTEuMDQgMi41My0yLjIxIDMuMzFsMy41IDMuNSBjMi4wNC0xLjg4IDMuMi00LjcxIDMuMi04LjI1eiIgZmlsbD0iIzQyODVmNCIvPjwvc3ZnPg==" alt="Google logo">
+      <button
+        type="button"
+        class="btn btn-social btn-google"
+        (click)="loginComGoogle()"
+      >
+        <img
+          src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMjIuNTYgMTIuMjVjMC0uNzgtLjA3LTEuNTMtLjItMi4yNUgxMnY0LjI2aDUuOTJjLS4yNiAxLjM3LTEuMDQgMi41My0yLjIxIDMuMzFsMy41IDMuNSBjMi4wNC0xLjg4IDMuMi00LjcxIDMuMi04LjI1eiIvPjxwYXRoIGQ9Ik0xMiAyM2M0LjQyIDAgOC4wNy0yLjE4IDguMDctMi4xOEwxNi41NSAxOS4zYy0xLjQ0LjY4LTMuMjIgMS4yMS01LjU1IDEtMy44NyAwLTcuMjEtMi41OC04LjM4LTYuMDlMMCAxNC4wN3YtLjA0QzIuNDYgMjAuMDYgNi44NCAyMyAxMiAyM3oiIGZpbGw9IiNmYmJjMDQiLz48cGF0aCBkPSJNNCA4LjdjLS4yMy42Ny0uMzUgMS4zOS0uMzUgMi4xNHMuMTIgMS40Ny4zNSAyLjE0TDAgMTRDMS4wMyA5LjQzIDYgOC4xMiA2IDguMTJsMi40My0yLjQyQzUuNDYgMy45NiAyLjQ2IDYuMDQgMCA4LjEybC4wMy4wM3oiIGZpbGw9IiNlYTQzMzUiLz48cGF0aCBkPSJNNCA4LjdjLS4yMy42Ny0uMzUgMS4zOS0uMzUgMi4xNHMuMTIgMS40Ny4zNSAyLjE0TDAgMTRDMS4wMyA5LjQzIDYgOC4xMiA2IDguMTJsMi40My0yLjQyQzUuNDYgMy45NiAyLjQ2IDYuMDQgMCA4LjEybC4wMy4wM3oiIGZpbGw9IiNlYTQzMzUiLz48cGF0aCBkPSJNMjQgMTJjMCAuNzgtLjA3IDEuNTMtLjIgMi4yNUgxMnY0LjI2aDUuOTJjLS4yNiAxLjM3LTEuMDQgMi41My0yLjIxIDMuMzFsMy41IDMuNSBjMi4wNC0xLjg4IDMuMi00LjcxIDMuMi04LjI1eiIgZmlsbD0iIzQyODVmNCIvPjwvc3ZnPg=="
+          alt="Google logo"
+        />
         Entrar com Google
       </button>
-      <button type="button" class="btn btn-social btn-github" (click)="loginComGithub()">
-        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMCAwaDI0djI0SDB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTEyIDBDNS4zNyAwIDAgNS4zNyAwIDEyczUuMzcgMTIgMTIgMTIgMTItNS4zNyAxMi0xMlMxOC42MyAwIDEyIDB6bTcuMTEgMTcuNTFjLTEuNC41NS0yLjggMS4wOS00LjIzIDEuNjQtLjc0LjI4LTEuNDUuNDItMi4xMy40Mi0uNjggMC0xLjM5LS4xNC0yLjE0LS40Mi0xLjQzLS41NS0yLjgzLTEuMDktNC4yMi0xLjY0LS4zNS0uMTQtLjctLjI4LTEuMDUtLjQyLS4zMy0uMTQtLjY2LS4yOC0uOTktLjQyLS4zNC0uMTQtLjY4LS4yOC0xLjAyLS40Mi0uMzItLjE0LS42My0uMjgtLjk1LS40Mi0uMzEtLjE0LS42Mi0uMjgtLjkzLS40Mi0uMy0uMTQtLjYtLjI4LS45LS40Mi0uMy0uMTQtLjU5LS4yOC0uODktLjQyLS4yOC0uMTQtLjU3LS4yOC0uODUtLjQyLS4yOC0uMTQtLjU2LS4yOC0uODQtLjQyLS4yOC0uMTQtLjU1LS4yOC0uODItLjQyLS4yNy0uMTQtLjU0LS4yOC0uODEtLjQyLS4yNy0uMTQtLjUzLS4yOC0uOC0uNDItLjI2LS4xNC0uNTItLjI4LS43OC0uNDItLjI2LS4xNC0uNTItLjI4LS43OC0uNDItLjI1LS4xNC0uNS0uMjgtLjc1LS40Mi0uMjUtLjE0LS41LS4yOC0uNzUtLjQyLS4yNC0uMTQtLjQ4LS4yOC0uNzItLjQyLS4yNC0uMTQtLjQ4LS4yOC0uNzEtLjQyLS4yMy0uMTQtLjQ3LS4yOC0uNy0uNDItLjIzLS4xNC0uNDYtLjI4LS42OS0uNDItLjIyLS4xNC0uNDQtLjI4LS42Ni0uNDItLjIyLS4xNC0uNDMtLjI4LS42NS0uNDItLjIxLS4xNC0uNDItLjI4LS42My0uNDItLjIxLS4xNC0uNDEtLjI4LS42Mi0uNDItLjItLjE0LS40LS4yOC0uNTktLjQyLS4xOS0uMTQtLjM4LS4yOC0uNTctLjQyLS4xOS0uMTQtLjM4LS4yOC0uNTYtLjQyLS4xOC0uMTQtLjM2LS4yOC0uNTQtLjQyLS4xOC0uMTQtLjM2LS4yOC0uNTMtLjQyLS4xNy0uMTQtLjM0LS4yOC0uNTEtLjQyLS4xNy0uMTQtLjMzLS4yOC0uNS0uNDItLjE2LS4xNC0uMzItLjI4LS40OC0uNDItLjE2LS4xNC0uMzItLjI4LS40Ny0uNDItLjE1LTAuMTQtLjMtMC4yOC0uNDUtMC40Mi0uMTUtMC4xNC0uMy0wLjI4LS40NC0wLjQyLTEuMDQtMS42OS0xLjY0LTMuNjYtMS42NC01Ljc0IDAtNC40MSAzLjU5LTggOC04czggMy41OSA4IDhjMCAyLjA4LS42IDQuMDUtMS42NCA1LjczbC0uNDQuNDJjLS4xNS4xNC0uMy4yOC0uNDUuNDItLjE2LjE0LS4zMi4yOC0uNDguNDJzLS4zMS4yOC0uNDcuNDJjLS4xNy4xNC0uMzQuMjgtLjUxLjQyLS4xNy4xNC0uMzQuMjgtLjUuNDItLjE4LjE0LS4zNi4yOC0uNTQuNDJzLS4zNS4yOC0uNTMuNDJjLS4xOC4xNC0uMzYuMjgtLjU0LjQycy0uMzUuMjgtLjUzLjQyYy0uMTkuMTQtLjM4LjI4LS41Ny40Mi0uMTkuMTQtLjM4LjI4LS41Ni40Mi0uMi4xNC0uNC4yOC0uNTkuNDJzLS4zOC4yOC0uNTcuNDJjLS4xOS4xNC0uMzguMjgtLjU3LjQyLS4xOS4xNC0uMzguMjgtLjU3LjQyLS4yLjE0LS40LjI4LS42LjQyLS4yLjE0LS4zOS4yOC0uNTkuNDItLjIxLjE0LS40MS4yOC0uNjIuNDItLjIxLjE0LS40Mi4yOC0uNjMuNDItLjIyLjE0LS40My4yOC0uNjUuNDJzLS40NC4yOC0uNjYuNDJjLS4yMi4xNC0uNDQuMjgtLjY2LjQyLS4yMy4xNC0uNDYuMjgtLjY5LjQycy0uNDYuMjgtLjcuNDJjLS4yMy4xNC0uNDYuMjgtLjcuNDItLjI0LjE0LS40OC4yOC0uNzEuNDJzLS40Ny4yOC0uNzIuNDJjLS4yNC4xNC0uNDguMjgtLjcyLjQycy0uNDguMjgtLjczLjQyYy0uMjUuMTQtLjUuMjgtLjc1LjQycy0uNDkuMjgtLjc0LjQyYy0uMjYuMTQtLjUyLjI4LS43OC40MnoiIGZpbGw9IiMzMzMiLz48L3N2Zz4=" alt="GitHub logo">
+      <button
+        type="button"
+        class="btn btn-social btn-github"
+        (click)="loginComGithub()"
+      >
+        <img
+          src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMCAwaDI0djI0SDB6IiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTEyIDBDNS4zNyAwIDAgNS4zNyAwIDEyczUuMzcgMTIgMTIgMTIgMTItNS4zNyAxMi0xMlMxOC42MyAwIDEyIDB6bTcuMTEgMTcuNTFjLTEuNC41NS0yLjggMS4wOS00LjIzIDEuNjQtLjc0LjI4LTEuNDUuNDItMi4xMy40Mi0uNjggMC0xLjM5LS4xNC0yLjE0LS40Mi0xLjQzLS41NS0yLjgzLTEuMDktNC4yMi0xLjY0LS4zNS0uMTQtLjctLjI4LTEuMDUtLjQyLS4zMy0uMTQtLjY2LS4yOC0uOTktLjQyLS4zNC0uMTQtLjY4LS4yOC0xLjAyLS40Mi0uMzItLjE0LS42My0uMjgtLjk1LS40Mi0uMzEtLjE0LS42Mi0uMjgtLjkzLS40Mi0uMy0uMTQtLjYtLjI4LS45LS40Mi0uMy0uMTQtLjU5LS4yOC0uODktLjQyLS4yOC0uMTQtLjU3LS4yOC0uODUtLjQyLS4yOC0uMTQtLjU2LS4yOC0uODQtLjQyLS4yOC0uMTQtLjU1LS4yOC0uODItLjQyLS4yNy0uMTQtLjU0LS4yOC0uODEtLjQyLS4yNy0uMTQtLjUzLS4yOC0uOC0uNDItLjI2LS4xNC0uNTItLjI4LS43OC0uNDItLjI2LS4xNC0uNTItLjI4LS43OC0uNDItLjI1LS4xNC0uNS0uMjgtLjc1LS40Mi0uMjUtLjE0LS41LS4yOC0uNzUtLjQyLS4yNC0uMTQtLjQ4LS4yOC0uNzItLjQyLS4yNC0uMTQtLjQ4LS4yOC0uNzEtLjQyLS4yMy0uMTQtLjQ3LS4yOC0uNy0uNDItLjIzLS4xNC0uNDYtLjI4LS42OS0uNDItLjIyLS4xNC0uNDQtLjI4LS42Ni0uNDItLjIyLS4xNC0uNDMtLjI4LS42NS0uNDItLjIxLS4xNC0uNDItLjI4LS42My0uNDItLjIxLS4xNC0uNDEtLjI4LS42Mi0uNDItLjItLjE0LS40LS4yOC0uNTktLjQyLS4xOS0uMTQtLjM4LS4yOC0uNTctLjQyLS4xOS0uMTQtLjM4LS4yOC0uNTYtLjQyLS4xOC0uMTQtLjM2LS4yOC0uNTQtLjQyLS4xOC0uMTQtLjM2LS4yOC0uNTMtLjQyLS4xNy0uMTQtLjM0LS4yOC0uNTEtLjQyLS4xNy0uMTQtLjMzLS4yOC0uNS0uNDItLjE2LS4xNC0uMzItLjI4LS40OC0uNDItLjE2LS4xNC0uMzItLjI4LS40Ny0uNDItLjE1LTAuMTQtLjMtMC4yOC0uNDUtMC40Mi0uMTUtMC4xNC0uMy0wLjI4LS40NC0wLjQyLTEuMDQtMS42OS0xLjY0LTMuNjYtMS42NC01Ljc0IDAtNC40MSAzLjU5LTggOC04czggMy41OSA4IDhjMCAyLjA4LS42IDQuMDUtMS42NCA1LjczbC0uNDQuNDJjLS4xNS4xNC0uMy4yOC0uNDUuNDItLjE2LjE0LS4zMi4yOC0uNDguNDJzLS4zMS4yOC0uNDcuNDJjLS4xNy4xNC0uMzQuMjgtLjUxLjQyLS4xNy4xNC0uMzQuMjgtLjUuNDItLjE4LjE0LS4zNi4yOC0uNTQuNDJzLS4zNS4yOC0uNTMuNDJjLS4xOC4xNC0uMzYuMjgtLjU0LjQycy0uMzUuMjgtLjUzLjQyYy0uMTkuMTQtLjM4LjI4LS41Ny40Mi0uMTkuMTQtLjM4LjI4LS41Ni40Mi0uMi4xNC0uNC4yOC0uNTkuNDJzLS4zOC4yOC0uNTcuNDJjLS4xOS4xNC0uMzguMjgtLjU3LjQyLS4xOS4xNC0uMzguMjgtLjU3LjQyLS4yLjE0LS40LjI4LS42LjQyLS4yLjE0LS4zOS4yOC0uNTkuNDItLjIxLjE0LS40MS4yOC0uNjIuNDItLjIxLjE0LS40Mi4yOC0uNjMuNDItLjIyLjE0LS40My4yOC0uNjUuNDJzLS40NC4yOC0uNjYuNDJjLS4yMi4xNC0uNDQuMjgtLjY2LjQyLS4yMy4xNC0uNDYuMjgtLjY5LjQycy0uNDYuMjgtLjcuNDJjLS4yMy4xNC0uNDYuMjgtLjcuNDItLjI0LjE0LS40OC4yOC0uNzEuNDJzLS40Ny4yOC0uNzIuNDJjLS4yNC4xNC0uNDguMjgtLjcyLjQycy0uNDguMjgtLjczLjQyYy0uMjUuMTQtLjUuMjgtLjc1LjQycy0uNDkuMjgtLjc0LjQyYy0uMjYuMTQtLjUyLjI4LS43OC40MnoiIGZpbGw9IiMzMzMiLz48L3N2Zz4="
+          alt="GitHub logo"
+        />
         Entrar com GitHub
       </button>
     </div>
   </div>
 </div>
+<app-alert-message
+  (closed)="onAlertClosed()"
+  *ngIf="mensagemErro"
+  [message]="mensagemErro"
+  type="error"
+  [autoClose]="true"
+>
+</app-alert-message>

@@ -1,11 +1,19 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { UsuarioService } from '../../features/auth/services/usuario.service';
 
 @Component({
   selector: 'app-cabecalho',
-  imports: [],
+  standalone: true,
+  imports: [CommonModule, RouterLink],
   templateUrl: './cabecalho.component.html',
-  styleUrl: './cabecalho.component.scss'
+  styleUrls: ['./cabecalho.component.scss']
 })
 export class CabecalhoComponent {
+  private usuarioService = inject(UsuarioService);
 
+  logout(): void {
+    this.usuarioService.logout();
+  }
 }

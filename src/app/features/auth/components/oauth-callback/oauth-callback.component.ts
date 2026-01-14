@@ -19,7 +19,6 @@ export class OauthCallbackComponent implements OnInit {
     const code = this.route.snapshot.queryParams['code'];
 
     if (!code || (provider !== 'google' && provider !== 'github')) {
-      console.warn('Callback OAuth inválido');
       this.router.navigate(['/login']);
       return;
     }

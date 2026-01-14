@@ -1,0 +1,14 @@
+.content {
+  flex: 1; /* Grow to fill available space */
+  display: flex;
+  flex-direction: column;
+  padding: 0px;
+}
+
+.content-with-padding {
+  flex: 1; /* Grow to fill available space */
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+

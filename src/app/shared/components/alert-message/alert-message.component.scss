@@ -1,0 +1,60 @@
+.alert-card {
+  margin-bottom: 1rem;
+  border-left: 5px solid;
+  max-width: 600px;
+}
+
+.alert-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.message-text {
+  flex-grow: 1;
+}
+
+// Type-specific styles
+.info {
+  border-color: #2196F3;
+  color: #2196F3;
+}
+
+.success {
+  border-color: #4CAF50;
+  color: #4CAF50;
+}
+
+.warning {
+  border-color: #FFC107;
+  color: #FFC107;
+}
+
+.error {
+  border-color: #F44336;
+  color: #F44336;
+}
+
+.alert-card.error mat-icon {
+  color: warn; // Uses Material's warn color
+}
+
+.alert-card.success mat-icon {
+  color: primary; // Uses Material's primary color
+}
+
+.alert-card.info mat-icon {
+  color: accent; // Uses Material's accent color
+}
+
+.alert-card.warning mat-icon {
+  color: accent; // Uses Material's accent color
+}
+
+:host {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1000;
+}

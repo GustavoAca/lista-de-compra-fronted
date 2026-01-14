@@ -13,6 +13,7 @@
 
   .actions {
     margin-top: 2rem;
+    margin-bottom: 3rem;
   }
 
   .lists-summary {
@@ -20,19 +21,24 @@
     padding: 2rem;
     background-color: #f9f9f9;
     border-radius: 8px;
+    text-align: left;
   }
 }
 
-// Estilos básicos para o botão, podem ser adaptados ou movidos para um local global
-.btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1rem;
-}
+@media (max-width: 768px) {
+  .home-container {
+    padding: 1rem;
+  }
 
-.btn-primary {
-  background-color: #007bff;
-  color: white;
+  h1 {
+    font-size: 1.8rem;
+  }
+
+  p {
+    font-size: 1rem;
+  }
+
+  .lists-summary {
+    padding: 1.5rem;
+  }
 }

@@ -4,3 +4,10 @@ export interface Item {
   quantidade: number;
   comprado: boolean;
 }
+
+export interface ItemLista {
+  id: string | number;
+  listaCompraId: string | number;
+  itemOfertaId: string | number;
+  quantidade: number;
+}

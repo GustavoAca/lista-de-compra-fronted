@@ -1,21 +1,65 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { LoginRequest, LoginResponse } from '../models/login.model';
+import { Router } from '@angular/router';
+import { JwtHelperService } from '@auth0/angular-jwt';
+import { DecodedToken } from '../models/decodedToken.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class UsuarioService {
   private http = inject(HttpClient);
-  private authApiPath = '/usuarios'; // Assumindo que o endpoint de login é /users/login
+  private router = inject(Router);
+  private jwtHelper = inject(JwtHelperService);
+  private authApiPath = '/usuarios';
 
   constructor() {}
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
     const url = `${this.authApiPath}/login`;
-    return this.http.post<LoginResponse>(url, credentials);
+    return this.http.post<LoginResponse>(url, credentials).pipe(
+      tap((response) => {
+        this.decodeAndStoreToken(response.accessToken, response.refreshToken);
+      })
+    );
   }
 
-  // Métodos para logout, registro, etc., podem ser adicionados aqui
+  refreshToken(refreshToken: string): Observable<LoginResponse> {
+    const url = `${this.authApiPath}/atualizar-token`;
+    return this.http.post<LoginResponse>(url, { refreshToken });
+  }
+
+  logout(): void {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('username');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('user_token');
+    this.router.navigate(['/login']);
+  }
+
+  decodeAndStoreToken(accessToken: string, refreshToken: string): void {
+    const decodedToken = this.jwtHelper.decodeToken(refreshToken);
+
+    const parsedSub = decodedToken.sub
+      .split(',')
+      .map((item: string) => item.trim()) // remove espaços antes/depois de cada par
+      .reduce((acc: any, curr: string) => {
+        const [rawKey, rawValue] = curr.split(':');
+
+        const key = rawKey.trim();
+        const value: string = rawValue?.trim(); // evita espaços e quebra se vier undefined
+
+        acc[key] = value;
+        return acc;
+      }, {} as DecodedToken);
+
+    localStorage.setItem('access_token', accessToken);
+    localStorage.setItem('refresh_token', refreshToken);
+    localStorage.setItem('username', parsedSub.username);
+    localStorage.setItem('userId', parsedSub.userId.toString());
+    localStorage.setItem('user_token', parsedSub.refreshToken);
+  }
 }

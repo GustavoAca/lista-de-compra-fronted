@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment'; // Ajuste o cam
 export const baseUrlInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> => {
   // Verifica se a requisição já tem uma URL completa ou é para um recurso local (ex: assets)
   // Ou se já aponta para um domínio externo, não queremos interceptar.
+
   if (req.url.startsWith('http://') || req.url.startsWith('https://')) {
     return next(req);
   }

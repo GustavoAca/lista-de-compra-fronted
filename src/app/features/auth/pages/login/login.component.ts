@@ -1,3 +1,4 @@
+import { LoadingSpinnerComponent } from './../../../../shared/components/loading-spinner/loading-spinner.component';
 import { environment } from './../../../../../environments/environment';
 import { Component, inject } from '@angular/core';
 import {
@@ -7,10 +8,10 @@ import {
   Validators,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { OauthService } from '../../services/oauth.service';
 import { UsuarioService } from '../../services/usuario.service'; // Importar UsuarioService
 import { LoginRequest } from '../../models/login.model'; // Importar LoginRequest
 import { Router } from '@angular/router'; // Importar Router
+import { AlertMessageComponent } from '../../../../shared/components/alert-message/alert-message.component';
 
 @Component({
   selector: 'app-login',
@@ -18,6 +19,8 @@ import { Router } from '@angular/router'; // Importar Router
   imports: [
     CommonModule,
     ReactiveFormsModule, // Importa o ReactiveFormsModule para usar formulários reativos
+    LoadingSpinnerComponent,
+    AlertMessageComponent,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
@@ -27,48 +30,55 @@ export class LoginComponent {
   private fb = inject(FormBuilder);
   private usuarioService = inject(UsuarioService); // Injetar UsuarioService
   private router = inject(Router); // Injetar Router
+  loading: boolean = false;
+  mensagemErro: string = '';
+  deveExibirMensagem: boolean = false;
 
   constructor() {
     var token = localStorage.getItem('access_token');
     var refreshToken = localStorage.getItem('refresh_token');
-    if ((token !== null) && (refreshToken !== null)) {
+    if (token !== null && refreshToken !== null) {
       this.router.navigate(['/home']); // Redirecionar para a home
     }
     this.loginForm = this.fb.group({
-      username: [''], // Atualizado para 'email'
-      password: [''],
+      username: ['', Validators.email], // Atualizado para 'email'
+      password: ['', Validators.required],
     });
   }
 
   onSubmit(): void {
     if (this.loginForm.valid) {
-      console.log('Formulário enviado:', this.loginForm.value);
       const credentials: LoginRequest = this.loginForm.value as LoginRequest;
+      this.loading = true;
       this.usuarioService.login(credentials).subscribe({
         next: (response) => {
-          console.log('Login bem-sucedido:', response);
-          // Armazenar tokens (ex: localStorage, sessionStorage, ou um serviço de autenticação)
           localStorage.setItem('access_token', response.accessToken);
           localStorage.setItem('refresh_token', response.refreshToken);
           this.router.navigate(['/home']); // Redirecionar para a home
         },
         error: (err) => {
-          console.error('Erro no login:', err);
-          // Exibir mensagem de erro para o usuário (ex: um toast, uma mensagem no formulário)
+          this.loading = false;
+          this.deveExibirMensagem = true;
+          this.mensagemErro = err.error?.detail;
+        },
+        complete: () => {
+          this.loading = false;
         },
       });
     } else {
-      console.log('Formulário inválido');
     }
   }
 
   loginComGoogle(): void {
-    console.log('Iniciando login com Google...');
     window.location.href = `${environment.apiUrl}/oauth/google`;
   }
 
   loginComGithub(): void {
-    console.log('Iniciando login com GitHub...');
     window.location.href = `${environment.apiUrl}/oauth/github`;
+  }
+
+  onAlertClosed(): void {
+    this.deveExibirMensagem = false;
+    this.mensagemErro = '';
   }
 }

@@ -20,10 +20,23 @@
 }
 
 .logo-title {
-  font-size: 1.5rem;
-  font-weight: bold;
   color: white;
   text-decoration: none;
+  display: flex; /* Para alinhar a imagem verticalmente, se necessário */
+  align-items: center;
+}
+
+.logo-image {
+  height: 40px; /* Ajuste a altura conforme necessário */
+  width: auto; /* Mantém a proporção da imagem */
+  /*
+    Tentar remover o fundo branco da imagem usando mix-blend-mode.
+    Isso funciona melhor se o logo for uma imagem escura em fundo branco e o fundo do header for colorido/escuro.
+    Pode ser necessário ajustar ou usar 'filter' dependendo do seu logo real.
+    Ex: filter: invert(1) para logos pretas em fundos brancos, se o fundo do header for claro e você quiser a logo preta.
+    Ou se o logo for branco em fundo branco e o header for escuro.
+  */
+  mix-blend-mode: darken;
 }
 
 nav a {
@@ -60,7 +73,7 @@ nav a {
   }
 
   .logo-title {
-    font-size: 1.2rem;
+    /* Font size removed, as it's an image now */
   }
 
   .logout-button {

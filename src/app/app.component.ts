@@ -20,7 +20,6 @@ export class AppComponent {
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
-      // O cabeçalho não deve ser exibido na tela de login
       this.showHeader = !event.urlAfterRedirects.includes('/login');
     });
   }

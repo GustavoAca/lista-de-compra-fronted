@@ -1,0 +1,50 @@
+<div class="item-details-container">
+  <app-loading-spinner *ngIf="loadingItens" size="sm"></app-loading-spinner>
+
+  <app-alert-message
+    (closed)="onAlertClosed()"
+    *ngIf="deveExibirMensagem"
+    [message]="mensagemErro"
+    type="error"
+    [autoClose]="true"
+  >
+  </app-alert-message>
+
+  <div *ngIf="!loadingItens && !deveExibirMensagem" class="content-wrapper">
+    <div *ngIf="page && !page.empty; else noItems" class="list-display-container">
+      <div class="actions">
+        <button mat-icon-button (click)="removerItens()" [disabled]="selectedItems.size === 0" class="remove-button">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+      <ul class="item-list">
+        <li *ngFor="let item of page.content">
+          <mat-checkbox (change)="onCheckboxChange(item.id, $event.checked)"></mat-checkbox>
+          <span class="item-info-wrapper">
+            <span class="item-name">Item: {{ item.itemOferta.item.nome }}</span>
+            <span class="item-quantity">Quantidade: {{ item.quantidade }}</span>
+            <span class="item-seller">Vendedor: {{ item.itemOferta.vendedor.nome }}</span>
+            <span class="item-price">Preço: {{ item.itemOferta.preco | currency:'BRL' }}</span>
+            <span class="item-promotion" [class.on-promotion]="item.itemOferta.hasPromocaoAtiva">
+              Promoção: {{ item.itemOferta.hasPromocaoAtiva ? 'Sim' : 'Não' }}
+            </span>
+          </span>
+        </li>
+      </ul>
+
+      <mat-paginator
+        [length]="page.totalElements"
+        [pageSize]="page.size"
+        [pageIndex]="page.number"
+        [pageSizeOptions]="pageSizeOptions"
+        (page)="onPageChange($event)"
+        aria-label="Select page of items"
+      >
+      </mat-paginator>
+    </div>
+
+    <ng-template #noItems>
+      <p><i>Esta lista não possui itens.</i></p>
+    </ng-template>
+  </div>
+</div>

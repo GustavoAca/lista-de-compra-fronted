@@ -8,9 +8,9 @@ import {
   Validators,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { UsuarioService } from '../../services/usuario.service'; // Importar UsuarioService
-import { LoginRequest } from '../../models/login.model'; // Importar LoginRequest
-import { Router } from '@angular/router'; // Importar Router
+import { UsuarioService } from '../../services/usuario.service';
+import { LoginRequest } from '../../models/login.model';
+import { Router } from '@angular/router';
 import { AlertMessageComponent } from '../../../../shared/components/alert-message/alert-message.component';
 
 @Component({
@@ -18,7 +18,7 @@ import { AlertMessageComponent } from '../../../../shared/components/alert-messa
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule, // Importa o ReactiveFormsModule para usar formulários reativos
+    ReactiveFormsModule,
     LoadingSpinnerComponent,
     AlertMessageComponent,
   ],
@@ -28,8 +28,8 @@ import { AlertMessageComponent } from '../../../../shared/components/alert-messa
 export class LoginComponent {
   loginForm: FormGroup;
   private fb = inject(FormBuilder);
-  private usuarioService = inject(UsuarioService); // Injetar UsuarioService
-  private router = inject(Router); // Injetar Router
+  private usuarioService = inject(UsuarioService);
+  private router = inject(Router);
   loading: boolean = false;
   mensagemErro: string = '';
   deveExibirMensagem: boolean = false;
@@ -38,10 +38,10 @@ export class LoginComponent {
     var token = localStorage.getItem('access_token');
     var refreshToken = localStorage.getItem('refresh_token');
     if (token !== null && refreshToken !== null) {
-      this.router.navigate(['/home']); // Redirecionar para a home
+      this.router.navigate(['/home']);
     }
     this.loginForm = this.fb.group({
-      username: ['', Validators.email], // Atualizado para 'email'
+      username: ['', Validators.email],
       password: ['', Validators.required],
     });
   }
@@ -54,7 +54,7 @@ export class LoginComponent {
         next: (response) => {
           localStorage.setItem('access_token', response.accessToken);
           localStorage.setItem('refresh_token', response.refreshToken);
-          this.router.navigate(['/home']); // Redirecionar para a home
+          this.router.navigate(['/home']);
         },
         error: (err) => {
           this.loading = false;

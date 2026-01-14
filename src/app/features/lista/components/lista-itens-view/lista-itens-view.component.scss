@@ -1,0 +1,111 @@
+.item-details-container {
+  padding: 1rem 0; // Padding inside the expansion panel content
+}
+
+.content-wrapper {
+  position: relative;
+}
+
+.list-display-container {
+  position: relative;
+  padding-top: 40px; // Make space for the absolutely positioned button
+}
+
+.actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.actions .remove-button {
+  &:hover:not([disabled]) {
+    outline: 1px solid red;
+    color: red; // Explicitly set icon color to red on hover
+  }
+}
+
+.item-list {
+  list-style-type: none; // Remove default bullet points
+  padding-left: 0; // Remove default padding
+  margin-top: 0.5rem;
+
+  li {
+    display: flex;
+    // Removed flex-wrap: wrap; // Allow items to wrap to the next line
+    align-items: center; // Align items vertically
+    justify-content: flex-start; // Explicitly align items to the start (left)
+    margin-bottom: 0.8rem; // Space between list items
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--mat-expansion-panel-divider-color);
+    font-size: 0.95rem;
+    color: var(--mat-expansion-panel-content-text-color);
+
+    &:last-child {
+      border-bottom: none; // No border for the last item
+    }
+
+    mat-checkbox {
+      margin-right: 1rem; // Space between checkbox and info
+    }
+
+    .item-info-wrapper {
+      display: flex;
+      // Removed flex-wrap: wrap;
+      flex-grow: 1; // Allow info wrapper to take remaining space
+
+      span {
+        flex-basis: auto; // Allow spans to take natural width
+        margin-right: 1rem; // Space between spans
+        &:last-child {
+          margin-right: 0;
+        }
+      }
+    }
+
+    .item-name {
+      // flex-basis: 100%; // Make the item name take full width - This was problematic, let flex-grow handle it
+      font-weight: 600;
+      // margin-bottom: 0.5rem; // Space below the name - Removed as it might cause wrapping if no flex-wrap
+      color: var(--mat-expansion-panel-header-description-color);
+    }
+
+    .item-quantity {
+      font-weight: 500;
+      min-width: 80px; // Ensure enough space
+    }
+
+    .item-seller {
+      flex-grow: 1; // Take available space
+      min-width: 150px; // Ensure enough space
+    }
+
+    .item-price {
+      font-weight: 600;
+      color: var(--mat-expansion-panel-header-description-color);
+      min-width: 100px; // Ensure enough space
+      text-align: right;
+    }
+
+    .item-promotion {
+      font-size: 0.85rem;
+      color: gray;
+      min-width: 80px;
+      text-align: right;
+    }
+
+    .item-promotion.on-promotion {
+      color: var(--mat-primary-color); // Use primary color for promotion
+      font-weight: 600;
+    }
+  }
+}
+
+p {
+  font-size: 0.95rem;
+  color: var(--mat-expansion-panel-content-text-color);
+  padding-left: 0.5rem;
+}
+
+app-alert-message {
+  margin-bottom: 1rem;
+}

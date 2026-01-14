@@ -3,15 +3,14 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Lista } from '../models/lista.model';
 import { Page } from '../../../shared/pipes/page.model';
+import { ItemListaDTO } from '../models/item-lista.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ListaCompraService {
-  // Injeta o HttpClient para fazer requisições HTTP.
   private http = inject(HttpClient);
 
-  // Caminho relativo para a sua API. O interceptor adicionará a URL base.
   private apiPath = '/listas-compras';
 
   constructor() {}
@@ -23,5 +22,29 @@ export class ListaCompraService {
         size,
       },
     });
+  }
+
+  getItensPorLista(
+    listaId: string,
+    page = 0,
+    size = 10
+  ): Observable<Page<ItemListaDTO>> {
+    const url = `${this.apiPath}/${listaId}/itens`;
+    return this.http.get<Page<ItemListaDTO>>(url, {
+      params: {
+        page,
+        size,
+      },
+    });
+  }
+
+  removerDaLista(listaId: string, itensLista: string[]): Observable<boolean> {
+    const url = `${this.apiPath}/${listaId}/remover-itens`;
+    return this.http.delete<boolean>(url, { body: itensLista });
+  }
+
+  atualizarQuantidadeItem(listaId: string, itemId: string, novaQuantidade: number): Observable<any> {
+    const url = `${this.apiPath}/${listaId}/itens/${itemId}`;
+    return this.http.put(url, { quantidade: novaQuantidade });
   }
 }

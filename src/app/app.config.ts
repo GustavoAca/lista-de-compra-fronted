@@ -7,7 +7,6 @@ import { routes } from './app.routes';
 import { baseUrlInterceptor } from './core/interceptors/base-url.interceptor';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { environment } from '../environments/environment';
 
 export function tokenGetter() {
   return localStorage.getItem('access_token');
@@ -23,7 +22,7 @@ export const appConfig: ApplicationConfig = {
       JwtModule.forRoot({
         config: {
           tokenGetter: tokenGetter,
-          allowedDomains: [], // Manter vazio para desativar o interceptor do @auth0/angular-jwt
+          allowedDomains: [],
           disallowedRoutes: [],
         },
       })

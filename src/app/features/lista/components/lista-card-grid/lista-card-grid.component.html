@@ -1,23 +1,18 @@
-<div class="lists-grid" *ngIf="page && !page!.empty; else noLists">
-  <mat-card *ngFor="let lista of page?.content ?? []" class="list-card">
-    <mat-card-header>
-      <mat-card-title>{{ lista.nome }}</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <p>
-        <mat-icon>shopping_cart</mat-icon>
-        <span>{{ lista.totalItens }} itens</span>
-      </p>
-      <p>
-        <mat-icon>monetization_on</mat-icon>
-        <span>{{ lista.valorTotal | currency : "BRL" }}</span>
-      </p>
-    </mat-card-content>
-    <mat-card-actions>
-      <button mat-button>VER DETALHES</button>
-    </mat-card-actions>
-  </mat-card>
-</div>
+<mat-accordion *ngIf="page && !page!.empty; else noLists">
+  <mat-expansion-panel *ngFor="let lista of page?.content ?? []">
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        <strong>{{ lista.nome }}</strong>
+      </mat-panel-title>
+      <mat-panel-description>
+        {{ lista.totalItens }} itens - {{ lista.valorTotal | currency : "BRL" }}
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <app-lista-itens-view [lista]="lista"></app-lista-itens-view>
+    </ng-template>
+  </mat-expansion-panel>
+</mat-accordion>
 
 <ng-template #noLists>
   <p><i>Você ainda não tem nenhuma lista de compras.</i></p>
@@ -43,7 +38,6 @@
     ></app-loading-spinner>
   </div>
 </ng-container>
-
 
 <app-alert-message
   (closed)="onAlertClosed()"

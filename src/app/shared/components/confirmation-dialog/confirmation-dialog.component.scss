@@ -1,0 +1,9 @@
+[mat-dialog-actions] {
+  justify-content: flex-end;
+}
+
+button[color="warn"] {
+  &:hover {
+    outline: 1px solid red;
+  }
+}

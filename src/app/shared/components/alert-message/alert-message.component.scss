@@ -15,41 +15,40 @@
   flex-grow: 1;
 }
 
-// Type-specific styles
 .info {
-  border-color: #2196F3;
-  color: #2196F3;
+  border-color: #2196f3;
+  color: #2196f3;
 }
 
 .success {
-  border-color: #4CAF50;
-  color: #4CAF50;
+  border-color: #4caf50;
+  color: #4caf50;
 }
 
 .warning {
-  border-color: #FFC107;
-  color: #FFC107;
+  border-color: #ffc107;
+  color: #ffc107;
 }
 
 .error {
-  border-color: #F44336;
-  color: #F44336;
+  border-color: #f44336;
+  color: #f44336;
 }
 
 .alert-card.error mat-icon {
-  color: warn; // Uses Material's warn color
+  color: warn;
 }
 
 .alert-card.success mat-icon {
-  color: primary; // Uses Material's primary color
+  color: primary;
 }
 
 .alert-card.info mat-icon {
-  color: accent; // Uses Material's accent color
+  color: accent;
 }
 
 .alert-card.warning mat-icon {
-  color: accent; // Uses Material's accent color
+  color: accent;
 }
 
 :host {

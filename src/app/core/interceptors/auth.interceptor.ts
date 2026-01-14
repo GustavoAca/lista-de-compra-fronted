@@ -12,7 +12,6 @@ import { UsuarioService } from '../../features/auth/services/usuario.service';
 import { LoginResponse } from '../../features/auth/models/login.model';
 import { JwtHelperService } from '@auth0/angular-jwt';
 
-// --- State must be outside the interceptor function to be preserved ---
 let isRefreshing = false;
 const refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(
   null
@@ -54,7 +53,6 @@ function handle401Error(
     var accessToken = localStorage.getItem('access_token');
 
     if (!refreshToken || !accessToken) {
-      // trate erro, redirecione para login, logout, etc.
       throw new Error('Tokens não encontrados no localStorage');
     }
 

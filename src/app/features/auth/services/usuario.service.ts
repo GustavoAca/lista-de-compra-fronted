@@ -45,12 +45,12 @@ export class UsuarioService {
 
     const parsedSub = decodedToken.sub
       .split(',')
-      .map((item: string) => item.trim()) // remove espaços antes/depois de cada par
+      .map((item: string) => item.trim())
       .reduce((acc: any, curr: string) => {
         const [rawKey, rawValue] = curr.split(':');
 
         const key = rawKey.trim();
-        const value: string = rawValue?.trim(); // evita espaços e quebra se vier undefined
+        const value: string = rawValue?.trim();
 
         acc[key] = value;
         return acc;

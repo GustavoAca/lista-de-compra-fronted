@@ -9,7 +9,9 @@
     [autoClose]="true"
   >
   </app-alert-message>
-
+      <button mat-icon-button [routerLink]="['/home']">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
   <div *ngIf="!loading && !deveExibirMensagem && lista">
     <div class="list-header">
       <h2>{{ lista.nome }}</h2>
@@ -19,9 +21,6 @@
     <div class="actions">
       <button mat-flat-button color="primary" [routerLink]="['/listas', lista.id, 'adicionar-itens']">
         Adicionar Mais Itens
-      </button>
-      <button mat-flat-button color="accent" (click)="salvarAlteracoes()">
-        Salvar Alterações
       </button>
       <!-- Add other list-level actions here if needed -->
     </div>

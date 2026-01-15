@@ -4,7 +4,9 @@ import { ListaCompraService } from '../../services/lista-compra.service';
 import { Lista } from '../../models/lista.model';
 import { ItemListaDTO } from '../../models/item-lista.model';
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { forkJoin, Observable, Subscription } from 'rxjs'; // Import forkJoin and Observable
+// Import debounceTime, Subject, switchMap
+import { forkJoin, Observable, Subscription, Subject } from 'rxjs';
+import { debounceTime, switchMap, tap } from 'rxjs/operators'; // Import operators from 'rxjs/operators'
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { AlertMessageComponent } from '../../../../shared/components/alert-message/alert-message.component';
 import { MatButtonModule } from '@angular/material/button';
@@ -32,26 +34,48 @@ export class ListaEditComponent implements OnInit, OnDestroy {
   listaId!: string;
   lista!: Lista;
   itens: ItemListaDTO[] = [];
-  private initialItensState: Map<string, ItemListaDTO> = new Map(); // Store original state for comparison
-  private pendingItemChanges: Map<string, number> = new Map(); // itemId -> newQuantity
+  private initialItensState: Map<string, ItemListaDTO> = new Map();
+  private pendingItemChanges: Map<string, number> = new Map();
 
   loading = true;
   mensagemErro: string = '';
   deveExibirMensagem = false;
-  totalListaValor: number = 0; // New property for total value
+  totalListaValor: number = 0;
 
   private routeSubscription!: Subscription;
+  private quantityChangeSubject = new Subject<void>(); // Debounce subject
+  private debounceSubscription!: Subscription; // Subscription for debounce
 
   ngOnInit(): void {
     this.routeSubscription = this.route.paramMap.subscribe(params => {
       this.listaId = params.get('id')!;
       this.loadListaDetails();
     });
+
+    this.debounceSubscription = this.quantityChangeSubject.pipe(
+      debounceTime(3000), // Wait for 3 seconds of inactivity
+      tap(() => {
+        if (this.pendingItemChanges.size > 0) { // Only show loading if there are changes
+          this.loading = true;
+          this.deveExibirMensagem = false;
+        }
+      }),
+      switchMap(() => this._processPendingChanges()) // Process changes when debounce finishes
+    ).subscribe({
+      error: (err) => {
+        this.loading = false;
+        this.deveExibirMensagem = true;
+        this.mensagemErro = err.error?.detail || 'Erro ao salvar alterações na lista.';
+      }
+    });
   }
 
   ngOnDestroy(): void {
     if (this.routeSubscription) {
       this.routeSubscription.unsubscribe();
+    }
+    if (this.debounceSubscription) {
+      this.debounceSubscription.unsubscribe();
     }
   }
 
@@ -76,9 +100,9 @@ export class ListaEditComponent implements OnInit, OnDestroy {
     this.listaCompraService.getItensPorLista(this.listaId, 0, 1000).subscribe({
       next: (pageResponse) => {
         this.itens = pageResponse.content;
-        this.initialItensState = new Map(this.itens.map(item => [item.id, { ...item }])); // Deep copy initial state
-        this.pendingItemChanges.clear(); // Clear pending changes after loading fresh data
-        this.calculateTotalValue(); // Calculate total after loading items
+        this.initialItensState = new Map(this.itens.map(item => [item.id, { ...item }]));
+        this.pendingItemChanges.clear();
+        this.calculateTotalValue();
         this.loading = false;
       },
       error: (err) => {
@@ -97,53 +121,48 @@ export class ListaEditComponent implements OnInit, OnDestroy {
   incrementarQuantidade(item: ItemListaDTO): void {
     item.quantidade++;
     this.pendingItemChanges.set(item.id, item.quantidade);
-    this.calculateTotalValue(); // Update total locally
+    this.calculateTotalValue();
+    this.quantityChangeSubject.next(); // Trigger debounce
   }
 
   decrementarQuantidade(item: ItemListaDTO): void {
-    if (item.quantidade > 0) { // Ensure quantity doesn't go below 0 locally
+    if (item.quantidade > 0) {
       item.quantidade--;
       this.pendingItemChanges.set(item.id, item.quantidade);
     }
 
-    // If quantity becomes 0, remove it from the displayed items immediately for UX
     if (item.quantidade === 0) {
       this.itens = this.itens.filter(i => i.id !== item.id);
     }
-    this.calculateTotalValue(); // Update total locally
+    this.calculateTotalValue();
+    this.quantityChangeSubject.next(); // Trigger debounce
   }
 
   private calculateTotalValue(): void {
     this.totalListaValor = this.itens.reduce((sum, item) => {
-      // Ensure item.itemOferta and item.itemOferta.preco are defined before access
       const preco = item.itemOferta && item.itemOferta.preco ? item.itemOferta.preco : 0;
       return sum + (item.quantidade * preco);
     }, 0);
   }
 
-  salvarAlteracoes(): void {
-    this.loading = true;
-    this.deveExibirMensagem = false;
-
+  // Renamed salvarAlteracoes to _processPendingChanges and made it private
+  private _processPendingChanges(): Observable<any> {
     const itemsToAdd: { itemOfertaId: string, quantidade: number }[] = [];
     const itemsToRemove: { id: string, quantidade: number }[] = [];
 
     this.pendingItemChanges.forEach((newQuantity, itemId) => {
       const originalItem = this.initialItensState.get(itemId);
-      // If the item was just added (not in initialItensState), consider it an add from 0
       const originalQuantity = originalItem ? originalItem.quantidade : 0;
 
       const quantityDifference = newQuantity - originalQuantity;
 
       if (quantityDifference > 0) {
-        // Quantity increased, send to adicionar-itens
         const item = this.itens.find(i => i.id === itemId) || originalItem;
         if (item) {
           itemsToAdd.push({ itemOfertaId: item.itemOferta.id, quantidade: quantityDifference });
         }
       } else if (quantityDifference < 0) {
-        // Quantity decreased or item fully removed, send to remover-itens
-        const item = originalItem || this.itens.find(i => i.id === itemId); // Use original for id
+        const item = originalItem || this.itens.find(i => i.id === itemId);
         if (item) {
             itemsToRemove.push({ id: item.id, quantidade: Math.abs(quantityDifference) });
         }
@@ -159,21 +178,24 @@ export class ListaEditComponent implements OnInit, OnDestroy {
     }
 
     if (observables.length > 0) {
-      forkJoin(observables).subscribe({
-        next: () => {
-          this.loadListaItems(); // Reload all items to get fresh state from server
-        },
-        error: (err) => {
-          this.loading = false;
-          this.deveExibirMensagem = true;
-          this.mensagemErro = err.error?.detail || 'Erro ao salvar alterações na lista.';
-          // Optionally, handle partial success or revert local changes
-        }
-      });
+      return forkJoin(observables).pipe(
+        tap({
+          next: () => {
+            this.loadListaItems(); // Reload all items to get fresh state from server
+          },
+          error: (err) => {
+            this.loading = false;
+            this.deveExibirMensagem = true;
+            this.mensagemErro = err.error?.detail || 'Erro ao salvar alterações na lista.';
+          }
+        })
+      );
     } else {
-      this.loading = false;
-      // No pending changes, just set loading to false
+      this.loading = false; // No pending changes, just set loading to false
+      return new Observable(observer => { // Return an observable even if no changes
+        observer.next(undefined);
+        observer.complete();
+      });
     }
   }
 }
-

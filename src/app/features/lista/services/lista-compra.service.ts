@@ -52,6 +52,4 @@ export class ListaCompraService {
     const url = `${this.apiPath}/${listaId}/adicionar-itens`;
     return this.http.post(url, itensParaAdicionar);
   }
-
-
 }

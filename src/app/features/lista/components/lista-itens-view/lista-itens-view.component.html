@@ -13,16 +13,12 @@
   <div *ngIf="!loadingItens && !deveExibirMensagem" class="content-wrapper">
     <div *ngIf="page && !page.empty; else noItems" class="list-display-container">
       <div class="actions">
-        <button mat-flat-button color="primary" [routerLink]="['/listas', lista.id, 'adicionar-itens']">
-          Adicionar Itens
-        </button>
         <button mat-icon-button [routerLink]="['/lista/editar', lista.id]">
           <mat-icon>edit</mat-icon>
         </button>
       </div>
       <ul class="item-list">
         <li *ngFor="let item of page.content">
-          <mat-checkbox (change)="onCheckboxChange(item.id, $event.checked)"></mat-checkbox>
           <span class="item-info-wrapper">
             <span class="item-name">Item: {{ item.itemOferta.item.nome }}</span>
             <span class="item-quantity">Quantidade: {{ item.quantidade }}</span>

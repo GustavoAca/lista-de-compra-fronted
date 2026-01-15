@@ -43,9 +43,9 @@ export class ListaCompraService {
     return this.http.get<Lista>(url);
   }
 
-  removerDaLista(listaId: string, itemIds: string[]): Observable<any> {
+  removerDaLista(listaId: string, itensParaRemover: { id: string; quantidade: number }[]): Observable<any> {
     const url = `${this.apiPath}/${listaId}/remover-itens`;
-    return this.http.post(url, itemIds); // Assuming POST with body for removal
+    return this.http.delete(url, { body: itensParaRemover });
   }
 
   adicionarItensALista(listaId: string, itensParaAdicionar: { itemOfertaId: string, quantidade: number }[]): Observable<any> {
@@ -54,8 +54,4 @@ export class ListaCompraService {
   }
 
 
-  atualizarQuantidadeItem(listaId: string, itemId: string, novaQuantidade: number): Observable<any> {
-    const url = `${this.apiPath}/${listaId}/itens/${itemId}`;
-    return this.http.put(url, { quantidade: novaQuantidade });
-  }
 }

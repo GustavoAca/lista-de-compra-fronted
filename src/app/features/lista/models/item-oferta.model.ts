@@ -2,7 +2,7 @@ import { Item } from './item.model';
 import { Vendedor } from './vendedor.model';
 
 export interface ItemOferta {
-  id: number;
+  id: string;
   dataInicioPromocao: string;
   dataFimPromocao: string;
   hasPromocaoAtiva: boolean;

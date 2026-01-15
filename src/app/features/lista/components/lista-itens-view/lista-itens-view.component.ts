@@ -5,15 +5,12 @@ import { ListaCompraService } from '../../services/lista-compra.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { AlertMessageComponent } from '../../../../shared/components/alert-message/alert-message.component';
 import { Page } from '../../../../shared/pipes/page.model';
-import { PageEvent, MatPaginatorModule } from '@angular/material/paginator';
+// MatPaginatorModule and PageEvent removed
 import { Lista } from '../../models/lista.model';
-
 import { MatButtonModule } from '@angular/material/button';
-
-
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { InfiniteScrollComponent } from '../../../../src/app/shared/components/infinite-scroll/infinite-scroll.component'; // Import InfiniteScrollComponent
 
 @Component({
   selector: 'app-lista-itens-view',
@@ -22,11 +19,12 @@ import { Subscription } from 'rxjs';
     CommonModule,
     LoadingSpinnerComponent,
     AlertMessageComponent,
-    MatPaginatorModule,
+    // MatPaginatorModule removed
     CurrencyPipe,
     MatButtonModule,
     MatIconModule,
     RouterLink,
+    InfiniteScrollComponent, // Add InfiniteScrollComponent
   ],
   templateUrl: './lista-itens-view.component.html',
   styleUrl: './lista-itens-view.component.scss',
@@ -36,30 +34,49 @@ export class ListaItensViewComponent implements OnInit {
 
   private listaCompraService = inject(ListaCompraService);
 
-
   page?: Page<ItemListaDTO>;
   loadingItens = false;
   mensagemErro: string = '';
   deveExibirMensagem = false;
 
-  pageSizeOptions = [5, 10, 20];
-  defaultPageSize = 5;
-
-
+  // Paginator options removed
+  currentPage: number = 0; // Current page for infinite scroll
+  isLastPage: boolean = false; // Flag to indicate if the last page has been loaded
+  loadingScroll = false; // Loading state for infinite scroll
 
   ngOnInit(): void {
-    this.loadItens();
+    this.loadItens(true); // Load initial items, resetting pagination
   }
 
-  loadItens(page = 0, size = this.defaultPageSize): void {
+  loadItens(reset: boolean = false): void {
     if (!this.lista) return;
+
+    if (reset) {
+      this.currentPage = 0;
+      this.isLastPage = false;
+      this.page = undefined;
+    }
+
+    if (this.isLastPage || this.loadingItens) { // Use loadingItens for initial/scroll loading
+      return;
+    }
 
     this.loadingItens = true;
     this.deveExibirMensagem = false;
 
-    this.listaCompraService.getItensPorLista(this.lista.id!, page, size).subscribe({
-      next: (response) => {
-        this.page = response;
+    // Fetch 10 items per page for infinite scroll
+    this.listaCompraService.getItensPorLista(this.lista.id!, this.currentPage, 10).subscribe({
+      next: (response: Page<ItemListaDTO>) => {
+        if (!this.page || reset) {
+          this.page = response;
+        } else {
+          this.page.content = [...this.page.content, ...response.content];
+          this.page.last = response.last;
+          this.page.totalElements = response.totalElements;
+          // Update other page properties if needed, like page.number, page.totalPages
+        }
+        this.isLastPage = response.last;
+        this.currentPage++;
         this.loadingItens = false;
       },
       error: (err) => {
@@ -71,9 +88,7 @@ export class ListaItensViewComponent implements OnInit {
     });
   }
 
-  onPageChange(event: PageEvent) {
-    this.loadItens(event.pageIndex, event.pageSize);
-  }
+  // onPageChange removed
 
   onAlertClosed(): void {
     this.deveExibirMensagem = false;

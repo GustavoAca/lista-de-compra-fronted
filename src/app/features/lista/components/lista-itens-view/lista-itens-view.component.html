@@ -11,27 +11,28 @@
   </app-alert-message>
 
   <div *ngIf="!loadingItens && !deveExibirMensagem" class="content-wrapper">
-    <div *ngIf="page && !page.empty; else noItems" class="list-display-container">
-      <div class="actions">
-        <button mat-icon-button [routerLink]="['/lista/editar', lista.id]">
-          <mat-icon>edit</mat-icon>
-        </button>
-      </div>
-      <ul class="item-list">
-        <li *ngFor="let item of page.content">
-          <span class="item-info-wrapper">
-            <span class="item-name">Item: {{ item.itemOferta.item.nome }}</span>
-            <span class="item-quantity">Quantidade: {{ item.quantidade }}</span>
-            <span class="item-seller">Vendedor: {{ item.itemOferta.vendedor.nome }}</span>
-            <span class="item-price">Preço: {{ item.itemOferta.preco | currency:'BRL' }}</span>
-            <span class="item-promotion" [class.on-promotion]="item.itemOferta.hasPromocaoAtiva">
-              Promoção: {{ item.itemOferta.hasPromocaoAtiva ? 'Sim' : 'Não' }}
+    <app-infinite-scroll *ngIf="page && !page.empty; else noItems" [isLoading]="loadingItens" [isLastPage]="isLastPage" (scrolledToEnd)="loadItens()">
+      <div class="list-display-container">
+        <div class="actions">
+          <button mat-icon-button [routerLink]="['/lista/editar', lista.id]">
+            <mat-icon>edit</mat-icon>
+          </button>
+        </div>
+        <ul class="item-list">
+          <li *ngFor="let item of page.content">
+            <span class="item-info-wrapper">
+              <span class="item-name">Item: {{ item.itemOferta.item.nome }}</span>
+              <span class="item-quantity">Quantidade: {{ item.quantidade }}</span>
+              <span class="item-seller">Vendedor: {{ item.itemOferta.vendedor.nome }}</span>
+              <span class="item-price">Preço: {{ item.itemOferta.preco | currency:'BRL' }}</span>
+              <span class="item-promotion" [class.on-promotion]="item.itemOferta.hasPromocaoAtiva">
+                Promoção: {{ item.itemOferta.hasPromocaoAtiva ? 'Sim' : 'Não' }}
+              </span>
             </span>
-          </span>
-        </li>
-      </ul>
-    </div>
-
+          </li>
+        </ul>
+      </div>
+    </app-infinite-scroll>
     <ng-template #noItems>
       <p><i>Esta lista não possui itens.</i></p>
     </ng-template>

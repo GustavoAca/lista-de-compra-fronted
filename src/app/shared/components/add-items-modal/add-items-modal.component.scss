@@ -1,0 +1,87 @@
+/* src/app/src/app/shared/components/add-items-modal/add-items-modal.component.scss */
+.mat-mdc-dialog-title { // Targeting the Angular Material dialog title
+  padding: 20px 24px 0px 24px; // Adjust padding for better alignment
+  margin-bottom: 0px; // Remove default bottom margin if it's causing issues
+}
+
+.mat-mdc-dialog-content { // Targeting the Angular Material dialog content
+  padding: 20px 24px 24px 24px; // Default content padding usually
+}
+
+.modal-content-wrapper {
+  min-width: 400px;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.seller-select-full-width {
+  width: 100%;
+}
+
+.seller-selection-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.error-message {
+  color: red;
+  text-align: center;
+}
+
+.no-items-message {
+  text-align: center;
+  color: gray;
+}
+
+// .item-list-container styles removed
+
+.item-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .item-info {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+
+  .item-name {
+    font-weight: bold;
+  }
+
+  .item-price {
+    color: green;
+  }
+
+  .item-promotion {
+    font-size: 0.8em;
+    color: gray;
+
+    &.on-promotion {
+      color: orange;
+      font-weight: bold;
+    }
+  }
+
+  .quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+}

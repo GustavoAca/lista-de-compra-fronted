@@ -1,4 +1,4 @@
-export interface Vendedor{
-  id: number;
+export interface VendedorDTO {
+  id: string;
   nome: string;
 }

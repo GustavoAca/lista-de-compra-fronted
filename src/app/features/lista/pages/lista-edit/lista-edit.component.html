@@ -29,7 +29,7 @@
       <button
         mat-flat-button
         color="primary"
-        [routerLink]="['/listas', lista.id, 'adicionar-itens']"
+        (click)="openAddItemsModal()"
       >
         Adicionar Mais Itens
       </button>

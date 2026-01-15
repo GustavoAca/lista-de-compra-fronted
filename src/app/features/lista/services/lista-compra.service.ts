@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 import { Lista } from '../models/lista.model';
 import { Page } from '../../../shared/pipes/page.model';
 import { ItemListaDTO } from '../models/item-lista.model';
+import { ItemAlterado } from '../models/item-alterado.model';
+
 
 @Injectable({
   providedIn: 'root',
@@ -43,13 +45,18 @@ export class ListaCompraService {
     return this.http.get<Lista>(url);
   }
 
-  removerDaLista(listaId: string, itensParaRemover: { id: string; quantidade: number }[]): Observable<any> {
-    const url = `${this.apiPath}/${listaId}/remover-itens`;
-    return this.http.delete(url, { body: itensParaRemover });
-  }
-
-  adicionarItensALista(listaId: string, itensParaAdicionar: { itemOfertaId: string, quantidade: number }[]): Observable<any> {
+  adicionarItensALista(
+    listaId: string,
+    itensParaAdicionar: { itemOfertaId: string; quantidade: number }[]
+  ): Observable<any> {
     const url = `${this.apiPath}/${listaId}/adicionar-itens`;
     return this.http.post(url, itensParaAdicionar);
   }
-}
+
+  alterarItens(
+    listaId: string,
+    itensAlterados: ItemAlterado[]
+  ): Observable<any> {
+    const url = `${this.apiPath}/${listaId}/alterar-itens`;
+    return this.http.put(url,  itensAlterados );
+  }}

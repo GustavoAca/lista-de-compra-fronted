@@ -11,9 +11,10 @@ import { AlertMessageComponent } from '../../../../shared/components/alert-messa
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Page } from '../../../../shared/pipes/page.model';
-import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { InfiniteScrollComponent } from '../../../../src/app/shared/components/infinite-scroll/infinite-scroll.component'; // Import InfiniteScrollComponent
+import { ItemAlterado } from '../../models/item-alterado.model';
+import { AddItemsModalComponent } from '../../../../shared/components/add-items-modal/add-items-modal.component';
+import { InfiniteScrollComponent } from '../../../../shared/components/infinite-scroll/infinite-scroll.component';
 
 @Component({
   selector: 'app-lista-edit',
@@ -25,7 +26,6 @@ import { InfiniteScrollComponent } from '../../../../src/app/shared/components/i
     MatButtonModule,
     MatIconModule,
     CurrencyPipe,
-    ConfirmationDialogComponent,
     MatDialogModule,
     RouterLink,
     InfiniteScrollComponent,
@@ -36,8 +36,7 @@ import { InfiniteScrollComponent } from '../../../../src/app/shared/components/i
 export class ListaEditComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private listaCompraService = inject(ListaCompraService);
-  private dialog = inject(MatDialog);
-  private router = inject(Router);
+  private dialog = inject(MatDialog); // Re-add MatDialog injection
 
   listaId!: string;
   lista!: Lista;
@@ -100,8 +99,7 @@ export class ListaEditComponent implements OnInit, OnDestroy {
     this.listaCompraService.getListaById(this.listaId).subscribe({
       next: (listaResponse: Lista) => {
         this.lista = listaResponse;
-        this.loadingInitial = false;
-        this.loadListaItems();
+        this.loadListaItems(true); // Indicate initial load
       },
       error: () => {
         this.loadingInitial = false;
@@ -109,7 +107,7 @@ export class ListaEditComponent implements OnInit, OnDestroy {
     });
   }
 
-  loadListaItems(): void {
+  loadListaItems(isInitialLoad: boolean = false): void {
     if (this.isLastPage || this.loadingScroll) return;
 
     this.loadingScroll = true;
@@ -138,9 +136,15 @@ export class ListaEditComponent implements OnInit, OnDestroy {
           this.currentPage++;
           this.calculateTotalValue();
           this.loadingScroll = false;
+          if (isInitialLoad) {
+            this.loadingInitial = false;
+          }
         },
         error: () => {
           this.loadingScroll = false;
+          if (isInitialLoad) {
+            this.loadingInitial = false;
+          }
         },
       });
   }
@@ -180,45 +184,26 @@ export class ListaEditComponent implements OnInit, OnDestroy {
   }
 
   private _processPendingChanges(): Observable<any> {
-    const itemsToAdd: { itemOfertaId: string; quantidade: number }[] = [];
-    const itemsToRemove: { id: string; quantidade: number }[] = [];
+    const itensAlterados: ItemAlterado[] = [];
 
     this.pendingItemChanges.forEach((newQuantity, itemId) => {
       const originalItem = this.initialItensState.get(itemId);
       const originalQuantity = originalItem ? originalItem.quantidade : 0;
 
-      const quantityDifference = newQuantity - originalQuantity;
-
-      if (quantityDifference > 0) {
-        const item =
-          this.itensPage?.content?.find((i) => i.id === itemId) || originalItem;
-        if (item) {
-          itemsToAdd.push({
-            itemOfertaId: item.itemOferta.id,
-            quantidade: newQuantity, // Send newQuantity (absolute target quantity)
-          });
-        }
-      } else if (quantityDifference < 0) {
-        const item =
-          originalItem || this.itensPage?.content?.find((i) => i.id === itemId);
-        if (item) {
-          itemsToRemove.push({
-            id: item.id,
-            quantidade: newQuantity, // Send newQuantity (absolute target quantity)
-          });
-        }
+      const item =
+        this.itensPage?.content?.find((i) => i.id === itemId) || originalItem;
+      if (item) {
+        itensAlterados.push({
+          id: item.id,
+          quantidade: newQuantity, // Send newQuantity (absolute target quantity)
+        });
       }
     });
 
     const observables: Observable<any>[] = [];
-    if (itemsToAdd.length > 0) {
+    if (itensAlterados.length > 0) {
       observables.push(
-        this.listaCompraService.adicionarItensALista(this.listaId, itemsToAdd)
-      );
-    }
-    if (itemsToRemove.length > 0) {
-      observables.push(
-        this.listaCompraService.removerDaLista(this.listaId, itemsToRemove)
+        this.listaCompraService.alterarItens(this.listaId, itensAlterados)
       );
     }
 
@@ -255,5 +240,33 @@ export class ListaEditComponent implements OnInit, OnDestroy {
 
   trackByItemId(index: number, item: ItemListaDTO): string {
     return item.id;
+  }
+
+  openAddItemsModal(): void {
+    const dialogRef = this.dialog.open(AddItemsModalComponent, {
+      width: '800px', // Adjust width as needed
+      // Optionally pass data to the modal, e.g., this.listaId
+      // data: { listaId: this.listaId }
+    });
+
+    dialogRef.afterClosed().subscribe((result: { itemOfertaId: string, quantidade: number }[]) => {
+      if (result && result.length > 0) {
+        this.loadingInitial = true; // Show loading spinner
+        this.listaCompraService.adicionarItensALista(this.listaId, result).subscribe({
+          next: () => {
+            this.pendingItemChanges.clear(); // Clear pending changes from previous session
+            this.initialItensState.clear();
+            this.reloadItens(); // Reload the list to reflect added items
+            this.deveExibirMensagem = false; // Clear any previous error message
+            this.loadingInitial = false; // Hide loading spinner
+          },
+          error: (err) => {
+            this.loadingInitial = false;
+            this.deveExibirMensagem = true;
+            this.mensagemErro = err.error?.detail || 'Erro ao adicionar itens à lista.';
+          }
+        });
+      }
+    });
   }
 }

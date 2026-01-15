@@ -10,7 +10,7 @@ import { Lista } from '../../models/lista.model';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
-import { InfiniteScrollComponent } from '../../../../src/app/shared/components/infinite-scroll/infinite-scroll.component'; // Import InfiniteScrollComponent
+import { InfiniteScrollComponent } from '../../../../shared/components/infinite-scroll/infinite-scroll.component';
 
 @Component({
   selector: 'app-lista-itens-view',
@@ -94,12 +94,4 @@ export class ListaItensViewComponent implements OnInit {
     this.deveExibirMensagem = false;
     this.mensagemErro = '';
   }
-
-
-
-
-
-
-
-
 }

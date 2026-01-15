@@ -1,17 +1,9 @@
-import {
-  Component,
-  inject,
-  OnInit,
-  AfterViewInit,
-  OnDestroy,
-  ViewChild,
-} from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink, ParamMap } from '@angular/router';
 import { ListaCompraService } from '../../services/lista-compra.service';
 import { Lista } from '../../models/lista.model';
 import { ItemListaDTO } from '../../models/item-lista.model';
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { CdkScrollable, ScrollingModule } from '@angular/cdk/scrolling'; // Import CdkScrollable and ScrollingModule
 import { forkJoin, Observable, Subscription, Subject } from 'rxjs';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
@@ -21,7 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { Page } from '../../../../shared/pipes/page.model';
 import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { NgZone } from '@angular/core';
+import { InfiniteScrollComponent } from '../../../../src/app/shared/components/infinite-scroll/infinite-scroll.component'; // Import InfiniteScrollComponent
 
 @Component({
   selector: 'app-lista-edit',
@@ -36,17 +28,16 @@ import { NgZone } from '@angular/core';
     ConfirmationDialogComponent,
     MatDialogModule,
     RouterLink,
-    ScrollingModule// Add ScrollingModule to imports
+    InfiniteScrollComponent,
   ],
   templateUrl: './lista-edit.component.html',
   styleUrl: './lista-edit.component.scss',
 })
-export class ListaEditComponent implements OnInit, AfterViewInit, OnDestroy {
+export class ListaEditComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private listaCompraService = inject(ListaCompraService);
   private dialog = inject(MatDialog);
   private router = inject(Router);
-  private zone = inject(NgZone);
 
   listaId!: string;
   lista!: Lista;
@@ -60,33 +51,33 @@ export class ListaEditComponent implements OnInit, AfterViewInit, OnDestroy {
   loadingInitial = true;
   loadingScroll = false;
 
-  currentPage: number = 0; // Current page for infinite scroll
-  isLastPage: boolean = false; // Flag to indicate if the last page has been loaded
+  currentPage: number = 0;
+  isLastPage: boolean = false;
 
   private routeSubscription!: Subscription;
-  private quantityChangeSubject = new Subject<void>(); // Debounce subject
-  private debounceSubscription!: Subscription; // Subscription for debounce
-  private scrollSubscription!: Subscription; // Subscription for CdkScrollable
+  private quantityChangeSubject = new Subject<void>();
+  private debounceSubscription!: Subscription;
 
   ngOnInit(): void {
-    this.routeSubscription = this.route.paramMap.subscribe((params) => {
-      this.listaId = params.get('id')!;
-      this.currentPage = 0; // Reset page on list change
-      this.isLastPage = false; // Reset last page flag
-      this.itensPage = null; // Clear existing items
-      this.loadListaDetails();
-    });
+    this.routeSubscription = this.route.paramMap.subscribe(
+      (params: ParamMap) => {
+        this.listaId = params.get('id')!;
+        this.currentPage = 0;
+        this.isLastPage = false;
+        this.itensPage = null;
+        this.loadListaDetails();
+      }
+    );
 
     this.debounceSubscription = this.quantityChangeSubject
       .pipe(
-        debounceTime(3000), // Wait for 3 seconds of inactivity
+        debounceTime(3000),
         tap(() => {
           if (this.pendingItemChanges.size > 0) {
-            // Only show loading if there are changes
             this.deveExibirMensagem = false;
           }
         }),
-        switchMap(() => this._processPendingChanges()) // Process changes when debounce finishes
+        switchMap(() => this._processPendingChanges())
       )
       .subscribe({
         error: (err) => {
@@ -95,37 +86,9 @@ export class ListaEditComponent implements OnInit, AfterViewInit, OnDestroy {
             err.error?.detail || 'Erro ao salvar alterações na lista.';
         },
       });
-  } // End of ngOnInit
-
-  ngAfterViewInit(): void {}
-
- @ViewChild(CdkScrollable)
-set scroll(scroll: CdkScrollable | undefined) {
-  if (!scroll) return;
-
-  this.scrollSubscription?.unsubscribe();
-
-  this.scrollSubscription = scroll
-    .elementScrolled()
-    .pipe(debounceTime(100))
-    .subscribe(() => {
-      const distanceFromBottom = scroll.measureScrollOffset('bottom');
-
-      if (
-        distanceFromBottom <= 200 &&
-        !this.isLastPage &&
-        !this.loadingScroll
-      ) {
-        this.zone.run(() => {
-          this.loadListaItems();
-        });
-      }
-    });
-}
-
+  }
 
   ngOnDestroy(): void {
-    this.scrollSubscription?.unsubscribe();
     this.routeSubscription?.unsubscribe();
     this.debounceSubscription?.unsubscribe();
   }
@@ -135,7 +98,7 @@ set scroll(scroll: CdkScrollable | undefined) {
     this.deveExibirMensagem = false;
 
     this.listaCompraService.getListaById(this.listaId).subscribe({
-      next: (listaResponse) => {
+      next: (listaResponse: Lista) => {
         this.lista = listaResponse;
         this.loadingInitial = false;
         this.loadListaItems();
@@ -154,12 +117,12 @@ set scroll(scroll: CdkScrollable | undefined) {
     this.listaCompraService
       .getItensPorLista(this.listaId, this.currentPage, 10)
       .subscribe({
-        next: (pageResponse) => {
+        next: (pageResponse: Page<ItemListaDTO>) => {
           if (!this.itensPage) {
             this.itensPage = pageResponse;
 
             this.initialItensState.clear();
-            pageResponse.content.forEach((item) => {
+            pageResponse.content.forEach((item: ItemListaDTO) => {
               this.initialItensState.set(item.id, { ...item });
             });
           } else {
@@ -191,7 +154,7 @@ set scroll(scroll: CdkScrollable | undefined) {
     item.quantidade++;
     this.pendingItemChanges.set(item.id, item.quantidade);
     this.calculateTotalValue();
-    this.quantityChangeSubject.next(); // Trigger debounce
+    this.quantityChangeSubject.next();
   }
 
   decrementarQuantidade(item: ItemListaDTO): void {
@@ -201,7 +164,7 @@ set scroll(scroll: CdkScrollable | undefined) {
     }
 
     this.calculateTotalValue();
-    this.quantityChangeSubject.next(); // Trigger debounce
+    this.quantityChangeSubject.next();
   }
 
   private calculateTotalValue(): void {
@@ -210,12 +173,12 @@ set scroll(scroll: CdkScrollable | undefined) {
       return;
     }
     this.totalListaValor = this.itensPage.content.reduce((sum, item) => {
-      const preco = item.itemOferta && item.itemOferta.preco ? item.itemOferta.preco : 0;
-      return sum + (item.quantidade * preco);
+      const preco =
+        item.itemOferta && item.itemOferta.preco ? item.itemOferta.preco : 0;
+      return sum + item.quantidade * preco;
     }, 0);
   }
 
-  // Renamed salvarAlteracoes to _processPendingChanges and made it private
   private _processPendingChanges(): Observable<any> {
     const itemsToAdd: { itemOfertaId: string; quantidade: number }[] = [];
     const itemsToRemove: { id: string; quantidade: number }[] = [];

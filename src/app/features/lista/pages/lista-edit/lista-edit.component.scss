@@ -1,15 +1,7 @@
 .lista-edit-container {
   padding: 20px;
 
-  .scroll-container {
-    max-height: 500px; /* Or a more dynamic value based on viewport, e.g., calc(100vh - 200px) */
-    overflow-y: auto;
-    border: 1px solid var(--border-color, #e0e0e0); // Optional: add a border to visualize the scrollable area
-    border-radius: 8px;
-    padding: 10px;
-    margin-top: 20px; // Add some space above the scrollable list
-    height: calc(100vh - 200px);
-  }
+
 
   .list-header { // New style for the header containing title and total
     display: flex;
@@ -147,11 +139,7 @@
   overflow: hidden;
 }
 
-.scroll-container {
-  flex: 1;
-  overflow-y: auto;
-  padding-right: 8px;
-}
+
 
 /* Apenas visual */
 .item-list {

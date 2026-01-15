@@ -36,11 +36,11 @@
     </div>
 
     <!-- SCROLL ACONTECE AQUI -->
-    <div
+    <app-infinite-scroll
       *ngIf="itensPage && !itensPage.empty; else noItems"
-      class="scroll-container"
-      cdkScrollable
-      #scrollContainer
+      [isLoading]="loadingScroll"
+      [isLastPage]="isLastPage"
+      (scrolledToEnd)="loadListaItems()"
     >
       <ul class="item-list">
         <li
@@ -86,8 +86,7 @@
         *ngIf="loadingScroll"
         size="sm"
       ></app-loading-spinner>
-    </div>
-
+    </app-infinite-scroll>
     <ng-template #noItems>
       <p><i>Esta lista não possui itens. Adicione alguns!</i></p>
     </ng-template>

@@ -30,16 +30,6 @@
           </span>
         </li>
       </ul>
-
-      <mat-paginator
-        [length]="page.totalElements"
-        [pageSize]="page.size"
-        [pageIndex]="page.number"
-        [pageSizeOptions]="pageSizeOptions"
-        (page)="onPageChange($event)"
-        aria-label="Select page of items"
-      >
-      </mat-paginator>
     </div>
 
     <ng-template #noItems>

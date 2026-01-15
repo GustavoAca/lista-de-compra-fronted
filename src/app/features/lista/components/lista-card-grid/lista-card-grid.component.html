@@ -18,17 +18,6 @@
   <p><i>Você ainda não tem nenhuma lista de compras.</i></p>
 </ng-template>
 
-<mat-paginator
-  *ngIf="page"
-  [length]="page.totalElements"
-  [pageSize]="page.size"
-  [pageIndex]="page.number"
-  [pageSizeOptions]="pageSizeOptions"
-  (page)="onPageChange($event)"
-  aria-label="Select page of lists"
->
-</mat-paginator>
-
 <ng-container *ngIf="loading">
   <div class="loading-container">
     <app-loading-spinner

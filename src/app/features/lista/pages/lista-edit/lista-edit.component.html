@@ -1,5 +1,5 @@
 <div class="lista-edit-container">
-  <app-loading-spinner *ngIf="loading" size="md"></app-loading-spinner>
+  <app-loading-spinner *ngIf="loadingInitial" size="md"></app-loading-spinner>
 
   <app-alert-message
     (closed)="onAlertClosed()"
@@ -9,33 +9,62 @@
     [autoClose]="true"
   >
   </app-alert-message>
-      <button mat-icon-button [routerLink]="['/home']">
-        <mat-icon>arrow_back</mat-icon>
-      </button>
-  <div *ngIf="!loading && !deveExibirMensagem && lista">
+
+  <button mat-icon-button [routerLink]="['/home']">
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+
+  <div
+    *ngIf="!loadingInitial && !deveExibirMensagem && lista"
+    class="lista-content"
+  >
     <div class="list-header">
       <h2>{{ lista.nome }}</h2>
-      <span class="total-value-display">{{ totalListaValor | currency:'BRL' }}</span>
+      <span class="total-value-display">
+        {{ totalListaValor | currency : "BRL" }}
+      </span>
     </div>
 
     <div class="actions">
-      <button mat-flat-button color="primary" [routerLink]="['/listas', lista.id, 'adicionar-itens']">
+      <button
+        mat-flat-button
+        color="primary"
+        [routerLink]="['/listas', lista.id, 'adicionar-itens']"
+      >
         Adicionar Mais Itens
       </button>
-      <!-- Add other list-level actions here if needed -->
     </div>
 
-    <div *ngIf="itens.length > 0; else noItems">
+    <!-- SCROLL ACONTECE AQUI -->
+    <div
+      *ngIf="itensPage && !itensPage.empty; else noItems"
+      class="scroll-container"
+      cdkScrollable
+      #scrollContainer
+    >
       <ul class="item-list">
-        <li *ngFor="let item of itens" class="list-item-card">
+        <li
+          *ngFor="let item of itensPage.content; trackBy: trackByItemId"
+          class="list-item-card"
+        >
           <div class="item-main-content">
-            <p class="item-seller">Vendedor: {{ item.itemOferta.vendedor.nome }}</p>
-            <h3 class="item-name">{{ item.itemOferta.item.nome }}</h3>
-            <p class="item-price">Preço: {{ item.itemOferta.preco | currency:'BRL' }}</p>
-            <p class="item-promotion" [class.on-promotion]="item.itemOferta.hasPromocaoAtiva">
-              Promoção: {{ item.itemOferta.hasPromocaoAtiva ? 'Sim' : 'Não' }}
+            <p class="item-seller">
+              Vendedor: {{ item.itemOferta.vendedor.nome }}
+            </p>
+            <h3 class="item-name">
+              {{ item.itemOferta.item.nome }}
+            </h3>
+            <p class="item-price">
+              Preço: {{ item.itemOferta.preco | currency : "BRL" }}
+            </p>
+            <p
+              class="item-promotion"
+              [class.on-promotion]="item.itemOferta.hasPromocaoAtiva"
+            >
+              Promoção: {{ item.itemOferta.hasPromocaoAtiva ? "Sim" : "Não" }}
             </p>
           </div>
+
           <div class="quantity-controls-at-end">
             <button mat-icon-button (click)="decrementarQuantidade(item)">
               <mat-icon>remove</mat-icon>
@@ -47,9 +76,16 @@
           </div>
         </li>
       </ul>
+
       <div class="total-items-summary">
-        Total de Itens na Lista: {{ itens.length }}
+        Total de Itens na Lista: {{ itensPage.totalElements }}
       </div>
+
+      <!-- Loader do infinite scroll -->
+      <app-loading-spinner
+        *ngIf="loadingScroll"
+        size="sm"
+      ></app-loading-spinner>
     </div>
 
     <ng-template #noItems>

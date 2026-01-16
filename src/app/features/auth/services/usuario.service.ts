@@ -1,3 +1,4 @@
+import { SessionTimeoutService } from './../../../core/services/session-timeout.service';
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
@@ -13,6 +14,7 @@ export class UsuarioService {
   private http = inject(HttpClient);
   private router = inject(Router);
   private jwtHelper = inject(JwtHelperService);
+  private sessionTimeoutService = inject(SessionTimeoutService);
   private authApiPath = '/usuarios';
 
   constructor() {}
@@ -21,17 +23,27 @@ export class UsuarioService {
     const url = `${this.authApiPath}/login`;
     return this.http.post<LoginResponse>(url, credentials).pipe(
       tap((response) => {
+        this.sessionTimeoutService.setExpirationTime(response.expiresIn);
         this.decodeAndStoreToken(response.accessToken, response.refreshToken);
+        this.sessionTimeoutService.startTokenExpirationTimer();
       })
     );
   }
 
   refreshToken(refreshToken: string): Observable<LoginResponse> {
     const url = `${this.authApiPath}/atualizar-token`;
-    return this.http.post<LoginResponse>(url, { refreshToken });
+    return this.http.post<LoginResponse>(url, { refreshToken }).pipe(
+      tap((response) => {
+        this.sessionTimeoutService.setExpirationTime(response.expiresIn);
+        this.decodeAndStoreToken(response.accessToken, response.refreshToken);
+        this.sessionTimeoutService.startTokenExpirationTimer();
+      })
+    );
   }
 
   logout(): void {
+    this.sessionTimeoutService.stopTokenExpirationTimer();
+    this.sessionTimeoutService.clearExpirationTime();
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('username');

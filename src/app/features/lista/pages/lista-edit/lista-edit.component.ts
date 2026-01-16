@@ -1,20 +1,23 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink, ParamMap } from '@angular/router';
+import { ActivatedRoute, RouterLink, ParamMap } from '@angular/router';
+import { CommonModule, CurrencyPipe } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+
+import { Subject, Subscription, Observable, forkJoin } from 'rxjs';
+import { debounceTime, switchMap, tap } from 'rxjs/operators';
+
 import { ListaCompraService } from '../../services/lista-compra.service';
 import { Lista } from '../../models/lista.model';
 import { ItemListaDTO } from '../../models/item-lista.model';
-import { CommonModule, CurrencyPipe } from '@angular/common';
-import { forkJoin, Observable, Subscription, Subject } from 'rxjs';
-import { debounceTime, switchMap, tap } from 'rxjs/operators';
+import { ItemAlterado } from '../../models/item-alterado.model';
+
+import { Page } from '../../../../shared/pipes/page.model';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { AlertMessageComponent } from '../../../../shared/components/alert-message/alert-message.component';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { Page } from '../../../../shared/pipes/page.model';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { ItemAlterado } from '../../models/item-alterado.model';
-import { AddItemsModalComponent } from '../../../../shared/components/add-items-modal/add-items-modal.component';
 import { InfiniteScrollComponent } from '../../../../shared/components/infinite-scroll/infinite-scroll.component';
+import { AddItemsModalComponent } from '../../../../shared/components/add-items-modal/add-items-modal.component';
 
 @Component({
   selector: 'app-lista-edit',
@@ -34,57 +37,54 @@ import { InfiniteScrollComponent } from '../../../../shared/components/infinite-
   styleUrl: './lista-edit.component.scss',
 })
 export class ListaEditComponent implements OnInit, OnDestroy {
+
+  // =========================
+  // Injeções
+  // =========================
   private route = inject(ActivatedRoute);
   private listaCompraService = inject(ListaCompraService);
-  private dialog = inject(MatDialog); // Re-add MatDialog injection
+  private dialog = inject(MatDialog);
 
+  // =========================
+  // Estado público (template)
+  // =========================
   listaId!: string;
   lista!: Lista;
   itensPage: Page<ItemListaDTO> | null = null;
-  private initialItensState: Map<string, ItemListaDTO> = new Map();
-  private pendingItemChanges: Map<string, number> = new Map();
 
-  mensagemErro: string = '';
-  deveExibirMensagem = false;
-  totalListaValor: number = 0;
+  totalListaValor = 0;
   loadingInitial = true;
   loadingScroll = false;
 
-  currentPage: number = 0;
-  isLastPage: boolean = false;
+  deveExibirMensagem = false;
+  mensagemErro = '';
 
-  private routeSubscription!: Subscription;
+  // =========================
+  // Paginação
+  // =========================
+  currentPage = 0;
+  isLastPage = false;
+
+  // =========================
+  // Estado interno
+  // =========================
+  private initialItensState = new Map<string, ItemListaDTO>();
+  private pendingItemChanges = new Map<string, number>();
+
   private quantityChangeSubject = new Subject<void>();
+
+  // =========================
+  // Subscriptions
+  // =========================
+  private routeSubscription!: Subscription;
   private debounceSubscription!: Subscription;
 
+  // =========================
+  // Lifecycle
+  // =========================
   ngOnInit(): void {
-    this.routeSubscription = this.route.paramMap.subscribe(
-      (params: ParamMap) => {
-        this.listaId = params.get('id')!;
-        this.currentPage = 0;
-        this.isLastPage = false;
-        this.itensPage = null;
-        this.loadListaDetails();
-      }
-    );
-
-    this.debounceSubscription = this.quantityChangeSubject
-      .pipe(
-        debounceTime(3000),
-        tap(() => {
-          if (this.pendingItemChanges.size > 0) {
-            this.deveExibirMensagem = false;
-          }
-        }),
-        switchMap(() => this._processPendingChanges())
-      )
-      .subscribe({
-        error: (err) => {
-          this.deveExibirMensagem = true;
-          this.mensagemErro =
-            err.error?.detail || 'Erro ao salvar alterações na lista.';
-        },
-      });
+    this.observeRoute();
+    this.observeDebouncedChanges();
   }
 
   ngOnDestroy(): void {
@@ -92,181 +92,254 @@ export class ListaEditComponent implements OnInit, OnDestroy {
     this.debounceSubscription?.unsubscribe();
   }
 
-  loadListaDetails(): void {
-    this.loadingInitial = true;
-    this.deveExibirMensagem = false;
+  // =========================
+  // Rota / Inicialização
+  // =========================
+  private observeRoute(): void {
+    this.routeSubscription = this.route.paramMap.subscribe((params: ParamMap) => {
+      const id = params.get('id');
+      if (!id) return;
 
-    this.listaCompraService.getListaById(this.listaId).subscribe({
-      next: (listaResponse: Lista) => {
-        this.lista = listaResponse;
-        this.loadListaItems(true); // Indicate initial load
-      },
-      error: () => {
-        this.loadingInitial = false;
-      },
+      this.initializeLista(id);
     });
   }
 
-  loadListaItems(isInitialLoad: boolean = false): void {
-    if (this.isLastPage || this.loadingScroll) return;
+  private initializeLista(listaId: string): void {
+    this.listaId = listaId;
+    this.resetState();
+    this.resetPagination();
+    this.loadLista();
+  }
+
+  // =========================
+  // Carregamento da lista
+  // =========================
+  private loadLista(): void {
+    this.loadingInitial = true;
+    this.clearError();
+
+    this.listaCompraService.getListaById(this.listaId).subscribe({
+      next: lista => {
+        this.lista = lista;
+        this.loadListaItems(true);
+      },
+      error: () => {
+        this.loadingInitial = false;
+        this.showError('Erro ao carregar a lista.');
+      }
+    });
+  }
+
+  // =========================
+  // Itens / Paginação
+  // =========================
+  loadListaItems(isInitialLoad = false): void {
+    if (this.loadingScroll || this.isLastPage) return;
 
     this.loadingScroll = true;
 
     this.listaCompraService
       .getItensPorLista(this.listaId, this.currentPage, 10)
       .subscribe({
-        next: (pageResponse: Page<ItemListaDTO>) => {
-          if (!this.itensPage) {
-            this.itensPage = pageResponse;
-
-            this.initialItensState.clear();
-            pageResponse.content.forEach((item: ItemListaDTO) => {
-              this.initialItensState.set(item.id, { ...item });
-            });
-          } else {
-            this.itensPage = {
-              ...this.itensPage,
-              content: [...this.itensPage.content, ...pageResponse.content],
-              last: pageResponse.last,
-              totalElements: pageResponse.totalElements,
-            };
-          }
-
-          this.isLastPage = pageResponse.last;
-          this.currentPage++;
-          this.calculateTotalValue();
-          this.loadingScroll = false;
-          if (isInitialLoad) {
-            this.loadingInitial = false;
-          }
-        },
-        error: () => {
-          this.loadingScroll = false;
-          if (isInitialLoad) {
-            this.loadingInitial = false;
-          }
-        },
+        next: page => this.onItemsLoaded(page, isInitialLoad),
+        error: () => this.onItemsLoadError(isInitialLoad)
       });
   }
 
-  onAlertClosed(): void {
-    this.deveExibirMensagem = false;
-    this.mensagemErro = '';
+  private onItemsLoaded(page: Page<ItemListaDTO>, isInitialLoad: boolean): void {
+    if (!this.itensPage) {
+      this.initializeItems(page);
+    } else {
+      this.appendItems(page);
+    }
+
+    this.isLastPage = page.last;
+    this.currentPage++;
+    this.calculateTotalValue();
+
+    this.loadingScroll = false;
+    if (isInitialLoad) this.loadingInitial = false;
   }
 
+  private onItemsLoadError(isInitialLoad: boolean): void {
+    this.loadingScroll = false;
+    if (isInitialLoad) this.loadingInitial = false;
+    this.showError('Erro ao carregar itens da lista.');
+  }
+
+  private initializeItems(page: Page<ItemListaDTO>): void {
+    this.itensPage = page;
+    this.initialItensState.clear();
+
+    page.content.forEach(item =>
+      this.initialItensState.set(item.id, { ...item })
+    );
+  }
+
+  private appendItems(page: Page<ItemListaDTO>): void {
+    this.itensPage = {
+      ...this.itensPage!,
+      content: [...this.itensPage!.content, ...page.content],
+      last: page.last,
+      totalElements: page.totalElements
+    };
+  }
+
+  // =========================
+  // Quantidade / Alterações
+  // =========================
   incrementarQuantidade(item: ItemListaDTO): void {
     item.quantidade++;
+    this.registerItemChange(item);
+  }
+
+  decrementarQuantidade(item: ItemListaDTO): void {
+    if (item.quantidade === 0) return;
+    item.quantidade--;
+    this.registerItemChange(item);
+  }
+
+  private registerItemChange(item: ItemListaDTO): void {
     this.pendingItemChanges.set(item.id, item.quantidade);
     this.calculateTotalValue();
     this.quantityChangeSubject.next();
   }
 
-  decrementarQuantidade(item: ItemListaDTO): void {
-    if (item.quantidade > 0) {
-      item.quantidade--;
-      this.pendingItemChanges.set(item.id, item.quantidade);
-    }
-
-    this.calculateTotalValue();
-    this.quantityChangeSubject.next();
+  // =========================
+  // Persistência (debounce)
+  // =========================
+  private observeDebouncedChanges(): void {
+    this.debounceSubscription = this.quantityChangeSubject
+      .pipe(
+        debounceTime(3000),
+        switchMap(() => this.persistPendingChanges())
+      )
+      .subscribe({
+        error: err => this.showError(
+          err.error?.detail || 'Erro ao salvar alterações.'
+        )
+      });
   }
 
+  private persistPendingChanges(): Observable<any> {
+    if (this.pendingItemChanges.size === 0) {
+      return new Observable(observer => observer.complete());
+    }
+
+    const itensAlterados = this.buildItensAlterados();
+
+    return this.listaCompraService
+      .alterarItens(this.listaId, itensAlterados)
+      .pipe(
+        tap(() => this.onPersistSuccess())
+      );
+  }
+
+  private buildItensAlterados(): ItemAlterado[] {
+    const itens: ItemAlterado[] = [];
+
+    this.pendingItemChanges.forEach((quantidade, id) => {
+      itens.push({ id, quantidade });
+    });
+
+    return itens;
+  }
+
+  private onPersistSuccess(): void {
+    this.pendingItemChanges.clear();
+    this.initialItensState.clear();
+    this.reloadItens();
+  }
+
+  // =========================
+  // Modal de adicionar itens
+  // =========================
+  openAddItemsModal(): void {
+    const vendedorId = this.resolveVendedorId();
+
+    const dialogRef = this.dialog.open(AddItemsModalComponent, {
+      width: '800px',
+      data: { vendedorId }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (!result || result.length === 0) return;
+      this.addItemsToLista(result);
+    });
+  }
+
+  private addItemsToLista(itens: { itemOfertaId: string; quantidade: number }[]): void {
+    this.loadingInitial = true;
+
+    this.listaCompraService.adicionarItensALista(this.listaId, itens).subscribe({
+      next: () => {
+        this.pendingItemChanges.clear();
+        this.initialItensState.clear();
+        this.reloadItens();
+        this.loadingInitial = false;
+      },
+      error: err => {
+        this.loadingInitial = false;
+        this.showError(err.error?.detail || 'Erro ao adicionar itens.');
+      }
+    });
+  }
+
+  private resolveVendedorId(): string | null {
+    return this.itensPage?.content?.[0]?.itemOferta?.vendedor?.id ?? null;
+  }
+
+  // =========================
+  // Utilitários
+  // =========================
   private calculateTotalValue(): void {
-    if (!this.itensPage || !this.itensPage.content) {
+    if (!this.itensPage) {
       this.totalListaValor = 0;
       return;
     }
+
     this.totalListaValor = this.itensPage.content.reduce((sum, item) => {
-      const preco =
-        item.itemOferta && item.itemOferta.preco ? item.itemOferta.preco : 0;
+      const preco = item.itemOferta?.preco ?? 0;
       return sum + item.quantidade * preco;
     }, 0);
   }
 
-  private _processPendingChanges(): Observable<any> {
-    const itensAlterados: ItemAlterado[] = [];
-
-    this.pendingItemChanges.forEach((newQuantity, itemId) => {
-      const originalItem = this.initialItensState.get(itemId);
-      const originalQuantity = originalItem ? originalItem.quantidade : 0;
-
-      const item =
-        this.itensPage?.content?.find((i) => i.id === itemId) || originalItem;
-      if (item) {
-        itensAlterados.push({
-          id: item.id,
-          quantidade: newQuantity, // Send newQuantity (absolute target quantity)
-        });
-      }
-    });
-
-    const observables: Observable<any>[] = [];
-    if (itensAlterados.length > 0) {
-      observables.push(
-        this.listaCompraService.alterarItens(this.listaId, itensAlterados)
-      );
-    }
-
-    if (observables.length > 0) {
-      return forkJoin(observables).pipe(
-        tap({
-          next: () => {
-            this.pendingItemChanges.clear();
-            this.initialItensState.clear();
-            this.reloadItens(); // Reload all items to get fresh state from server
-          },
-          error: (err) => {
-            this.deveExibirMensagem = true;
-            this.mensagemErro =
-              err.error?.detail || 'Erro ao salvar alterações na lista.';
-          },
-        })
-      );
-    } else {
-      return new Observable((observer) => {
-        // Return an observable even if no changes
-        observer.next(undefined);
-        observer.complete();
-      });
-    }
-  }
-
   private reloadItens(): void {
-    this.currentPage = 0;
-    this.isLastPage = false;
+    this.resetPagination();
     this.itensPage = null;
     this.loadListaItems();
   }
 
-  trackByItemId(index: number, item: ItemListaDTO): string {
+  private resetPagination(): void {
+    this.currentPage = 0;
+    this.isLastPage = false;
+  }
+
+  private resetState(): void {
+    this.itensPage = null;
+    this.pendingItemChanges.clear();
+    this.initialItensState.clear();
+    this.clearError();
+  }
+
+  trackByItemId(_: number, item: ItemListaDTO): string {
     return item.id;
   }
 
-  openAddItemsModal(): void {
-    const dialogRef = this.dialog.open(AddItemsModalComponent, {
-      width: '800px', // Adjust width as needed
-      // Optionally pass data to the modal, e.g., this.listaId
-      // data: { listaId: this.listaId }
-    });
+  // =========================
+  // Mensagens
+  // =========================
+  onAlertClosed(): void {
+    this.clearError();
+  }
 
-    dialogRef.afterClosed().subscribe((result: { itemOfertaId: string, quantidade: number }[]) => {
-      if (result && result.length > 0) {
-        this.loadingInitial = true; // Show loading spinner
-        this.listaCompraService.adicionarItensALista(this.listaId, result).subscribe({
-          next: () => {
-            this.pendingItemChanges.clear(); // Clear pending changes from previous session
-            this.initialItensState.clear();
-            this.reloadItens(); // Reload the list to reflect added items
-            this.deveExibirMensagem = false; // Clear any previous error message
-            this.loadingInitial = false; // Hide loading spinner
-          },
-          error: (err) => {
-            this.loadingInitial = false;
-            this.deveExibirMensagem = true;
-            this.mensagemErro = err.error?.detail || 'Erro ao adicionar itens à lista.';
-          }
-        });
-      }
-    });
+  private showError(message: string): void {
+    this.deveExibirMensagem = true;
+    this.mensagemErro = message;
+  }
+
+  private clearError(): void {
+    this.deveExibirMensagem = false;
+    this.mensagemErro = '';
   }
 }

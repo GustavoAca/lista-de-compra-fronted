@@ -1,0 +1,87 @@
+name: Release Frontend
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 2️⃣ Setup Node
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 3️⃣ Install deps
+      - name: Install dependencies
+        run: npm ci
+
+      # 4️⃣ Build Angular
+      - name: Build Angular
+        run: npm run build -- --configuration=production
+
+      # 5️⃣ Docker login
+      - name: Docker login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 6️⃣ Build Docker image (temporary tag)
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/lista-compra-frontend:${{ github.sha }} \
+            .
+
+      # 7️⃣ Push Docker image (temporary)
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/lista-compra-frontend:${{ github.sha }}
+
+      # 8️⃣ Bump version (ONLY AFTER DOCKER PUSH)
+      - name: Bump version
+        run: |
+          npm version patch --no-git-tag-version
+          VERSION=$(node -p "require('./package.json').version")
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      # 9️⃣ Retag image with version + latest
+      - name: Retag Docker image
+        run: |
+          docker tag \
+            ${{ secrets.DOCKERHUB_USERNAME }}/lista-compra-frontend:${{ github.sha }} \
+            ${{ secrets.DOCKERHUB_USERNAME }}/lista-compra-frontend:$VERSION
+
+          docker tag \
+            ${{ secrets.DOCKERHUB_USERNAME }}/lista-compra-frontend:${{ github.sha }} \
+            ${{ secrets.DOCKERHUB_USERNAME }}/lista-compra-frontend:latest
+
+      # 🔟 Push final tags
+      - name: Push versioned tags
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/lista-compra-frontend:$VERSION
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/lista-compra-frontend:latest
+
+      # 1️⃣1️⃣ Commit + tag
+      - name: Commit and tag version
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add package.json package-lock.json
+          git commit -m "chore(release): v$VERSION"
+          git tag v$VERSION
+          git push origin main --tags

@@ -36,7 +36,7 @@ export class SessionTimeoutService {
   }
 
   setExpirationTime(expiresIn: number): void {
-    const expirationTime = Date.now() + expiresIn * 1000;
+    const expirationTime = Date.now() + expiresIn * 60 * 1000;
     localStorage.setItem(EXPIRATION_KEY, JSON.stringify(expirationTime));
   }
 

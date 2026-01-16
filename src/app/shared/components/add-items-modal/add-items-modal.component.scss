@@ -1,10 +1,10 @@
 /* src/app/src/app/shared/components/add-items-modal/add-items-modal.component.scss */
-.mat-mdc-dialog-title { // Targeting the Angular Material dialog title
-  padding: 20px 24px 0px 24px; // Adjust padding for better alignment
+h2 { // Targeting the Angular Material dialog title
+  padding: 20px 25px 20px 24px; // Adjust padding for better alignment
   margin-bottom: 0px; // Remove default bottom margin if it's causing issues
 }
 
-.mat-mdc-dialog-content { // Targeting the Angular Material dialog content
+mat-mdc-dialog-content { // Targeting the Angular Material dialog content
   padding: 20px 24px 24px 24px; // Default content padding usually
 }
 

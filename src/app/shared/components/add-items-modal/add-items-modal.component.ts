@@ -117,6 +117,7 @@ export class AddItemsModalComponent implements OnInit, OnDestroy {
       }
     });
   }
+
   loadItemOffers(reset: boolean = false): void {
     const sellerId = this.selectedSellerControl.value?.id;
     if (!sellerId) return;

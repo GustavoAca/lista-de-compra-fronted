@@ -1,0 +1,26 @@
+# Node
+node_modules
+npm-debug.log
+.npm
+
+# Build artifacts
+dist
+.angular
+
+# IDE and OS files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore

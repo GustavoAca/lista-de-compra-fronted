@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, Injector } from '@angular/core';
 import { UsuarioService } from '../../features/auth/services/usuario.service';
 
 const EXPIRATION_KEY = 'token_expires_at';
@@ -7,7 +7,7 @@ const EXPIRATION_KEY = 'token_expires_at';
   providedIn: 'root',
 })
 export class SessionTimeoutService {
-  private usuarioService = inject(UsuarioService);
+  private injector = inject(Injector);
   private timer: any;
 
   constructor() {}
@@ -19,10 +19,12 @@ export class SessionTimeoutService {
       const timeout = expirationTime - Date.now();
       if (timeout > 0) {
         this.timer = setTimeout(() => {
-          this.usuarioService.logout();
+          const usuarioService = this.injector.get(UsuarioService);
+          usuarioService.logout();
         }, timeout);
       } else {
-        this.usuarioService.logout();
+        const usuarioService = this.injector.get(UsuarioService);
+        usuarioService.logout();
       }
     }
   }

@@ -35,9 +35,18 @@
     padding-bottom: 8px;
   }
 
-  .mat-mdc-card-content {
+  .card-content-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding-top: 0;
     padding-bottom: 8px;
+  }
+
+  .item-details {
+    p {
+      margin: 0; // Remove default margins from paragraphs
+    }
   }
 
   .item-price {
@@ -46,14 +55,9 @@
 
   .item-promotion {
     &.on-promotion {
-      color: #4caf50; // Green color for promotion
+      color: #4caf50;
       font-weight: bold;
     }
-  }
-
-  .mat-mdc-card-actions {
-    padding-top: 0;
-    padding-bottom: 8px;
   }
 
   .quantity-controls {
@@ -65,10 +69,6 @@
       font-size: 1.2em;
       min-width: 20px;
       text-align: center;
-    }
-
-    .flex-spacer {
-      flex: 1 1 auto;
     }
   }
 }

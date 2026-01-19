@@ -1,38 +1,40 @@
-<mat-accordion *ngIf="page && !page!.empty; else noLists">
-  <mat-expansion-panel *ngFor="let lista of page?.content ?? []">
-    <mat-expansion-panel-header>
-      <mat-panel-title>
-        <strong>{{ lista.nome }}</strong>
-      </mat-panel-title>
-      <mat-panel-description>
-        {{ lista.totalItens }} itens - {{ lista.valorTotal | currency : "BRL" }}
-      </mat-panel-description>
-    </mat-expansion-panel-header>
-    <ng-template matExpansionPanelContent>
-      <app-lista-itens-view [lista]="lista"></app-lista-itens-view>
-    </ng-template>
-  </mat-expansion-panel>
-</mat-accordion>
-
-<ng-template #noLists>
-  <p><i>Você ainda não tem nenhuma lista de compras.</i></p>
-</ng-template>
-
-<ng-container *ngIf="loading">
-  <div class="loading-container">
-    <app-loading-spinner
-      *ngIf="loading"
-      size="md"
-      color="warn"
-    ></app-loading-spinner>
+<div class="grid-container">
+  <div *ngIf="loading && !page" class="loading-container">
+    <app-loading-spinner size="lg"></app-loading-spinner>
   </div>
-</ng-container>
 
-<app-alert-message
-  (closed)="onAlertClosed()"
-  *ngIf="deveExibirMensagem"
-  [message]="mensagemErro"
-  type="error"
-  [autoClose]="true"
->
-</app-alert-message>
+  <app-alert-message
+    (closed)="onAlertClosed()"
+    *ngIf="deveExibirMensagem"
+    [message]="mensagemErro"
+    type="error"
+    [autoClose]="true"
+  >
+  </app-alert-message>
+
+  <div *ngIf="page && !page!.empty; else noLists">
+    <mat-accordion>
+      <mat-expansion-panel *ngFor="let lista of page?.content ?? []">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <strong>{{ lista.nome }}</strong>
+          </mat-panel-title>
+          <mat-panel-description>
+            <span>{{ lista.totalItens }} itens</span>
+            <span class="total-value">{{ lista.valorTotal | currency : "BRL" }}</span>
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <app-lista-itens-view [lista]="lista"></app-lista-itens-view>
+        </ng-template>
+      </mat-expansion-panel>
+    </mat-accordion>
+
+  </div>
+
+  <ng-template #noLists>
+    <div *ngIf="!loading" class="no-lists-message">
+      <p><i>Você ainda não tem nenhuma lista de compras.</i></p>
+    </div>
+  </ng-template>
+</div>

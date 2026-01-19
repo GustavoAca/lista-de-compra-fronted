@@ -25,16 +25,6 @@
       </span>
     </div>
 
-    <div class="actions">
-      <button
-        mat-flat-button
-        color="primary"
-        (click)="openAddItemsModal()"
-      >
-        Adicionar Mais Itens
-      </button>
-    </div>
-
     <!-- SCROLL ACONTECE AQUI -->
     <app-infinite-scroll
       *ngIf="itensPage && !itensPage.empty; else noItems"
@@ -42,40 +32,36 @@
       [isLastPage]="isLastPage"
       (scrolledToEnd)="loadListaItems()"
     >
-      <ul class="item-list">
-        <li
-          *ngFor="let item of itensPage.content; trackBy: trackByItemId"
-          class="list-item-card"
-        >
-          <div class="item-main-content">
-            <p class="item-seller">
-              Vendedor: {{ item.itemOferta.vendedor.nome }}
-            </p>
-            <h3 class="item-name">
-              {{ item.itemOferta.item.nome }}
-            </h3>
-            <p class="item-price">
-              Preço: {{ item.itemOferta.preco | currency : "BRL" }}
-            </p>
-            <p
-              class="item-promotion"
-              [class.on-promotion]="item.itemOferta.hasPromocaoAtiva"
-            >
-              Promoção: {{ item.itemOferta.hasPromocaoAtiva ? "Sim" : "Não" }}
-            </p>
-          </div>
-
-          <div class="quantity-controls-at-end">
-            <button mat-icon-button (click)="decrementarQuantidade(item)">
-              <mat-icon>remove</mat-icon>
-            </button>
-            <span>{{ item.quantidade }}</span>
-            <button mat-icon-button (click)="incrementarQuantidade(item)">
-              <mat-icon>add</mat-icon>
-            </button>
-          </div>
-        </li>
-      </ul>
+      <div class="item-list-cards">
+        <mat-card *ngFor="let item of itensPage.content; trackBy: trackByItemId" class="item-card">
+          <mat-card-header>
+            <mat-card-title>{{ item.itemOferta.item.nome }}</mat-card-title>
+            <mat-card-subtitle>Vendedor: {{ item.itemOferta.vendedor.nome }}</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content class="card-content-flex">
+            <div class="item-details">
+              <p class="item-price">
+                Preço: {{ item.itemOferta.preco | currency : "BRL" }}
+              </p>
+              <p
+                class="item-promotion"
+                [class.on-promotion]="item.itemOferta.hasPromocaoAtiva"
+              >
+                Promoção: {{ item.itemOferta.hasPromocaoAtiva ? "Sim" : "Não" }}
+              </p>
+            </div>
+            <div class="quantity-controls">
+              <button mat-icon-button (click)="decrementarQuantidade(item)">
+                <mat-icon>remove</mat-icon>
+              </button>
+              <span>{{ item.quantidade }}</span>
+              <button mat-icon-button (click)="incrementarQuantidade(item)">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
 
       <div class="total-items-summary">
         Total de Itens na Lista: {{ itensPage.totalElements }}
@@ -91,4 +77,8 @@
       <p><i>Esta lista não possui itens. Adicione alguns!</i></p>
     </ng-template>
   </div>
+
+  <button mat-fab color="primary" class="fab-add-item" (click)="openAddItemsModal()">
+    <mat-icon>add</mat-icon>
+  </button>
 </div>

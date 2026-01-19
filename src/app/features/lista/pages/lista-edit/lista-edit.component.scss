@@ -1,149 +1,87 @@
 .lista-edit-container {
   padding: 20px;
+}
 
-
-
-  .list-header { // New style for the header containing title and total
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-
-    h2 {
-      margin: 0; // Remove default margin from h2 inside flex container
-      color: var(--primary-color);
-    }
-
-    .total-value-display {
-      border: 1px solid var(--border-color, #e0e0e0);
-      border-radius: 5px;
-      padding: 8px 12px;
-      font-weight: 600;
-      color: var(--accent-color, #28a745); // Using accent color for total
-      background-color: var(--card-background-color, #f9f9f9);
-      font-size: 1.1em;
-      min-width: 120px; // Ensure a minimum width for consistent look
-      text-align: center;
-    }
-  }
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 
   h2 {
-    margin-bottom: 20px;
+    margin: 0;
     color: var(--primary-color);
   }
 
-  .actions {
-    margin-bottom: 20px;
+  .total-value-display {
+    font-size: 1.5em;
+    font-weight: bold;
+    white-space: nowrap;
+  }
+}
+
+.fab-add-item {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100;
+}
+
+.item-list-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 80px;
+}
+
+.item-card {
+  .mat-mdc-card-header {
+    padding-bottom: 8px;
+  }
+
+  .card-content-flex {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0;
+    padding-bottom: 8px;
   }
 
-  .item-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .list-item-card {
-    background-color: var(--card-background-color, #ffffff);
-    border: 1px solid var(--border-color, #e0e0e0);
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 15px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-
-    display: flex; /* Added flex to align main content and quantity */
-    justify-content: space-between; /* Space between main content and quantity */
-    align-items: center; /* Vertically center items */
-
-    .item-main-content { /* New div for main details */
-      flex-grow: 1; /* Allows it to take up available space */
-    }
-
-    h3.item-name { /* Specificity for the item name heading */
-      margin-top: 0;
-      margin-bottom: 5px;
-      font-size: 1.3em;
-      color: var(--text-color-dark, #333);
-    }
-
-    p { /* General paragraph styling, will apply to seller, price, promotion */
-      margin: 0 0 3px 0;
-      font-size: 0.95em;
-      color: var(--text-color-medium, #555);
-    }
-
-    p.item-seller { /* Specific styling for seller */
-      font-weight: 500;
-      margin-bottom: 8px;
-    }
-
-    p.item-price {
-      font-weight: 600;
-      color: var(--accent-color, #28a745);
-      font-size: 1.1em;
-      margin-top: 5px;
-    }
-
-    p.item-promotion {
-      font-style: italic;
-      color: var(--text-color-light, #777);
-
-      &.on-promotion {
-        color: var(--promotion-color, #ff5722);
-        font-weight: 500;
-      }
-    }
-
-    .quantity-controls-at-end { /* New class for quantity controls at the end */
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      margin-left: 20px; /* Add some space from the main content */
-
-      span {
-        font-weight: 500;
-        font-size: 1.1em;
-        min-width: 25px;
-        text-align: center;
-      }
+  .item-details {
+    p {
+      margin: 0; // Remove default margins from paragraphs
     }
   }
 
-  .total-items-summary {
-    text-align: right; /* Align to the right */
-    padding: 10px 0;
-    margin-top: 20px;
-    font-weight: 600;
-    color: var(--text-color-dark, #333);
-    border-top: 1px solid var(--border-color, #e0e0e0);
+  .item-price {
+    font-weight: 500;
   }
 
-  .noItems {
-    text-align: center;
-    color: var(--text-color-light, #777);
-    margin-top: 30px;
+  .item-promotion {
+    &.on-promotion {
+      color: #4caf50;
+      font-weight: bold;
+    }
+  }
+
+  .quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    span {
+      font-size: 1.2em;
+      min-width: 20px;
+      text-align: center;
+    }
   }
 }
 
-.lista-edit-container {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.lista-content {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-}
-
-
-
-/* Apenas visual */
-.item-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.total-items-summary {
+  text-align: right;
+  padding: 10px 0;
+  margin-top: 20px;
+  font-weight: 600;
+  color: var(--text-color-dark, #333);
+  border-top: 1px solid var(--border-color, #e0e0e0);
 }

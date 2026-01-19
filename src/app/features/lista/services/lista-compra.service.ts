@@ -6,6 +6,7 @@ import { Page } from '../../../shared/pipes/page.model';
 import { ItemListaDTO } from '../models/item-lista.model';
 import { ItemAlterado } from '../models/item-alterado.model';
 import { ListaCompraDTO } from '../models/lista-compra-dto.model';
+import { ListaCompraCriacao } from '../models/item-oferta-reduzido.model';
 
 
 @Injectable({
@@ -62,7 +63,8 @@ export class ListaCompraService {
     return this.http.put(url,  itensAlterados );
   }
 
-  criarLista(listaCompraDTO: ListaCompraDTO): Observable<any> {
+  criarLista(listaCompraDTO: ListaCompraCriacao): Observable<any> {
+    console.table(listaCompraDTO);
     return this.http.post(this.apiPath, listaCompraDTO);
   }
 }

@@ -1,0 +1,48 @@
+.item-list-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.item-card {
+  .mat-mdc-card-header {
+    padding-bottom: 8px;
+  }
+
+  .card-content-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0;
+    padding-bottom: 8px;
+  }
+
+  .item-details {
+    p {
+      margin: 0;
+    }
+  }
+
+  .item-price {
+    font-weight: 500;
+  }
+
+  .item-promotion {
+    &.on-promotion {
+      color: #4caf50;
+      font-weight: bold;
+    }
+  }
+
+  .quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    span {
+      font-size: 1.2em;
+      min-width: 20px;
+      text-align: center;
+    }
+  }
+}

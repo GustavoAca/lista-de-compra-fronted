@@ -1,3 +1,4 @@
+import { ItemListaDTO } from '../../../features/lista/models/item-lista.model';
 import {
   Component,
   OnInit,
@@ -63,7 +64,7 @@ export class AddItemsModalComponent implements OnInit, OnDestroy {
   private dialogRef = inject(
     MatDialogRef<
       AddItemsModalComponent,
-      { itemOfertaId: string; quantidade: number }[]
+      ItemListaDTO[] // Changed return type
     >
   );
   private vendedorService = inject(VendedorService);
@@ -87,7 +88,7 @@ export class AddItemsModalComponent implements OnInit, OnDestroy {
   // ===== Seleção =====
   selectedItems = new Map<
     string,
-    { itemOfertaId: string; quantidade: number }
+    ItemListaDTO // Changed map value type
   >();
 
   errorMessage: string | null = null;
@@ -239,7 +240,7 @@ export class AddItemsModalComponent implements OnInit, OnDestroy {
     }
 
     this.selectedItems.set(itemOferta.id, {
-      itemOfertaId: itemOferta.id,
+      itemOferta: itemOferta, // Store the full object
       quantidade: quantity,
     });
   }

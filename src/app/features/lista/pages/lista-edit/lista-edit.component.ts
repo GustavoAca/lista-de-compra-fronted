@@ -18,6 +18,7 @@ import { Page } from '../../../../shared/pipes/page.model';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { AlertMessageComponent } from '../../../../shared/components/alert-message/alert-message.component';
 import { InfiniteScrollComponent } from '../../../../shared/components/infinite-scroll/infinite-scroll.component';
+import { ItemListDisplayComponent } from '../../components/item-list-display/item-list-display.component';
 import { AddItemsModalComponent } from '../../../../shared/components/add-items-modal/add-items-modal.component';
 
 @Component({
@@ -33,7 +34,8 @@ import { AddItemsModalComponent } from '../../../../shared/components/add-items-
     MatDialogModule,
     RouterLink,
     InfiniteScrollComponent,
-    MatCardModule, // Add MatCardModule
+    MatCardModule,
+    ItemListDisplayComponent, // Add the new component
   ],
   templateUrl: './lista-edit.component.html',
   styleUrl: './lista-edit.component.scss',

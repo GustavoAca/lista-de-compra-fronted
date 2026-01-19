@@ -22,8 +22,10 @@ import { ListaCompraService } from '../../services/lista-compra.service';
 import { ItemOfertaService } from '../../services/item-oferta.service';
 import { ListaCompraDTO } from '../../models/lista-compra-dto.model';
 import { ItemOferta } from '../../models/item-oferta.model';
+import { ItemListDisplayComponent } from '../../components/item-list-display/item-list-display.component';
 import { VendedorDTO } from '../../models/vendedor.model';
 import { Subscription } from 'rxjs';
+import { ListaCompraCriacao } from '../../models/item-oferta-reduzido.model';
 
 @Component({
   selector: 'app-lista-create',
@@ -40,7 +42,8 @@ import { Subscription } from 'rxjs';
     AlertMessageComponent,
     CurrencyPipe,
     RouterLink,
-    MatCardModule, // Add MatCardModule
+    MatCardModule,
+    ItemListDisplayComponent, // Add the new component here
   ],
   templateUrl: './lista-create.component.html',
   styleUrl: './lista-create.component.scss',
@@ -74,13 +77,13 @@ export class ListaCreateComponent implements OnInit, OnDestroy {
   get totalListaValor(): number {
     return this.itensLista.reduce(
       (acc, item) => acc + item.quantidade * item.itemOferta.preco,
-      0
+      0,
     );
   }
 
   ngOnInit(): void {
     this.listForm = this.fb.group({
-      nome: ['', Validators.required],
+      nome: ['', [Validators.required, Validators.minLength(3)]],
     });
   }
 
@@ -89,66 +92,54 @@ export class ListaCreateComponent implements OnInit, OnDestroy {
     this.createListSubscription?.unsubscribe();
   }
 
-  trackByItemId(index: number, item: ItemListaDTO): string {
-    return item.itemOferta.id;
-  }
+  // trackByItemId is removed from here
 
   // ============================================================
   // Gerenciamento de Itens
   // ============================================================
 
+  adicionarItem(oferta: ItemOferta) {
+    this.itensLista.push({
+      tempId: crypto.randomUUID(), // ou Date.now() + Math.random()
+      quantidade: 1,
+      itemOferta: oferta,
+    });
+  }
+
   openAddItemsModal(): void {
+    this.loading = true; // Set loading to true when modal opens
     const dialogRef = this.dialog.open(AddItemsModalComponent, {
       width: '800px',
       data: { vendedorId: null }, // Pass null to allow seller selection
     });
 
-    dialogRef
-      .afterClosed()
-      .subscribe(
-        (result: { itemOfertaId: string; quantidade: number }[]) => {
-          if (result && result.length > 0) {
-            this.loading = true;
-            const itemOfertaIds = result.map((item) => item.itemOfertaId);
-            this.itemOfertaService
-              .getItensOfertaByIds(itemOfertaIds)
-              .subscribe({
-                next: (itemOfertas: ItemOferta[]) => {
-                  result.forEach((selectedItem) => {
-                    const foundOferta = itemOfertas.find(
-                      (oferta) => oferta.id === selectedItem.itemOfertaId
-                    );
-                    if (foundOferta) {
-                      const existingItemIndex = this.itensLista.findIndex(
-                        (item) => item.itemOferta.id === foundOferta.id
-                      );
+    dialogRef.afterClosed().subscribe((result: ItemListaDTO[] | undefined) => {
+      if (result?.length) {
+        result.forEach((newItem) => {
+          const normalized: ItemListaDTO = {
+            tempId: crypto.randomUUID(),
+            quantidade: newItem.quantidade ?? 1,
+            itemOferta: {
+              ...newItem.itemOferta,
+              item: newItem.itemOferta.item, // GARANTIR que existe
+            },
+          };
 
-                      if (existingItemIndex > -1) {
-                        // Update existing item quantity
-                        this.itensLista[existingItemIndex].quantidade +=
-                          selectedItem.quantidade;
-                      } else {
-                        // Add new item
-                        this.itensLista.push({
-                          itemOferta: foundOferta,
-                          quantidade: selectedItem.quantidade,
-                        });
-                      }
-                    }
-                  });
-                  this.loading = false;
-                },
-                error: (err) => {
-                  this.loading = false;
-                  this.deveExibirMensagem = true;
-                  this.mensagemErro =
-                    err.error?.detail ||
-                    'Erro ao buscar detalhes dos itens de oferta.';
-                },
-              });
+          const index = this.itensLista.findIndex(
+            (i) => i.itemOferta.id === normalized.itemOferta.id,
+          );
+
+          if (index > -1) {
+            this.itensLista[index].quantidade += normalized.quantidade;
+          } else {
+            this.itensLista.push(normalized);
           }
-        }
-      );
+        });
+
+        this.itensLista = [...this.itensLista];
+      }
+      this.loading = false;
+    });
   }
 
   incrementarQuantidade(item: ItemListaDTO): void {
@@ -164,7 +155,7 @@ export class ListaCreateComponent implements OnInit, OnDestroy {
 
   removerItem(itemToRemove: ItemListaDTO): void {
     this.itensLista = this.itensLista.filter(
-      (item) => item.itemOferta.id !== itemToRemove.itemOferta.id
+      (item) => item.tempId !== itemToRemove.tempId,
     );
   }
 
@@ -187,17 +178,15 @@ export class ListaCreateComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.deveExibirMensagem = false;
 
-    const listaCompraDTO: ListaCompraDTO = {
+    const listaCompraDTO: ListaCompraCriacao = {
       id: undefined, // ID will be generated by the backend
       usuarioId: undefined, // Backend will likely get this from auth context
       nome: this.listForm.get('nome')?.value,
       valorTotal: this.totalListaValor,
       totalItens: this.totalItens,
       itensLista: this.itensLista.map((item) => ({
-        itemOferta: item.itemOferta, // Pass the entire ItemOferta object
+        itemOfertaId: item.itemOferta.id,
         quantidade: item.quantidade,
-        id: item.id, // Include optional id
-        listaCompraId: item.listaCompraId, // Include optional listaCompraId
       })),
     };
 
@@ -220,5 +209,9 @@ export class ListaCreateComponent implements OnInit, OnDestroy {
   onAlertClosed(): void {
     this.deveExibirMensagem = false;
     this.mensagemErro = '';
+  }
+
+  receberVendedor(): string | null {
+    return null; // In create mode, no specific seller is selected
   }
 }

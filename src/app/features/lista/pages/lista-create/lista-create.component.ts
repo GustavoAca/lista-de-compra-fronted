@@ -11,6 +11,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 
 import { AddItemsModalComponent } from '../../../../shared/components/add-items-modal/add-items-modal.component';
@@ -39,6 +40,7 @@ import { Subscription } from 'rxjs';
     AlertMessageComponent,
     CurrencyPipe,
     RouterLink,
+    MatCardModule, // Add MatCardModule
   ],
   templateUrl: './lista-create.component.html',
   styleUrl: './lista-create.component.scss',

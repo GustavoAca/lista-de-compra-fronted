@@ -20,11 +20,57 @@
   position: fixed;
   bottom: 24px;
   right: 24px;
-  z-index: 100; // Ensure it's above other content
+  z-index: 100;
 }
 
-.item-list {
-  padding-bottom: 80px; // Add padding to avoid overlap with the create button
+.item-list-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 80px; // Padding for the main create button at the bottom
+}
+
+.item-card {
+  .mat-mdc-card-header {
+    padding-bottom: 8px;
+  }
+
+  .mat-mdc-card-content {
+    padding-top: 0;
+    padding-bottom: 8px;
+  }
+
+  .item-price {
+    font-weight: 500;
+  }
+
+  .item-promotion {
+    &.on-promotion {
+      color: #4caf50; // Green color for promotion
+      font-weight: bold;
+    }
+  }
+
+  .mat-mdc-card-actions {
+    padding-top: 0;
+    padding-bottom: 8px;
+  }
+
+  .quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    span {
+      font-size: 1.2em;
+      min-width: 20px;
+      text-align: center;
+    }
+
+    .flex-spacer {
+      flex: 1 1 auto;
+    }
+  }
 }
 
 .create-list-actions {

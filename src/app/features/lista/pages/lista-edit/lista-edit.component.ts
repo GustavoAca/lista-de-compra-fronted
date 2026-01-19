@@ -3,6 +3,7 @@ import { ActivatedRoute, RouterLink, ParamMap } from '@angular/router';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 import { Subject, Subscription, Observable, forkJoin } from 'rxjs';
@@ -32,6 +33,7 @@ import { AddItemsModalComponent } from '../../../../shared/components/add-items-
     MatDialogModule,
     RouterLink,
     InfiniteScrollComponent,
+    MatCardModule, // Add MatCardModule
   ],
   templateUrl: './lista-edit.component.html',
   styleUrl: './lista-edit.component.scss',

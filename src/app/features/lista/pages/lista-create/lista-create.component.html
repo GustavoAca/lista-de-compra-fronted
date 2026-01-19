@@ -1,0 +1,92 @@
+<div class="lista-create-container">
+  <app-loading-spinner *ngIf="loading" size="md"></app-loading-spinner>
+
+  <app-alert-message
+    (closed)="onAlertClosed()"
+    *ngIf="deveExibirMensagem"
+    [message]="mensagemErro"
+    type="error"
+    [autoClose]="true"
+  >
+  </app-alert-message>
+
+  <button mat-icon-button [routerLink]="['/home']">
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+
+  <div *ngIf="!loading && !deveExibirMensagem" class="lista-content">
+    <div class="list-header-flex">
+      <form [formGroup]="listForm" class="list-name-form">
+        <mat-form-field appearance="outline" class="list-name-input">
+          <mat-label>Nome da Lista</mat-label>
+          <input matInput formControlName="nome" placeholder="Ex: Compras do Mês" />
+          <mat-error *ngIf="listForm.get('nome')?.hasError('required')">
+            O nome da lista é obrigatório.
+          </mat-error>
+        </mat-form-field>
+      </form>
+      <span class="total-value-display">
+        {{ totalListaValor | currency : "BRL" }}
+      </span>
+    </div>
+
+    <div *ngIf="itensLista.length > 0; else noItems">
+      <ul class="item-list">
+        <li *ngFor="let item of itensLista; trackBy: trackByItemId" class="list-item-card">
+          <div class="item-main-content">
+            <p class="item-seller">
+              Vendedor: {{ item.itemOferta.vendedor.nome }}
+            </p>
+            <h3 class="item-name">
+              {{ item.itemOferta.item.nome }}
+            </h3>
+            <p class="item-price">
+              Preço: {{ item.itemOferta.preco | currency : "BRL" }}
+            </p>
+            <p
+              class="item-promotion"
+              [class.on-promotion]="item.itemOferta.hasPromocaoAtiva"
+            >
+              Promoção: {{ item.itemOferta.hasPromocaoAtiva ? "Sim" : "Não" }}
+            </p>
+          </div>
+
+          <div class="quantity-controls-at-end">
+            <button mat-icon-button (click)="decrementarQuantidade(item)">
+              <mat-icon>remove</mat-icon>
+            </button>
+            <span>{{ item.quantidade }}</span>
+            <button mat-icon-button (click)="incrementarQuantidade(item)">
+              <mat-icon>add</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="removerItem(item)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </li>
+      </ul>
+
+      <div class="total-items-summary">
+        Total de Itens na Lista: {{ totalItens }}
+      </div>
+
+      <div class="create-list-actions">
+        <button
+          mat-flat-button
+          color="accent"
+          (click)="createList()"
+          [disabled]="listForm.invalid || itensLista.length === 0 || loading"
+        >
+          Criar Lista
+        </button>
+      </div>
+    </div>
+    <ng-template #noItems>
+      <p><i>Adicione itens à sua nova lista!</i></p>
+    </ng-template>
+  </div>
+
+  <button mat-fab color="accent" class="fab-add-item" (click)="openAddItemsModal()">
+    <mat-icon>add</mat-icon>
+  </button>
+</div>

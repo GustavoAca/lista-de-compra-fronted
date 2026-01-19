@@ -26,4 +26,10 @@ export class ItemOfertaService {
       },
     });
   }
+
+  getItensOfertaByIds(ids: string[]): Observable<ItemOferta[]> {
+    const url = `${this.itemOfertasApiPath}/buscar-por-ids`;
+    return this.http.post<ItemOferta[]>(url, ids);
+  }
 }
+

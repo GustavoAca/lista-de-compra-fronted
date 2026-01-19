@@ -123,9 +123,9 @@ export class ListaEditComponent implements OnInit, OnDestroy {
         this.lista = lista;
         this.loadListaItems(true);
       },
-      error: () => {
+      error: (err: any) => {
         this.loadingInitial = false;
-        this.showError('Erro ao carregar a lista.');
+        this.showError(err.error?.detail || 'Erro ao carregar a lista.');
       }
     });
   }
@@ -142,7 +142,7 @@ export class ListaEditComponent implements OnInit, OnDestroy {
       .getItensPorLista(this.listaId, this.currentPage, 10)
       .subscribe({
         next: page => this.onItemsLoaded(page, isInitialLoad),
-        error: () => this.onItemsLoadError(isInitialLoad)
+        error: (err: any) => this.onItemsLoadError(isInitialLoad, err)
       });
   }
 
@@ -161,10 +161,10 @@ export class ListaEditComponent implements OnInit, OnDestroy {
     if (isInitialLoad) this.loadingInitial = false;
   }
 
-  private onItemsLoadError(isInitialLoad: boolean): void {
+  private onItemsLoadError(isInitialLoad: boolean, err: any): void {
     this.loadingScroll = false;
     if (isInitialLoad) this.loadingInitial = false;
-    this.showError('Erro ao carregar itens da lista.');
+    this.showError(err.error?.detail || 'Erro ao carregar itens da lista.');
   }
 
   private initializeItems(page: Page<ItemListaDTO>): void {
@@ -172,7 +172,7 @@ export class ListaEditComponent implements OnInit, OnDestroy {
     this.initialItensState.clear();
 
     page.content.forEach(item =>
-      this.initialItensState.set(item.id, { ...item })
+      this.initialItensState.set(item.id!, { ...item })
     );
   }
 
@@ -200,7 +200,7 @@ export class ListaEditComponent implements OnInit, OnDestroy {
   }
 
   private registerItemChange(item: ItemListaDTO): void {
-    this.pendingItemChanges.set(item.id, item.quantidade);
+    this.pendingItemChanges.set(item.id!, item.quantidade);
     this.calculateTotalValue();
     this.quantityChangeSubject.next();
   }
@@ -215,7 +215,7 @@ export class ListaEditComponent implements OnInit, OnDestroy {
         switchMap(() => this.persistPendingChanges())
       )
       .subscribe({
-        error: err => this.showError(
+        error: (err: any) => this.showError(
           err.error?.detail || 'Erro ao salvar alterações.'
         )
       });
@@ -278,7 +278,7 @@ export class ListaEditComponent implements OnInit, OnDestroy {
         this.reloadItens();
         this.loadingInitial = false;
       },
-      error: err => {
+      error: (err: any) => {
         this.loadingInitial = false;
         this.showError(err.error?.detail || 'Erro ao adicionar itens.');
       }
@@ -323,7 +323,7 @@ export class ListaEditComponent implements OnInit, OnDestroy {
   }
 
   trackByItemId(_: number, item: ItemListaDTO): string {
-    return item.id;
+    return item.id!;
   }
 
   // =========================

@@ -2,12 +2,12 @@
   <h1>Bem-vindo à sua Lista de Compras!</h1>
   <p>Aqui você poderá gerenciar suas compras de forma fácil e rápida.</p>
 
-  <div class="actions">
-    <button mat-raised-button color="primary">Criar Nova Lista</button>
-  </div>
-
   <div class="lists-summary">
     <h2>Suas Listas</h2>
     <app-lista-card-grid></app-lista-card-grid>
   </div>
+
+  <button mat-fab color="primary" [routerLink]="['/lista/criar']" class="fab-create-list">
+    <mat-icon>add</mat-icon>
+  </button>
 </div>

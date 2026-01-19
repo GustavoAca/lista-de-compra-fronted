@@ -1,31 +1,34 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { Observable, Subscription } from 'rxjs';
+import { Router, RouterLink } from '@angular/router'; // Import RouterLink
+
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSelectModule } from '@angular/material/select';
 
-import { AddItemsModalComponent } from '../../../../shared/components/add-items-modal/add-items-modal.component';
-import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
-import { AlertMessageComponent } from '../../../../shared/components/alert-message/alert-message.component';
-import { ItemListaDTO } from '../../models/item-lista.model';
 import { ListaCompraService } from '../../services/lista-compra.service';
-import { ItemOfertaService } from '../../services/item-oferta.service';
-import { ListaCompraDTO } from '../../models/lista-compra-dto.model';
+import { AddItemsModalComponent } from '@app/shared/components/add-items-modal/add-items-modal.component';
+import { VendedorService } from '../../services/vendedor.service';
+import { VendedorModel } from '../../models/vendedor.model';
+import { ItemListaModel } from '../../models/item-lista.model';
 import { ItemOferta } from '../../models/item-oferta.model';
-import { ItemListDisplayComponent } from '../../components/item-list-display/item-list-display.component';
-import { VendedorDTO } from '../../models/vendedor.model';
-import { Subscription } from 'rxjs';
-import { ListaCompraCriacao } from '../../models/item-oferta-reduzido.model';
+import { ListaCompraCriacao } from '../../models/lista-compra-dto.model';
+import { CommonModule, CurrencyPipe } from '@angular/common'; // Import CurrencyPipe
+import { LoadingSpinnerComponent } from '@app/shared/components/loading-spinner/loading-spinner.component'; // Import
+import { AlertMessageComponent } from '@app/shared/components/alert-message/alert-message.component'; // Import
+import { ItemListDisplayComponent } from '../../components/item-list-display/item-list-display.component'; // Import
+import { Page } from '@app/shared/pipes/page.model'; // Added import for Page
 
 @Component({
   selector: 'app-lista-create',
@@ -33,177 +36,60 @@ import { ListaCompraCriacao } from '../../models/item-oferta-reduzido.model';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
+    MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatDialogModule,
-    LoadingSpinnerComponent,
-    AlertMessageComponent,
-    CurrencyPipe,
-    RouterLink,
-    MatCardModule,
-    ItemListDisplayComponent, // Add the new component here
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    LoadingSpinnerComponent, // Added
+    AlertMessageComponent, // Added
+    ItemListDisplayComponent, // Added
+    RouterLink, // Added
+    CurrencyPipe, // Added
   ],
   templateUrl: './lista-create.component.html',
-  styleUrl: './lista-create.component.scss',
+  styleUrls: ['./lista-create.component.scss'],
 })
 export class ListaCreateComponent implements OnInit, OnDestroy {
-  // ===== Injeções =====
-  private fb = inject(FormBuilder);
+  listaForm: FormGroup;
+  vendedores$!: Observable<Page<VendedorModel>>;
+  itensLista: ItemListaModel[] = [];
+
+  loading: boolean = false;
+  deveExibirMensagem: boolean = false;
+  mensagemErro: string = '';
+  totalListaValor: number = 0;
+  totalItens: number = 0;
+
+  selectedVendorId: string | null = null; // New property
+  isVendorSelectionLocked: boolean = false; // New property
+
+  private listaCompraService = inject(ListaCompraService);
+  private vendedorService = inject(VendedorService);
+  private snackBar = inject(MatSnackBar);
   private router = inject(Router);
   private dialog = inject(MatDialog);
-  private listaCompraService = inject(ListaCompraService);
-  private itemOfertaService = inject(ItemOfertaService);
+  private subscriptions = new Subscription();
 
-  // ===== Formulário =====
-  listForm!: FormGroup;
-
-  // ===== Estado da Lista =====
-  itensLista: ItemListaDTO[] = [];
-  loading = false;
-  deveExibirMensagem = false;
-  mensagemErro: string = '';
-
-  // ===== Subscriptions =====
-  private itemOfertaSubscription?: Subscription;
-  private createListSubscription?: Subscription;
-
-  // ===== Getters para o template =====
-  get totalItens(): number {
-    return this.itensLista.reduce((acc, item) => acc + item.quantidade, 0);
-  }
-
-  get totalListaValor(): number {
-    return this.itensLista.reduce(
-      (acc, item) => acc + item.quantidade * item.itemOferta.preco,
-      0,
-    );
+  constructor(private fb: FormBuilder) {
+    this.listaForm = this.fb.group({
+      nome: ['', Validators.required],
+      vendedorId: ['', Validators.required],
+    });
   }
 
   ngOnInit(): void {
-    this.listForm = this.fb.group({
-      nome: ['', [Validators.required, Validators.minLength(3)]],
-    });
-  }
+    this.vendedores$ = this.vendedorService.getVendedores();
 
-  ngOnDestroy(): void {
-    this.itemOfertaSubscription?.unsubscribe();
-    this.createListSubscription?.unsubscribe();
-  }
-
-  // trackByItemId is removed from here
-
-  // ============================================================
-  // Gerenciamento de Itens
-  // ============================================================
-
-  adicionarItem(oferta: ItemOferta) {
-    this.itensLista.push({
-      tempId: crypto.randomUUID(), // ou Date.now() + Math.random()
-      quantidade: 1,
-      itemOferta: oferta,
-    });
-  }
-
-  openAddItemsModal(): void {
-    this.loading = true; // Set loading to true when modal opens
-    const dialogRef = this.dialog.open(AddItemsModalComponent, {
-      width: '800px',
-      data: { vendedorId: null }, // Pass null to allow seller selection
-    });
-
-    dialogRef.afterClosed().subscribe((result: ItemListaDTO[] | undefined) => {
-      if (result?.length) {
-        result.forEach((newItem) => {
-          const normalized: ItemListaDTO = {
-            tempId: crypto.randomUUID(),
-            quantidade: newItem.quantidade ?? 1,
-            itemOferta: {
-              ...newItem.itemOferta,
-              item: newItem.itemOferta.item, // GARANTIR que existe
-            },
-          };
-
-          const index = this.itensLista.findIndex(
-            (i) => i.itemOferta.id === normalized.itemOferta.id,
-          );
-
-          if (index > -1) {
-            this.itensLista[index].quantidade += normalized.quantidade;
-          } else {
-            this.itensLista.push(normalized);
-          }
-        });
-
-        this.itensLista = [...this.itensLista];
-      }
-      this.loading = false;
-    });
-  }
-
-  incrementarQuantidade(item: ItemListaDTO): void {
-    item.quantidade++;
-  }
-
-  decrementarQuantidade(item: ItemListaDTO): void {
-    item.quantidade--;
-    if (item.quantidade <= 0) {
-      this.removerItem(item);
-    }
-  }
-
-  removerItem(itemToRemove: ItemListaDTO): void {
-    this.itensLista = this.itensLista.filter(
-      (item) => item.tempId !== itemToRemove.tempId,
+    // Subscribe to vendorId changes to update selectedVendorId if not locked
+    this.subscriptions.add(
+      this.listaForm.get('vendedorId')?.valueChanges.subscribe((vendorId) => {
+        if (!this.isVendorSelectionLocked) {
+          this.selectedVendorId = vendorId;
+        }
+      }),
     );
-  }
-
-  // ============================================================
-  // Criação da Lista
-  // ============================================================
-
-  createList(): void {
-    if (this.listForm.invalid) {
-      this.listForm.markAllAsTouched();
-      return;
-    }
-
-    if (this.itensLista.length === 0) {
-      this.deveExibirMensagem = true;
-      this.mensagemErro = 'A lista deve conter pelo menos um item.';
-      return;
-    }
-
-    this.loading = true;
-    this.deveExibirMensagem = false;
-
-    const listaCompraDTO: ListaCompraCriacao = {
-      id: undefined, // ID will be generated by the backend
-      usuarioId: undefined, // Backend will likely get this from auth context
-      nome: this.listForm.get('nome')?.value,
-      valorTotal: this.totalListaValor,
-      totalItens: this.totalItens,
-      itensLista: this.itensLista.map((item) => ({
-        itemOfertaId: item.itemOferta.id,
-        quantidade: item.quantidade,
-      })),
-    };
-
-    this.createListSubscription = this.listaCompraService
-      .criarLista(listaCompraDTO)
-      .subscribe({
-        next: () => {
-          this.loading = false;
-          this.router.navigate(['/home']); // Navigate to home or list details
-        },
-        error: (err) => {
-          this.loading = false;
-          this.deveExibirMensagem = true;
-          this.mensagemErro =
-            err.error?.detail || 'Erro ao criar a lista de compras.';
-        },
-      });
   }
 
   onAlertClosed(): void {
@@ -211,7 +97,150 @@ export class ListaCreateComponent implements OnInit, OnDestroy {
     this.mensagemErro = '';
   }
 
-  receberVendedor(): string | null {
-    return null; // In create mode, no specific seller is selected
+  openAddItemModal(): void {
+
+  if (!this.selectedVendorId) {
+    this.snackBar.open(
+      'Por favor, selecione um vendedor antes de adicionar itens.',
+      'Fechar',
+      { duration: 3000 }
+    );
+    return;
+  }
+
+  const dialogRef = this.dialog.open(AddItemsModalComponent, {
+    width: '800px',
+    data: {
+      vendedorId: this.selectedVendorId,
+      existingItems: this.itensLista
+    }
+  });
+
+  this.subscriptions.add(
+    dialogRef.afterClosed().subscribe((result: ItemListaModel[] | undefined) => {
+      if (!result || result.length === 0) return;
+
+      // trava o vendedor na primeira inclusão
+      if (!this.isVendorSelectionLocked) {
+        this.isVendorSelectionLocked = true;
+        this.listaForm.get('vendedorId')?.disable();
+      }
+
+      result.forEach(newItem => {
+        const index = this.itensLista.findIndex(
+          item => item.itemOferta.id === newItem.itemOferta.id
+        );
+
+        if (index > -1) {
+          this.itensLista[index].quantidade += newItem.quantidade;
+        } else {
+          this.itensLista.push({
+            tempId: crypto.randomUUID(),
+            itemOferta: newItem.itemOferta,
+            quantidade: newItem.quantidade
+          });
+        }
+      });
+
+      this.calculateTotals();
+    })
+  );
+}
+
+
+  incrementarQuantidade(item: ItemListaModel): void {
+    item.quantidade++;
+    this.calculateTotals();
+  }
+
+  decrementarQuantidade(item: ItemListaModel): void {
+    if (item.quantidade > 1) {
+      item.quantidade--;
+      this.calculateTotals();
+    } else {
+      this.removerItem(item);
+    }
+  }
+
+  removerItem(itemToRemove: ItemListaModel): void {
+    this.itensLista = this.itensLista.filter(
+      (item) => item.tempId !== itemToRemove.tempId,
+    );
+    this.calculateTotals();
+
+    // Unlock vendor selection if all items are removed
+    if (this.itensLista.length === 0) {
+      this.selectedVendorId = null;
+      this.isVendorSelectionLocked = false;
+      this.listaForm.get('vendedorId')?.enable(); // Re-enable the control
+      this.listaForm.get('vendedorId')?.setValue(''); // Clear selected value
+    }
+  }
+
+  private calculateTotals(): void {
+    this.totalItens = this.itensLista.reduce(
+      (sum, item) => sum + item.quantidade,
+      0,
+    );
+    this.totalListaValor = this.itensLista.reduce(
+      (sum, item) => sum + item.quantidade * (item.itemOferta?.preco || 0),
+      0,
+    );
+  }
+
+  salvarLista(): void {
+    this.listaForm.markAllAsTouched();
+    // Re-enable vendorId temporarily for validation check
+    const formValue = this.listaForm.getRawValue();
+
+    if (
+      !formValue.nome ||
+      !this.selectedVendorId ||
+      this.itensLista.length === 0
+    ) {
+      this.snackBar.open(
+        'Preencha todos os campos obrigatórios e adicione pelo menos um item à lista.',
+        'Fechar',
+        { duration: 3000 },
+      );
+      return;
+    }
+    const listaCompraCriacao: ListaCompraCriacao = {
+      nome: this.listaForm.get('nome')?.value,
+      valorTotal: 0.0,
+      itensLista: this.itensLista.map((item) => ({
+        itemOfertaId: item.itemOferta.id!,
+        quantidade: item.quantidade,
+      })),
+    };
+
+    this.loading = true;
+    this.listaCompraService.criarLista(listaCompraCriacao).subscribe(
+      () => {
+        this.snackBar.open('Lista criada com sucesso!', 'Fechar', {
+          duration: 3000,
+        });
+        this.router.navigate(['/home']);
+      },
+      (error) => {
+        this.loading = false;
+        this.deveExibirMensagem = true;
+        this.mensagemErro =
+          error.error?.detail || 'Erro ao criar lista. Tente novamente.';
+        this.snackBar.open(this.mensagemErro, 'Fechar', { duration: 3000 });
+        console.error('Erro ao criar lista:', error);
+      },
+    );
+  }
+
+  private getCurrentVendorId(): string | null {
+    if (this.itensLista.length > 0) {
+      return this.itensLista[0].itemOferta.vendedor.id;
+    }
+    return this.selectedVendorId;
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 }

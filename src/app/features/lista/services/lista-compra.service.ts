@@ -1,12 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Lista } from '../models/lista.model';
+import { ListaModel } from '../models/lista.model'; // Updated import
 import { Page } from '../../../shared/pipes/page.model';
-import { ItemListaDTO } from '../models/item-lista.model';
+import { ItemListaModel } from '../models/item-lista.model'; // Updated import
 import { ItemAlterado } from '../models/item-alterado.model';
-import { ListaCompraDTO } from '../models/lista-compra-dto.model';
-import { ListaCompraCriacao } from '../models/item-oferta-reduzido.model';
+import { ListaCompraDTO, ListaCompraCriacao } from '../models/lista-compra-dto.model';
 
 
 @Injectable({
@@ -19,8 +18,8 @@ export class ListaCompraService {
 
   constructor() {}
 
-  getListaCompras(page = 0, size = 10): Observable<Page<Lista>> {
-    return this.http.get<Page<Lista>>(this.apiPath, {
+  getListaCompras(page = 0, size = 10): Observable<Page<ListaModel>> { // Updated return type
+    return this.http.get<Page<ListaModel>>(this.apiPath, {
       params: {
         page,
         size,
@@ -32,9 +31,9 @@ export class ListaCompraService {
     listaId: string,
     page = 0,
     size = 10
-  ): Observable<Page<ItemListaDTO>> {
+  ): Observable<Page<ItemListaModel>> { // Updated return type
     const url = `${this.apiPath}/${listaId}/itens`;
-    return this.http.get<Page<ItemListaDTO>>(url, {
+    return this.http.get<Page<ItemListaModel>>(url, {
       params: {
         page,
         size,
@@ -42,9 +41,9 @@ export class ListaCompraService {
     });
   }
 
-  getListaById(listaId: string): Observable<Lista> {
+  getListaById(listaId: string): Observable<ListaModel> { // Updated return type
     const url = `${this.apiPath}/${listaId}`;
-    return this.http.get<Lista>(url);
+    return this.http.get<ListaModel>(url);
   }
 
   adicionarItensALista(

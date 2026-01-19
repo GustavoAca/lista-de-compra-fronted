@@ -16,14 +16,31 @@
 
   <div *ngIf="!loading && !deveExibirMensagem" class="lista-content">
     <div class="list-header-flex">
-      <form [formGroup]="listForm" class="list-name-form">
+      <form [formGroup]="listaForm" class="list-name-form">
         <mat-form-field appearance="outline" class="list-name-input">
           <mat-label>Nome da Lista</mat-label>
           <input matInput formControlName="nome"
-          (blur)="listForm.get('nome')?.setValue(listForm.get('nome')?.value?.trim())"
+          (blur)="listaForm.get('nome')?.setValue(listaForm.get('nome')?.value?.trim())"
           placeholder="Ex: Compras do Mês" />
-          <mat-error *ngIf="listForm.get('nome')?.hasError('required')">
+          <mat-error *ngIf="listaForm.get('nome')?.hasError('required')">
             O nome da lista é obrigatório.
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="list-vendedor-input">
+          <mat-label>Vendedor</mat-label>
+          <mat-select formControlName="vendedorId" placeholder="Selecione um Vendedor" [disabled]="isVendorSelectionLocked">
+            <ng-container *ngIf="(vendedores$ | async) as vendedores">
+              <mat-option *ngIf="vendedores.content.length === 0">
+                Nenhum vendedor disponível
+              </mat-option>
+              <mat-option *ngFor="let vendedor of vendedores.content" [value]="vendedor.id">
+                {{ vendedor.nome }}
+              </mat-option>
+            </ng-container>
+          </mat-select>
+          <mat-error *ngIf="listaForm.get('vendedorId')?.hasError('required')">
+            O vendedor é obrigatório.
           </mat-error>
         </mat-form-field>
       </form>
@@ -35,11 +52,10 @@
     <div *ngIf="itensLista.length > 0; else noItems" class="item-list-container">
       <app-item-list-display
         [items]="itensLista"
-        [isEditMode]="false"
+        [isEditMode]="true"
         (quantityIncrement)="incrementarQuantidade($event)"
         (quantityDecrement)="decrementarQuantidade($event)"
         (itemRemove)="removerItem($event)"
-        [venedorId]="receberVendedor()"
       ></app-item-list-display>
 
       <div class="total-items-summary">
@@ -50,8 +66,8 @@
         <button
           mat-flat-button
           color="accent"
-          (click)="createList()"
-          [disabled]="listForm.invalid || itensLista.length === 0 || loading"
+          (click)="salvarLista()"
+          [disabled]="listaForm.invalid || itensLista.length === 0 || loading"
         >
           Criar Lista
         </button>
@@ -62,7 +78,7 @@
     </ng-template>
   </div>
 
-  <button mat-fab color="accent" class="fab-add-item" (click)="openAddItemsModal()">
+  <button mat-fab color="accent" class="fab-add-item" (click)="openAddItemModal()">
     <mat-icon>add</mat-icon>
   </button>
 </div>

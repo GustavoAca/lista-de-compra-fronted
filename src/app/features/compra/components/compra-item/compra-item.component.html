@@ -1,0 +1,51 @@
+<!-- src/app/features/compra/components/compra-item/compra-item.component.html -->
+<mat-card [formGroup]="itemForm" class="compra-item-card"
+          [class.item-picked]="estaNoCarrinhoControl?.value">
+  <mat-card-content class="item-details-content">
+    <div class="item-header">
+      <mat-checkbox [formControl]="estaNoCarrinhoControl" color="primary">
+        <span class="item-name">{{ itemOriginal.nome }}</span>
+      </mat-checkbox>
+      <span class="item-quantity">
+        {{ itemOriginal.quantidade }} {{ itemOriginal.unidadeMedida }}
+      </span>
+    </div>
+
+    <div class="item-info">
+      <p class="item-vendor">Vendedor: {{ itemOriginal.vendedor.nome }}</p>
+      <p *ngIf="itemOriginal.observacao" class="item-notes">Observação: {{ itemOriginal.observacao }}</p>
+    </div>
+
+    <div class="item-pricing">
+      <mat-form-field appearance="outline" class="price-input">
+        <mat-label>Preço Unitário Atual</mat-label>
+        <input matInput type="number" [formControl]="precoAtualControl" placeholder="0.00">
+        <span matTextPrefix>R$</span>
+        <mat-error *ngIf="precoAtualControl?.hasError('required')">Preço é obrigatório.</mat-error>
+        <mat-error *ngIf="precoAtualControl?.hasError('min')">Preço deve ser positivo.</mat-error>
+      </mat-form-field>
+
+      <mat-checkbox [formControl]="emOfertaNaLojaControl" color="accent" class="promotion-checkbox">
+        Em oferta na loja?
+      </mat-checkbox>
+
+      <ng-container *ngIf="emOfertaNaLojaControl?.value">
+        <mat-form-field appearance="outline" class="price-input">
+          <mat-label>Valor da Oferta</mat-label>
+          <input matInput type="number" [formControl]="valorOfertaControl" placeholder="0.00">
+          <span matTextPrefix>R$</span>
+          <mat-error *ngIf="valorOfertaControl?.hasError('required')">Valor da oferta é obrigatório.</mat-error>
+          <mat-error *ngIf="valorOfertaControl?.hasError('min')">Valor da oferta deve ser positivo.</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="price-input">
+          <mat-label>Valor Original na Loja</mat-label>
+          <input matInput type="number" [formControl]="valorOriginalNaLojaControl" placeholder="0.00">
+          <span matTextPrefix>R$</span>
+          <mat-error *ngIf="valorOriginalNaLojaControl?.hasError('required')">Valor original é obrigatório.</mat-error>
+          <mat-error *ngIf="valorOriginalNaLojaControl?.hasError('min')">Valor original deve ser positivo.</mat-error>
+        </mat-form-field>
+      </ng-container>
+    </div>
+  </mat-card-content>
+</mat-card>

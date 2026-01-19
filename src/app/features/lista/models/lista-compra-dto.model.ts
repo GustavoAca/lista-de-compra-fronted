@@ -1,4 +1,4 @@
-import { ItemListaDTO } from './item-lista.model';
+import { ItemListaModel } from './item-lista.model';
 
 export interface ListaCompraDTO {
   id?: string;
@@ -6,5 +6,11 @@ export interface ListaCompraDTO {
   nome: string;
   valorTotal: number;
   totalItens: number;
-  itensLista: ItemListaDTO[];
+  itensLista: ItemListaModel[];
+}
+
+export interface ListaCompraCriacao {
+  nome: string;
+  itensLista: { itemOfertaId: string; quantidade: number }[];
+  valorTotal: number;
 }

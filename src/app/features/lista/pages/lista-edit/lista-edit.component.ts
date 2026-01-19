@@ -10,8 +10,8 @@ import { Subject, Subscription, Observable, forkJoin } from 'rxjs';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 
 import { ListaCompraService } from '../../services/lista-compra.service';
-import { Lista } from '../../models/lista.model';
-import { ItemListaDTO } from '../../models/item-lista.model';
+import { ListaModel } from '../../models/lista.model'; // Updated from Lista
+import { ItemListaModel } from '../../models/item-lista.model'; // Updated from ItemListaDTO
 import { ItemAlterado } from '../../models/item-alterado.model';
 
 import { Page } from '../../../../shared/pipes/page.model';
@@ -20,6 +20,7 @@ import { AlertMessageComponent } from '../../../../shared/components/alert-messa
 import { InfiniteScrollComponent } from '../../../../shared/components/infinite-scroll/infinite-scroll.component';
 import { ItemListDisplayComponent } from '../../components/item-list-display/item-list-display.component';
 import { AddItemsModalComponent } from '../../../../shared/components/add-items-modal/add-items-modal.component';
+import { ItemOferta } from '../../models/item-oferta.model';
 
 @Component({
   selector: 'app-lista-edit',
@@ -53,8 +54,8 @@ export class ListaEditComponent implements OnInit, OnDestroy {
   // Estado público (template)
   // =========================
   listaId!: string;
-  lista!: Lista;
-  itensPage: Page<ItemListaDTO> | null = null;
+  lista!: ListaModel; // Updated from Lista
+  itensPage: Page<ItemListaModel> | null = null; // Updated from ItemListaDTO
 
   totalListaValor = 0;
   loadingInitial = true;
@@ -72,7 +73,7 @@ export class ListaEditComponent implements OnInit, OnDestroy {
   // =========================
   // Estado interno
   // =========================
-  private initialItensState = new Map<string, ItemListaDTO>();
+  private initialItensState = new Map<string, ItemListaModel>(); // Updated from ItemListaDTO
   private pendingItemChanges = new Map<string, number>();
 
   private quantityChangeSubject = new Subject<void>();
@@ -150,7 +151,7 @@ export class ListaEditComponent implements OnInit, OnDestroy {
       });
   }
 
-  private onItemsLoaded(page: Page<ItemListaDTO>, isInitialLoad: boolean): void {
+  private onItemsLoaded(page: Page<ItemListaModel>, isInitialLoad: boolean): void { // Updated from ItemListaDTO
     if (!this.itensPage) {
       this.initializeItems(page);
     } else {
@@ -171,7 +172,7 @@ export class ListaEditComponent implements OnInit, OnDestroy {
     this.showError(err.error?.detail || 'Erro ao carregar itens da lista.');
   }
 
-  private initializeItems(page: Page<ItemListaDTO>): void {
+  private initializeItems(page: Page<ItemListaModel>): void { // Updated from ItemListaDTO
     this.itensPage = page;
     this.initialItensState.clear();
 
@@ -180,7 +181,7 @@ export class ListaEditComponent implements OnInit, OnDestroy {
     );
   }
 
-  private appendItems(page: Page<ItemListaDTO>): void {
+  private appendItems(page: Page<ItemListaModel>): void { // Updated from ItemListaDTO
     this.itensPage = {
       ...this.itensPage!,
       content: [...this.itensPage!.content, ...page.content],
@@ -192,18 +193,18 @@ export class ListaEditComponent implements OnInit, OnDestroy {
   // =========================
   // Quantidade / Alterações
   // =========================
-  incrementarQuantidade(item: ItemListaDTO): void {
+  incrementarQuantidade(item: ItemListaModel): void { // Updated from ItemListaDTO
     item.quantidade++;
     this.registerItemChange(item);
   }
 
-  decrementarQuantidade(item: ItemListaDTO): void {
+  decrementarQuantidade(item: ItemListaModel): void { // Updated from ItemListaDTO
     if (item.quantidade === 0) return;
     item.quantidade--;
     this.registerItemChange(item);
   }
 
-  private registerItemChange(item: ItemListaDTO): void {
+  private registerItemChange(item: ItemListaModel): void { // Updated from ItemListaDTO
     this.pendingItemChanges.set(item.id!, item.quantidade);
     this.calculateTotalValue();
     this.quantityChangeSubject.next();
@@ -272,10 +273,14 @@ export class ListaEditComponent implements OnInit, OnDestroy {
     });
   }
 
-  private addItemsToLista(itens: { itemOfertaId: string; quantidade: number }[]): void {
+  private addItemsToLista(itens: { itemOferta: ItemOferta; quantidade: number }[]): void {
     this.loadingInitial = true;
+      const payload = itens.map(i => ({
+      itemOfertaId: i.itemOferta.id,
+      quantidade: i.quantidade
+      }));
 
-    this.listaCompraService.adicionarItensALista(this.listaId, itens).subscribe({
+    this.listaCompraService.adicionarItensALista(this.listaId, payload).subscribe({
       next: () => {
         this.pendingItemChanges.clear();
         this.initialItensState.clear();
@@ -326,7 +331,7 @@ export class ListaEditComponent implements OnInit, OnDestroy {
     this.clearError();
   }
 
-  trackByItemId(_: number, item: ItemListaDTO): string {
+  trackByItemId(_: number, item: ItemListaModel): string { // Updated from ItemListaDTO
     return item.id!;
   }
 

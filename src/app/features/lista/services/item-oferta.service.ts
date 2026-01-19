@@ -31,5 +31,10 @@ export class ItemOfertaService {
     const url = `${this.itemOfertasApiPath}/buscar-por-ids`;
     return this.http.post<ItemOferta[]>(url, ids);
   }
+
+  getItemOfertaById(id: string): Observable<ItemOferta> {
+    const url = `${this.itemOfertasApiPath}/${id}`;
+    return this.http.get<ItemOferta>(url);
+  }
 }
 

@@ -1,50 +1,44 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { ItemListaDTO } from '../../models/item-lista.model';
+import { ItemListaModel } from '../../models/item-lista.model';
+import { MatCardModule } from '@angular/material/card'; // Import MatCardModule
 
 @Component({
   selector: 'app-item-list-display',
   standalone: true,
-  imports: [
-    CommonModule,
-    CurrencyPipe,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-  ],
+  imports: [CommonModule, MatButtonModule, MatIconModule, CurrencyPipe, MatCardModule], // Added MatCardModule
   templateUrl: './item-list-display.component.html',
-  styleUrl: './item-list-display.component.scss',
+  styleUrl: './item-list-display.component.scss'
 })
-export class ItemListDisplayComponent implements OnInit { // Implement OnInit
-  @Input() items: ItemListaDTO[] = [];
-  @Input() isEditMode: boolean = false;
-  @Input() venedorId: string | null = null;
+export class ItemListDisplayComponent {
+  @Input() items: ItemListaModel[] = [];
+  @Output() quantityIncrement = new EventEmitter<ItemListaModel>();
+  @Output() quantityDecrement = new EventEmitter<ItemListaModel>();
+  @Output() itemRemove = new EventEmitter<ItemListaModel>();
+  @Input() isEditMode: boolean = false; // Added isEditMode input
 
-  @Output() quantityIncrement = new EventEmitter<ItemListaDTO>();
-  @Output() quantityDecrement = new EventEmitter<ItemListaDTO>();
-  @Output() itemRemove = new EventEmitter<ItemListaDTO>();
+  constructor() { }
 
-  ngOnInit(): void {
-    console.log('ItemListDisplayComponent received items:', this.items);
+  trackByItemId(index: number, item: ItemListaModel): string {
+    return item.id!;
   }
 
-  trackByItemId(index: number, item: ItemListaDTO): string {
-    // In create mode, item.id might not exist, so we use itemOferta.id
-      return item.tempId || item.id! || item.itemOferta.id;
-  }
-
-  increment(item: ItemListaDTO): void {
+  increment(item: ItemListaModel): void {
     this.quantityIncrement.emit(item);
   }
 
-  decrement(item: ItemListaDTO): void {
+  decrement(item: ItemListaModel): void {
     this.quantityDecrement.emit(item);
   }
 
-  remove(item: ItemListaDTO): void {
+  remove(item: ItemListaModel): void {
     this.itemRemove.emit(item);
+  }
+
+  // Helper to determine which vendor ID to display
+  getVenedorId(item: ItemListaModel): string {
+    return item.itemOferta?.vendedor?.nome || 'N/A';
   }
 }

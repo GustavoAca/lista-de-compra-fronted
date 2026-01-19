@@ -1,6 +1,6 @@
 import { ItemLista } from "./item.model";
 
-export interface Lista {
+export interface ListaModel {
   id: string;
   usuarioId: string;
   nome: string;

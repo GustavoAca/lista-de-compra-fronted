@@ -1,4 +1,4 @@
-import { ItemListaDTO } from '../../../features/lista/models/item-lista.model';
+import { ItemListaModel } from '../../../features/lista/models/item-lista.model'; // Updated import
 import {
   Component,
   OnInit,
@@ -16,7 +16,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { Subscription } from 'rxjs';
 
-import { VendedorDTO } from '../../../features/lista/models/vendedor.model';
+import { VendedorModel } from '../../../features/lista/models/vendedor.model'; // Updated import
 import { ItemOferta } from '../../../features/lista/models/item-oferta.model';
 import { Page } from '../../pipes/page.model';
 
@@ -37,6 +37,7 @@ import { ItemOfertaService } from '../../../features/lista/services/item-oferta.
  */
 export interface AddItemsModalData {
   vendedorId: string | null;
+  existingItems: ItemListaModel[]; // New property
 }
 
 @Component({
@@ -64,16 +65,16 @@ export class AddItemsModalComponent implements OnInit, OnDestroy {
   private dialogRef = inject(
     MatDialogRef<
       AddItemsModalComponent,
-      ItemListaDTO[] // Changed return type
+      ItemListaModel[] // Updated from ItemListaDTO
     >
   );
   private vendedorService = inject(VendedorService);
   private itemOfertaService = inject(ItemOfertaService);
 
   // ===== Estado de vendedor =====
-  sellers: VendedorDTO[] = [];
-  selectedSellerControl = new FormControl<VendedorDTO | null>(null);
-  sellerPage: Page<VendedorDTO> | null = null;
+  sellers: VendedorModel[] = []; // Updated from VendedorDTO
+  selectedSellerControl = new FormControl<VendedorModel | null>(null); // Updated from VendedorDTO
+  sellerPage: Page<VendedorModel> | null = null; // Updated from VendedorDTO
   loadingSellers = false;
   currentSellerPage = 0;
   isLastSellerPage = false;
@@ -88,7 +89,7 @@ export class AddItemsModalComponent implements OnInit, OnDestroy {
   // ===== Seleção =====
   selectedItems = new Map<
     string,
-    ItemListaDTO // Changed map value type
+    ItemListaModel // Updated from ItemListaDTO
   >();
 
   errorMessage: string | null = null;
@@ -114,9 +115,15 @@ export class AddItemsModalComponent implements OnInit, OnDestroy {
   // ============================================================
 
   ngOnInit(): void {
+    if (this.data && this.data.existingItems && this.data.existingItems.length > 0) {
+      this.data.existingItems.forEach(item => {
+        this.selectedItems.set(item.itemOferta.id, item);
+      });
+    }
+
     if (this.isDirectSellerMode) {
       // Fluxo direto: vendedor já definido
-      this.loadItemOffers(true);
+      this.loadItemOffers(true); // Call with true to clear existingItems in case of reload, then re-add below
       return;
     }
 
@@ -253,6 +260,9 @@ export class AddItemsModalComponent implements OnInit, OnDestroy {
     const current = this.getQuantity(itemOferta);
     if (current > 0) {
       this.onQuantityChange(itemOferta, current - 1);
+    }
+    else {
+      this.selectedItems.delete(itemOferta.id);
     }
   }
 

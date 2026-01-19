@@ -1,12 +1,12 @@
 import { Component, inject, Input, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { ItemListaDTO } from '../../models/item-lista.model';
+import { ItemListaModel } from '../../models/item-lista.model'; // Updated import
 import { ListaCompraService } from '../../services/lista-compra.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { AlertMessageComponent } from '../../../../shared/components/alert-message/alert-message.component';
 import { Page } from '../../../../shared/pipes/page.model';
 // MatPaginatorModule and PageEvent removed
-import { Lista } from '../../models/lista.model';
+import { ListaModel } from '../../models/lista.model'; // Updated import
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
@@ -30,11 +30,11 @@ import { InfiniteScrollComponent } from '../../../../shared/components/infinite-
   styleUrl: './lista-itens-view.component.scss',
 })
 export class ListaItensViewComponent implements OnInit {
-  @Input() lista!: Lista;
+  @Input() lista!: ListaModel; // Updated from Lista
 
   private listaCompraService = inject(ListaCompraService);
 
-  page?: Page<ItemListaDTO>;
+  page?: Page<ItemListaModel>; // Updated from ItemListaDTO
   loadingItens = false;
   mensagemErro: string = '';
   deveExibirMensagem = false;
@@ -66,7 +66,7 @@ export class ListaItensViewComponent implements OnInit {
 
     // Fetch 10 items per page for infinite scroll
     this.listaCompraService.getItensPorLista(this.lista.id!, this.currentPage, 10).subscribe({
-      next: (response: Page<ItemListaDTO>) => {
+      next: (response: Page<ItemListaModel>) => { // Updated from ItemListaDTO
         if (!this.page || reset) {
           this.page = response;
         } else {

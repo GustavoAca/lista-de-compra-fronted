@@ -1,0 +1,63 @@
+/* src/app/features/compra/components/compra-item/compra-item.component.scss */
+.compra-item-card {
+  transition: box-shadow 0.3s ease-in-out, border-color 0.3s ease-in-out;
+  border: 1px solid #e0e0e0;
+
+  &.item-picked {
+    border-color: #4caf50; // Verde para itens marcados
+    box-shadow: 0 0 8px rgba(76, 175, 80, 0.2);
+  }
+
+  .item-details-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+
+    .item-name {
+      font-weight: 500;
+      font-size: 1.1rem;
+    }
+
+    .item-quantity {
+      font-size: 0.9rem;
+      color: #616161;
+    }
+  }
+
+  .item-info {
+    font-size: 0.85rem;
+    color: #757575;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px; // Espaçamento entre vendedor e observação
+    p {
+      margin: 0;
+    }
+  }
+
+  .item-pricing {
+    display: flex;
+    flex-wrap: wrap; // Permite que os inputs quebrem linha em telas menores
+    gap: 15px;
+    align-items: flex-start; // Alinha os itens ao topo
+    margin-top: 10px;
+
+    .price-input {
+      flex: 1 1 200px; // Cresce e encolhe, com base de 200px
+      min-width: 150px; // Garante tamanho mínimo
+    }
+
+    .promotion-checkbox {
+      margin-top: 10px; // Ajusta alinhamento com os inputs
+      align-self: center; // Centraliza verticalmente se necessário
+    }
+  }
+}

@@ -3,7 +3,7 @@ import { CommonModule, CurrencyPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { Lista } from '../../models/lista.model';
+import { ListaModel } from '../../models/lista.model'; // Updated import
 import { ListaCompraService } from '../../services/lista-compra.service';
 import { Page } from '../../../../shared/pipes/page.model';
 import { PageEvent, MatPaginatorModule } from '@angular/material/paginator';
@@ -32,7 +32,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 })
 export class ListaCardGridComponent implements OnInit {
   private listaCompraService: ListaCompraService = inject(ListaCompraService);
-  page?: Page<Lista>;
+  page?: Page<ListaModel>; // Updated from Lista
   pageSizeOptions = [5, 10, 20];
   defaultPageSize = 10;
   loading = false;

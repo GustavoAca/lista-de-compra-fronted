@@ -23,6 +23,10 @@ export const routes: Routes = [
     component: ListaCreateComponent,
   },
   {
+    path: 'compra', // New route for the compra feature
+    loadChildren: () => import('./features/compra/compra.module').then(m => m.CompraModule)
+  },
+  {
     path: '',
     redirectTo: 'login',
     pathMatch: 'full',

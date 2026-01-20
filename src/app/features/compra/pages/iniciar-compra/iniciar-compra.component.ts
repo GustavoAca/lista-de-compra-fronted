@@ -1,16 +1,11 @@
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  ChangeDetectorRef
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import {
   AbstractControl,
   FormArray,
   FormBuilder,
   FormGroup,
   ReactiveFormsModule,
-  Validators
+  Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -22,7 +17,7 @@ import {
   expand,
   reduce,
   debounceTime,
-  startWith
+  startWith,
 } from 'rxjs';
 
 import { CommonModule } from '@angular/common';
@@ -36,11 +31,16 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ListaCompraService } from '@app/features/lista/services/lista-compra.service';
 import { ListaModel } from '@app/features/lista/models/lista.model';
 import { ItemListaModel } from '@app/features/lista/models/item-lista.model';
-import { ItemCompra, ListaCompraDetalhada } from '@app/features/compra/models/item-compra.model';
-import { Page } from '@app/shared/pipes/page.model';
+import {
+  ItemCompra,
+  ListaCompraDetalhada,
+} from '@app/features/compra/models/item-compra.model';
 
 import { CompraItemComponent } from '../../components/compra-item/compra-item.component';
 import { LoadingSpinnerComponent } from '@app/shared/components/loading-spinner/loading-spinner.component';
+import { ConcluirListaRequestDTO } from '../../models/concluir-lista-request.dto';
+import { ItemListaConcluirRequest } from '../../models/item-lista-concluir.model';
+import { ItemOfertaConcluirRequest } from '../../models/item-oferta-concluir.model';
 
 interface ItemCompraForm {
   id: string;
@@ -67,16 +67,16 @@ interface ItemCompraForm {
     MatProgressSpinnerModule,
     MatSnackBarModule,
     MatTooltipModule,
-    LoadingSpinnerComponent
-  ]
+    LoadingSpinnerComponent,
+  ],
 })
 export class IniciarCompraComponent implements OnInit, OnDestroy {
-
   shoppingForm: FormGroup;
   itemsFormArray: FormArray;
   listaId: string | null = null;
   listaDetalhes: ListaCompraDetalhada | null = null;
   totalCompra = 0;
+  listaVersion: number = 0;
 
   private subscriptions = new Subscription();
 
@@ -86,10 +86,10 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
     private router: Router,
     private listaCompraService: ListaCompraService,
     private snackBar: MatSnackBar,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
   ) {
     this.shoppingForm = this.fb.group({
-      items: this.fb.array([])
+      items: this.fb.array([]),
     });
 
     this.itemsFormArray = this.shoppingForm.get('items') as FormArray;
@@ -122,50 +122,53 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
     this.fetchListaAndItems(id).subscribe({
       next: ({ lista, itens }) => {
         const itensCompra = this.mapToItemCompra(itens);
+        this.listaVersion = lista.version;
 
         this.listaDetalhes = {
           id: lista.id,
           nome: lista.nome,
-          itens: itensCompra
+          itens: itensCompra,
         };
 
         this.buildForm(itensCompra);
         this.setupTotalCalculation();
       },
-      error: err => this.handleError('Erro ao carregar a lista de compras.', err)
+      error: (err) =>
+        this.handleError('Erro ao carregar a lista de compras.', err),
     });
   }
 
   private fetchListaAndItems(
-    listaId: string
+    listaId: string,
   ): Observable<{ lista: ListaModel; itens: ItemListaModel[] }> {
-    return this.listaCompraService.getListaById(listaId).pipe(
-      switchMap(lista =>
-        this.fetchAllItemListaModels(listaId).pipe(
-          map(itens => ({ lista, itens }))
-        )
-      )
-    );
+    return this.listaCompraService
+      .getListaById(listaId)
+      .pipe(
+        switchMap((lista) =>
+          this.fetchAllItemListaModels(listaId).pipe(
+            map((itens) => ({ lista, itens })),
+          ),
+        ),
+      );
   }
 
-  private fetchAllItemListaModels(listaId: string): Observable<ItemListaModel[]> {
+  private fetchAllItemListaModels(
+    listaId: string,
+  ): Observable<ItemListaModel[]> {
     const pageSize = 10;
 
     return this.listaCompraService.getItensPorLista(listaId, 0, pageSize).pipe(
-      expand(page =>
+      expand((page) =>
         page.last
           ? of()
           : this.listaCompraService.getItensPorLista(
               listaId,
               page.number + 1,
-              pageSize
-            )
+              pageSize,
+            ),
       ),
-      map(page => page.content),
-      reduce(
-        (acc, items) => [...acc, ...items],
-        [] as ItemListaModel[]
-      )
+      map((page) => page.content),
+      reduce((acc, items) => [...acc, ...items], [] as ItemListaModel[]),
     );
   }
 
@@ -174,7 +177,7 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
   // =======================
 
   private mapToItemCompra(itens: ItemListaModel[]): ItemCompra[] {
-    return itens.map(itemLista => {
+    return itens.map((itemLista) => {
       const oferta = itemLista.itemOferta;
 
       return {
@@ -189,7 +192,8 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
         precoAtual: oferta.preco,
         emOfertaNaLoja: oferta.hasPromocaoAtiva,
         valorOferta: oferta.hasPromocaoAtiva ? oferta.preco : null,
-        valorOriginalNaLoja: oferta.preco
+        valorOriginalNaLoja: oferta.preco,
+        version: itemLista.version,
       } as ItemCompra;
     });
   }
@@ -201,7 +205,7 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
   private buildForm(items: ItemCompra[]): void {
     this.itemsFormArray.clear();
 
-    items.forEach(item => {
+    items.forEach((item) => {
       this.itemsFormArray.push(this.createItemFormGroup(item));
     });
 
@@ -218,7 +222,7 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
       emOfertaNaLoja: [item.emOfertaNaLoja],
       valorOferta: [item.valorOferta],
       valorOriginalNaLoja: [item.valorOriginalNaLoja],
-      quantidade: [item.quantidade, [Validators.required, Validators.min(1)]]
+      quantidade: [item.quantidade, [Validators.required, Validators.min(1)]],
     });
   }
 
@@ -240,9 +244,9 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
         .pipe(
           debounceTime(300),
           startWith(this.itemsFormArray.value),
-          map(items => this.calculateTotal(items))
+          map((items) => this.calculateTotal(items)),
         )
-        .subscribe(total => (this.totalCompra = total))
+        .subscribe((total) => (this.totalCompra = total)),
     );
   }
 
@@ -263,31 +267,80 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
   // Actions
   // =======================
 
-  finalizarCompra(): void {
+  concluirCompra(): void {
     this.itemsFormArray.markAllAsTouched();
 
     if (!this.shoppingForm.valid) {
+      this.snackBar.open('Existem itens inválidos no carrinho.', 'Fechar', {
+        duration: 3000,
+      });
+      return;
+    }
+
+    if (!this.listaDetalhes) {
       this.snackBar.open(
-        'Existem itens inválidos no carrinho.',
+        'Não foi possível recuperar os detalhes da lista.',
         'Fechar',
-        { duration: 3000 }
+        { duration: 3000 },
       );
       return;
     }
 
-    const itensSelecionados = this.shoppingForm.value.items.filter(
-      (item: ItemCompraForm) => item.estaNoCarrinho
+    const formItems = this.shoppingForm.value.items;
+
+    const itensLista: ItemListaConcluirRequest[] = this.listaDetalhes.itens
+      .map((itemOriginal, index) => {
+        const formItem = formItems[index];
+        if (!formItem.estaNoCarrinho) return null;
+
+        const itemOferta: ItemOfertaConcluirRequest = {
+          id: itemOriginal.itemOferta.id,
+          itemId: itemOriginal.itemOferta.item.id,
+          vendedorId: itemOriginal.itemOferta.vendedor.id,
+          hasPromocaoAtiva: formItem.emOfertaNaLoja,
+          preco: formItem.precoAtual,
+          dataInicioPromocao: itemOriginal.itemOferta.dataInicioPromocao
+            ? new Date(itemOriginal.itemOferta.dataInicioPromocao)
+            : undefined,
+          dataFinalPromocao: itemOriginal.itemOferta.dataFimPromocao
+            ? new Date(itemOriginal.itemOferta.dataFimPromocao)
+            : undefined,
+          version: itemOriginal.itemOferta.version,
+        };
+
+        return {
+          id: itemOriginal.id,
+          quantidade: formItem.quantidade,
+          version: itemOriginal.version,
+          itemOferta: itemOferta,
+          listaCompraId: itemOriginal.listaCompraId!,
+        };
+      })
+      .filter((item): item is ItemListaConcluirRequest => item !== null);
+
+    const concluirListaDto: ConcluirListaRequestDTO = {
+      id: this.listaDetalhes.id,
+      valorTotal: this.totalCompra,
+      nome: this.listaDetalhes.nome,
+      totalItens: itensLista.length,
+      version: this.listaVersion,
+      itensLista: itensLista,
+    };
+    console.table(concluirListaDto);
+
+    this.subscriptions.add(
+      this.listaCompraService.concluirCompra(concluirListaDto).subscribe({
+        next: () => {
+          this.snackBar.open('Compra concluída com sucesso!', 'Fechar', {
+            duration: 3000,
+          });
+          this.router.navigate(['/home']);
+        },
+        error: (err) => {
+          this.handleError('Erro ao concluir a compra.', err);
+        },
+      }),
     );
-
-    console.log('Compra finalizada:', itensSelecionados);
-
-    this.snackBar.open(
-      'Compra finalizada com sucesso!',
-      'Fechar',
-      { duration: 3000 }
-    );
-
-    this.router.navigate(['/compra/sucesso']);
   }
 
   // =======================
@@ -297,6 +350,5 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
   private handleError(message: string, error?: any): void {
     console.error(message, error);
     this.snackBar.open(message, 'Fechar', { duration: 3000 });
-    this.router.navigate(['/home']);
   }
 }

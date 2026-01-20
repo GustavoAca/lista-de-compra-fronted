@@ -7,4 +7,5 @@ export interface ListaModel {
   totalItens: number;
   valorTotal: number;
   itensLista: ItemLista[];
+  version: number
 }

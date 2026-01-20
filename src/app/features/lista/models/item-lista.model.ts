@@ -6,4 +6,5 @@ export interface ItemListaModel {
   listaCompraId?: string;
   itemOferta: ItemOferta;
   quantidade: number;
+  version?: number;
 }

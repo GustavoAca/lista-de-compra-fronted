@@ -9,4 +9,5 @@ export interface ItemOferta {
   preco: number;
   vendedor: VendedorModel; // Updated type
   item: Item;
+  version: number;
 }

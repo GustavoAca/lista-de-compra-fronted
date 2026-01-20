@@ -1,12 +1,12 @@
 export interface Item {
-  id: string | number;
+  id: string;
   nome: string;
   isAtivo: boolean;
 }
 
 export interface ItemLista {
-  id: string | number;
-  listaCompraId: string | number;
-  itemOfertaId: string | number;
+  id: string ;
+  listaCompraId: string ;
+  itemOfertaId: string ;
   quantidade: number;
 }

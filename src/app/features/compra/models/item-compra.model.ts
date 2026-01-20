@@ -23,6 +23,7 @@ export interface ItemCompra extends ItemListaModel {
   unidadeMedida: string;
   observacao?: string;
   precoOriginal?: number; // Add if not in ItemListaModel and used for initial price
+  version: number;
 
   vendedor: VendedorModel; // Detalhes do vendedor - now correctly imported as VendedorModel
 

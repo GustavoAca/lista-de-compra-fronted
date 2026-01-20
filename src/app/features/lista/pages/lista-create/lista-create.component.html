@@ -2,13 +2,12 @@
   <app-loading-spinner *ngIf="loading" size="md"></app-loading-spinner>
 
   <app-alert-message
-    (closed)="onAlertClosed()"
     *ngIf="deveExibirMensagem"
     [message]="mensagemErro"
     type="error"
     [autoClose]="true"
-  >
-  </app-alert-message>
+    (closed)="onAlertClosed()"
+  ></app-alert-message>
 
   <button mat-icon-button [routerLink]="['/home']">
     <mat-icon>arrow_back</mat-icon>
@@ -17,38 +16,62 @@
   <div *ngIf="!loading && !deveExibirMensagem" class="lista-content">
     <div class="list-header-flex">
       <form [formGroup]="listaForm" class="list-name-form">
+
+        <!-- Nome da lista -->
         <mat-form-field appearance="outline" class="list-name-input">
           <mat-label>Nome da Lista</mat-label>
-          <input matInput formControlName="nome"
-          (blur)="listaForm.get('nome')?.setValue(listaForm.get('nome')?.value?.trim())"
-          placeholder="Ex: Compras do Mês" />
+          <input
+            matInput
+            formControlName="nome"
+            placeholder="Ex: Compras do mês"
+          />
           <mat-error *ngIf="listaForm.get('nome')?.hasError('required')">
             O nome da lista é obrigatório.
           </mat-error>
         </mat-form-field>
 
+        <!-- Autocomplete de vendedor -->
         <mat-form-field appearance="outline" class="list-vendedor-input">
           <mat-label>Vendedor</mat-label>
-          <mat-select formControlName="vendedorId" placeholder="Selecione um Vendedor" [disabled]="isVendorSelectionLocked">
-            <ng-container *ngIf="(vendedores$ | async) as vendedores">
-              <mat-option *ngIf="vendedores.content.length === 0">
-                Nenhum vendedor disponível
-              </mat-option>
-              <mat-option *ngFor="let vendedor of vendedores.content" [value]="vendedor.id">
-                {{ vendedor.nome }}
-              </mat-option>
-            </ng-container>
-          </mat-select>
+
+          <input
+            type="text"
+            matInput
+            placeholder="Digite para buscar um vendedor"
+            formControlName="vendedor"
+            [matAutocomplete]="auto"
+            [disabled]="isVendorSelectionLocked"
+          />
+
+          <mat-autocomplete
+            #auto="matAutocomplete"
+            [displayWith]="displayVendedor"
+            (optionSelected)="onVendedorSelecionado($event.option.value)"
+          >
+            <mat-option *ngIf="(vendedores$ | async)?.content?.length === 0">
+              Nenhum vendedor encontrado
+            </mat-option>
+
+            <mat-option
+              *ngFor="let vendedor of (vendedores$ | async)?.content"
+              [value]="vendedor"
+            >
+              {{ vendedor.nome }}
+            </mat-option>
+          </mat-autocomplete>
+
           <mat-error *ngIf="listaForm.get('vendedorId')?.hasError('required')">
             O vendedor é obrigatório.
           </mat-error>
         </mat-form-field>
       </form>
+
       <span class="total-value-display">
-        {{ totalListaValor | currency : "BRL" }}
+        {{ totalListaValor | currency: 'BRL' }}
       </span>
     </div>
 
+    <!-- Lista de itens -->
     <div *ngIf="itensLista.length > 0; else noItems" class="item-list-container">
       <app-item-list-display
         [items]="itensLista"
@@ -58,7 +81,7 @@
       ></app-item-list-display>
 
       <div class="total-items-summary">
-        Total de Itens na Lista: {{ totalItens }}
+        Total de Itens: {{ totalItens }}
       </div>
 
       <div class="create-list-actions">
@@ -72,12 +95,18 @@
         </button>
       </div>
     </div>
+
     <ng-template #noItems>
       <p><i>Adicione itens à sua nova lista!</i></p>
     </ng-template>
   </div>
 
-  <button mat-fab color="accent" class="fab-add-item" (click)="openAddItemModal()">
+  <button
+    mat-fab
+    color="accent"
+    class="fab-add-item"
+    (click)="openAddItemModal()"
+  >
     <mat-icon>add</mat-icon>
   </button>
 </div>

@@ -14,12 +14,30 @@ export class VendedorService {
 
   constructor() {}
 
-  getVendedores(page = 0, size = 20): Observable<Page<VendedorModel>> { // Updated type
+  getVendedores(page = 0, size = 20): Observable<Page<VendedorModel>> {
+    // Updated type
     return this.http.get<Page<VendedorModel>>(this.vendedoresApiPath, {
       params: {
         page,
         size,
       },
     });
+  }
+
+  getVendedoresByName(
+    nome: string,
+    page = 0,
+    size = 20,
+  ): Observable<Page<VendedorModel>> {
+    return this.http.get<Page<VendedorModel>>(
+      `${this.vendedoresApiPath}/buscar-por-nome`,
+      {
+        params: {
+          nome,
+          page,
+          size,
+        },
+      },
+    );
   }
 }

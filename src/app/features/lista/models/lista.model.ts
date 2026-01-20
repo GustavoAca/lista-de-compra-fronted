@@ -1,5 +1,11 @@
 import { ItemLista } from "./item.model";
 
+enum StatusLista {
+  AGUARDANDO = 'Aguardando',
+  FINALIZADA = 'Finalizada',
+  CANCELADA = 'Cancelada'
+}
+
 export interface ListaModel {
   id: string;
   usuarioId: string;
@@ -7,5 +13,6 @@ export interface ListaModel {
   totalItens: number;
   valorTotal: number;
   itensLista: ItemLista[];
-  version: number
+  version: number;
+  statusLista: StatusLista;
 }

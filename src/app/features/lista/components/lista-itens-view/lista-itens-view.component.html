@@ -21,9 +21,9 @@
         <ul class="item-list">
           <li *ngFor="let item of page.content">
             <span class="item-info-wrapper">
-              <span class="item-name">Item: {{ item.itemOferta.item.nome }}</span>
+              <span class="item-name">{{ item.itemOferta.item.nome }}</span>
               <span class="item-quantity">Quantidade: {{ item.quantidade }}</span>
-              <span class="item-seller">Vendedor: {{ item.itemOferta.vendedor.nome }}</span>
+              <span class="item-seller"></span>
               <span class="item-price">Preço: {{ item.itemOferta.preco | currency:'BRL' }}</span>
               <span class="item-promotion" [class.on-promotion]="item.itemOferta.hasPromocaoAtiva">
                 Promoção: {{ item.itemOferta.hasPromocaoAtiva ? 'Sim' : 'Não' }}

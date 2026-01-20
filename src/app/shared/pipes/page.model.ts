@@ -14,3 +14,23 @@ export interface Page<T> {
     empty: boolean;
   };
 }
+
+export function emptyPage<T>(): Page<T> {
+  return {
+    content: [],
+    number: 0,
+    size: 0,
+    totalElements: 0,
+    totalPages: 0,
+    first: true,
+    last: true,
+    empty: true,
+    numberOfElements: 0,
+    sort: {
+      sorted: false,
+      unsorted: true,
+      empty: true,
+    },
+  };
+}
+

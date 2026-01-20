@@ -24,7 +24,7 @@
         <button mat-icon-button (click)="increment(item)">
           <mat-icon>add</mat-icon>
         </button>
-        <button *ngIf="isEditMode" mat-icon-button color="warn" (click)="remove(item)">
+        <button *ngIf="!isEditMode" mat-icon-button color="warn" (click)="remove(item)">
           <mat-icon>delete</mat-icon>
         </button>
       </div>

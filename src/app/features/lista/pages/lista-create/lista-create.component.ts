@@ -98,55 +98,55 @@ export class ListaCreateComponent implements OnInit, OnDestroy {
   }
 
   openAddItemModal(): void {
-
-  if (!this.selectedVendorId) {
-    this.snackBar.open(
-      'Por favor, selecione um vendedor antes de adicionar itens.',
-      'Fechar',
-      { duration: 3000 }
-    );
-    return;
-  }
-
-  const dialogRef = this.dialog.open(AddItemsModalComponent, {
-    width: '800px',
-    data: {
-      vendedorId: this.selectedVendorId,
-      existingItems: this.itensLista
+    if (!this.selectedVendorId) {
+      this.snackBar.open(
+        'Por favor, selecione um vendedor antes de adicionar itens.',
+        'Fechar',
+        { duration: 3000 },
+      );
+      return;
     }
-  });
 
-  this.subscriptions.add(
-    dialogRef.afterClosed().subscribe((result: ItemListaModel[] | undefined) => {
-      if (!result || result.length === 0) return;
+    const dialogRef = this.dialog.open(AddItemsModalComponent, {
+      width: '800px',
+      data: {
+        vendedorId: this.selectedVendorId,
+        existingItems: this.itensLista,
+      },
+    });
 
-      // trava o vendedor na primeira inclusão
-      if (!this.isVendorSelectionLocked) {
-        this.isVendorSelectionLocked = true;
-        this.listaForm.get('vendedorId')?.disable();
-      }
+    this.subscriptions.add(
+      dialogRef
+        .afterClosed()
+        .subscribe((result: ItemListaModel[] | undefined) => {
+          if (!result || result.length === 0) return;
 
-      result.forEach(newItem => {
-        const index = this.itensLista.findIndex(
-          item => item.itemOferta.id === newItem.itemOferta.id
-        );
+          // trava o vendedor na primeira inclusão
+          if (!this.isVendorSelectionLocked) {
+            this.isVendorSelectionLocked = true;
+            this.listaForm.get('vendedorId')?.disable();
+          }
 
-        if (index > -1) {
-          this.itensLista[index].quantidade += newItem.quantidade;
-        } else {
-          this.itensLista.push({
-            tempId: crypto.randomUUID(),
-            itemOferta: newItem.itemOferta,
-            quantidade: newItem.quantidade
+          result.forEach((newItem) => {
+            const index = this.itensLista.findIndex(
+              (item) => item.itemOferta.id === newItem.itemOferta.id,
+            );
+
+            if (index > -1) {
+              this.itensLista[index].quantidade += newItem.quantidade;
+            } else {
+              this.itensLista.push({
+                tempId: crypto.randomUUID(),
+                itemOferta: newItem.itemOferta,
+                quantidade: newItem.quantidade,
+              });
+            }
           });
-        }
-      });
 
-      this.calculateTotals();
-    })
-  );
-}
-
+          this.calculateTotals();
+        }),
+    );
+  }
 
   incrementarQuantidade(item: ItemListaModel): void {
     item.quantidade++;

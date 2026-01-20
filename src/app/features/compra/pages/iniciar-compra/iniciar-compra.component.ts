@@ -12,6 +12,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { CompraItemComponent } from '../../components/compra-item/compra-item.component';
+import { LoadingSpinnerComponent } from '@app/shared/components/loading-spinner/loading-spinner.component';
 
 // Angular Material Imports
 import { MatCardModule } from '@angular/material/card';
@@ -19,7 +20,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
-
 
 interface ItemCompraForm {
   id: string;
@@ -45,7 +45,8 @@ interface ItemCompraForm {
     MatIconModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
-    MatTooltipModule
+    MatTooltipModule,
+    LoadingSpinnerComponent
   ]
 })
 export class IniciarCompraComponent implements OnInit, OnDestroy {

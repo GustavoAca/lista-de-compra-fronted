@@ -52,7 +52,6 @@
     <div *ngIf="itensLista.length > 0; else noItems" class="item-list-container">
       <app-item-list-display
         [items]="itensLista"
-        [isEditMode]="true"
         (quantityIncrement)="incrementarQuantidade($event)"
         (quantityDecrement)="decrementarQuantidade($event)"
         (itemRemove)="removerItem($event)"

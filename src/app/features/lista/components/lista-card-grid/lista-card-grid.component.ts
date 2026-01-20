@@ -11,6 +11,7 @@ import { LoadingSpinnerComponent } from '../../../../shared/components/loading-s
 import { AlertMessageComponent } from '../../../../shared/components/alert-message/alert-message.component';
 import { ListaItensViewComponent } from '../lista-itens-view/lista-itens-view.component';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { RouterLink } from '@angular/router'; // Added RouterLink
 
 @Component({
   selector: 'app-lista-card-grid',
@@ -26,6 +27,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
     ListaItensViewComponent,
     MatExpansionModule,
     CurrencyPipe,
+    RouterLink, // Added RouterLink
   ],
   templateUrl: './lista-card-grid.component.html',
   styleUrl: './lista-card-grid.component.scss',

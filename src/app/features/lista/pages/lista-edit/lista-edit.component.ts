@@ -6,8 +6,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
-import { Subject, Subscription, Observable, forkJoin } from 'rxjs';
-import { debounceTime, switchMap, tap } from 'rxjs/operators';
+import { Subject, Subscription, Observable, of } from 'rxjs';
+import { debounceTime, switchMap, tap, expand, takeWhile, finalize } from 'rxjs/operators';
 
 import { ListaCompraService } from '../../services/lista-compra.service';
 import { ListaModel } from '../../models/lista.model'; // Updated from Lista
@@ -17,7 +17,6 @@ import { ItemAlterado } from '../../models/item-alterado.model';
 import { Page } from '../../../../shared/pipes/page.model';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { AlertMessageComponent } from '../../../../shared/components/alert-message/alert-message.component';
-import { InfiniteScrollComponent } from '../../../../shared/components/infinite-scroll/infinite-scroll.component';
 import { ItemListDisplayComponent } from '../../components/item-list-display/item-list-display.component';
 import { AddItemsModalComponent } from '../../../../shared/components/add-items-modal/add-items-modal.component';
 import { ItemOferta } from '../../models/item-oferta.model';
@@ -34,7 +33,6 @@ import { ItemOferta } from '../../models/item-oferta.model';
     CurrencyPipe,
     MatDialogModule,
     RouterLink,
-    InfiniteScrollComponent,
     MatCardModule,
     ItemListDisplayComponent, // Add the new component
   ],
@@ -56,10 +54,10 @@ export class ListaEditComponent implements OnInit, OnDestroy {
   listaId!: string;
   lista!: ListaModel; // Updated from Lista
   itensPage: Page<ItemListaModel> | null = null; // Updated from ItemListaDTO
+  allItems: ItemListaModel[] = []; // Stores all fetched items
 
   totalListaValor = 0;
   loadingInitial = true;
-  loadingScroll = false;
 
   deveExibirMensagem = false;
   mensagemErro = '';
@@ -68,7 +66,6 @@ export class ListaEditComponent implements OnInit, OnDestroy {
   // Paginação
   // =========================
   currentPage = 0;
-  isLastPage = false;
 
   // =========================
   // Estado interno
@@ -112,7 +109,6 @@ export class ListaEditComponent implements OnInit, OnDestroy {
   private initializeLista(listaId: string): void {
     this.listaId = listaId;
     this.resetState();
-    this.resetPagination();
     this.loadLista();
   }
 
@@ -126,7 +122,7 @@ export class ListaEditComponent implements OnInit, OnDestroy {
     this.listaCompraService.getListaById(this.listaId).subscribe({
       next: lista => {
         this.lista = lista;
-        this.loadListaItems(true);
+        this.loadListaItems(); // Now triggers full load
       },
       error: (err: any) => {
         this.loadingInitial = false;
@@ -136,58 +132,63 @@ export class ListaEditComponent implements OnInit, OnDestroy {
   }
 
   // =========================
-  // Itens / Paginação
+  // Itens / Carregamento Completo
   // =========================
-  loadListaItems(isInitialLoad = false): void {
-    if (this.loadingScroll || this.isLastPage) return;
+  loadListaItems(): void {
+    this.loadingInitial = true;
+    this.allItems = []; // Clear previous items
+    this.currentPage = 0; // Reset page for full fetch
 
-    this.loadingScroll = true;
-
-    this.listaCompraService
-      .getItensPorLista(this.listaId, this.currentPage, 10)
+    this._fetchPage()
+      .pipe(
+        finalize(() => this.loadingInitial = false) // Ensure loading is turned off
+      )
       .subscribe({
-        next: page => this.onItemsLoaded(page, isInitialLoad),
-        error: (err: any) => this.onItemsLoadError(isInitialLoad, err)
+        next: () => {
+          this.onAllItemsLoaded();
+        },
+        error: (err: any) => {
+          this.showError(err.error?.detail || 'Erro ao carregar itens da lista.');
+        }
       });
   }
 
-  private onItemsLoaded(page: Page<ItemListaModel>, isInitialLoad: boolean): void { // Updated from ItemListaDTO
-    if (!this.itensPage) {
-      this.initializeItems(page);
-    } else {
-      this.appendItems(page);
-    }
-
-    this.isLastPage = page.last;
-    this.currentPage++;
-    this.calculateTotalValue();
-
-    this.loadingScroll = false;
-    if (isInitialLoad) this.loadingInitial = false;
-  }
-
-  private onItemsLoadError(isInitialLoad: boolean, err: any): void {
-    this.loadingScroll = false;
-    if (isInitialLoad) this.loadingInitial = false;
-    this.showError(err.error?.detail || 'Erro ao carregar itens da lista.');
-  }
-
-  private initializeItems(page: Page<ItemListaModel>): void { // Updated from ItemListaDTO
-    this.itensPage = page;
-    this.initialItensState.clear();
-
-    page.content.forEach(item =>
-      this.initialItensState.set(item.id!, { ...item })
+  private _fetchPage(): Observable<Page<ItemListaModel>> {
+    return this.listaCompraService.getItensPorLista(this.listaId, this.currentPage, 10).pipe(
+      tap(page => {
+        this.allItems.push(...page.content);
+        this.currentPage++;
+      }),
+      expand(page => page.last ? of() : this._fetchPage()),
+      takeWhile(page => !page.last, true) // Include the last page in the result stream
     );
   }
 
-  private appendItems(page: Page<ItemListaModel>): void { // Updated from ItemListaDTO
+  private onAllItemsLoaded(): void {
+    // Create a mock Page object to store all items for existing logic
     this.itensPage = {
-      ...this.itensPage!,
-      content: [...this.itensPage!.content, ...page.content],
-      last: page.last,
-      totalElements: page.totalElements
+      content: this.allItems,
+      last: true,
+      totalPages: 1,
+      totalElements: this.allItems.length,
+      size: this.allItems.length,
+      number: 0,
+      first: true,
+      numberOfElements: this.allItems.length,
+      empty: this.allItems.length === 0,
+      sort: {
+        sorted: false,
+        unsorted: true,
+        empty: true
+      }
     };
+
+    this.initialItensState.clear();
+    this.allItems.forEach(item =>
+      this.initialItensState.set(item.id!, { ...item })
+    );
+
+    this.calculateTotalValue();
   }
 
   // =========================
@@ -295,40 +296,38 @@ export class ListaEditComponent implements OnInit, OnDestroy {
   }
 
   private resolveVendedorId(): string | null {
-    return this.itensPage?.content?.[0]?.itemOferta?.vendedor?.id ?? null;
+    // No longer rely on itensPage.content[0] as allItems is the source of truth now
+    return this.allItems?.[0]?.itemOferta?.vendedor?.id ?? null;
   }
 
   // =========================
   // Utilitários
   // =========================
   private calculateTotalValue(): void {
-    if (!this.itensPage) {
+    if (this.allItems.length === 0) {
       this.totalListaValor = 0;
       return;
     }
 
-    this.totalListaValor = this.itensPage.content.reduce((sum, item) => {
+    this.totalListaValor = this.allItems.reduce((sum, item) => {
       const preco = item.itemOferta?.preco ?? 0;
       return sum + item.quantidade * preco;
     }, 0);
   }
 
   private reloadItens(): void {
-    this.resetPagination();
-    this.itensPage = null;
+    // Reset state and trigger a full reload
+    this.resetState();
     this.loadListaItems();
-  }
-
-  private resetPagination(): void {
-    this.currentPage = 0;
-    this.isLastPage = false;
   }
 
   private resetState(): void {
     this.itensPage = null;
+    this.allItems = [];
     this.pendingItemChanges.clear();
     this.initialItensState.clear();
     this.clearError();
+    this.currentPage = 0; // Ensure current page is reset
   }
 
   trackByItemId(_: number, item: ItemListaModel): string { // Updated from ItemListaDTO

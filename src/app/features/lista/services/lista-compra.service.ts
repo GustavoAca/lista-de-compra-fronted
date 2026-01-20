@@ -31,7 +31,7 @@ export class ListaCompraService {
     listaId: string,
     page = 0,
     size = 10
-  ): Observable<Page<ItemListaModel>> { // Updated return type
+  ): Observable<Page<ItemListaModel>> {
     const url = `${this.apiPath}/${listaId}/itens`;
     return this.http.get<Page<ItemListaModel>>(url, {
       params: {

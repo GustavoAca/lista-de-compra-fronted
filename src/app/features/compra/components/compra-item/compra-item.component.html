@@ -1,6 +1,6 @@
 <!-- src/app/features/compra/components/compra-item/compra-item.component.html -->
 <mat-card [formGroup]="itemForm" class="compra-item-card"
-          [class.item-picked]="estaNoCarrinhoControl?.value">
+          [class.item-picked]="estaNoCarrinhoControl.value">
   <mat-card-content class="item-details-content">
     <div class="item-header">
       <mat-checkbox [formControl]="estaNoCarrinhoControl" color="primary">
@@ -12,7 +12,7 @@
     </div>
 
     <div class="item-info">
-      <p class="item-vendor">Vendedor: {{ itemOriginal.vendedor.nome }}</p>
+      <p class="item-vendor">Vendedor: {{ itemOriginal.vendedor.nome || "N/A" }}</p>
       <p *ngIf="itemOriginal.observacao" class="item-notes">Observação: {{ itemOriginal.observacao }}</p>
     </div>
 

@@ -25,30 +25,20 @@
       </span>
     </div>
 
-    <!-- SCROLL ACONTECE AQUI -->
-    <app-infinite-scroll
-      *ngIf="itensPage && !itensPage.empty; else noItems"
-      [isLoading]="loadingScroll"
-      [isLastPage]="isLastPage"
-      (scrolledToEnd)="loadListaItems()"
-    >
+    <!-- ITENS DA LISTA -->
+    <ng-container *ngIf="itensPage && itensPage.content && itensPage.content.length > 0; else noItems">
       <app-item-list-display
-        [items]="itensPage.content"
+        [items]="itensPage!.content"
         [isEditMode]="true"
         (quantityIncrement)="incrementarQuantidade($event)"
         (quantityDecrement)="decrementarQuantidade($event)"
       ></app-item-list-display>
 
       <div class="total-items-summary">
-        Total de Itens na Lista: {{ itensPage.totalElements }}
+        Total de Itens na Lista: {{ itensPage?.totalElements }}
       </div>
+    </ng-container>
 
-      <!-- Loader do infinite scroll -->
-      <app-loading-spinner
-        *ngIf="loadingScroll"
-        size="sm"
-      ></app-loading-spinner>
-    </app-infinite-scroll>
     <ng-template #noItems>
       <p><i>Esta lista não possui itens. Adicione alguns!</i></p>
     </ng-template>

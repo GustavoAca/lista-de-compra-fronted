@@ -3,6 +3,7 @@
 .compra-item-card {
   transition: box-shadow 0.3s ease-in-out, border-color 0.3s ease-in-out;
   border: 1px solid #e0e0e0;
+  margin-bottom: 16px; // Add some margin between cards
 
   &.item-picked {
     border-color: #4caf50;
@@ -12,24 +13,69 @@
   .item-details-content {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 16px; // Increased gap for better spacing
   }
 
   .item-header {
     display: flex;
+    flex-wrap: wrap; // Allow wrapping on smaller screens
     align-items: center;
-    justify-content: space-between;
+    gap: 16px; // Gap between elements in header
     padding-bottom: 8px;
     border-bottom: 1px solid #f0f0f0;
+
+    mat-checkbox {
+      flex-grow: 1; // Allow checkbox to take available space
+      min-width: 150px; // Ensure checkbox has enough space
+    }
 
     .item-name {
       font-weight: 500;
       font-size: 1.1rem;
     }
 
-    .item-quantity {
+    .item-quantity-display { // New class for the span
       font-size: 0.9rem;
       color: #616161;
+      white-space: nowrap; // Prevent wrapping for quantity display
+    }
+  }
+
+  .quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 4px; // Smaller gap for quantity controls
+    margin-left: auto; // Push to the right
+    
+    .quantity-input {
+      width: 80px; // Fixed width for quantity input
+      text-align: center;
+      .mat-form-field-wrapper { // Hide default Angular Material underline
+        padding-bottom: 0;
+      }
+      .mat-form-field-infix {
+        padding: 0.5em 0; // Adjust padding
+        border-top: none; // Remove top border
+      }
+      .mat-form-field-appearance-outline .mat-form-field-outline {
+        display: none; // Hide outline
+      }
+      input {
+        text-align: center;
+        -moz-appearance: textfield; // Hide arrows in Firefox
+        &::-webkit-outer-spin-button,
+        &::-webkit-inner-spin-button {
+          -webkit-appearance: none; // Hide arrows in Chrome/Safari
+          margin: 0;
+        }
+      }
+    }
+
+    button {
+      height: 36px;
+      width: 36px;
+      padding: 0;
+      min-width: 0;
     }
   }
 
@@ -48,9 +94,8 @@
   .item-pricing {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 16px; // Increased gap
     align-items: flex-start;
-    margin-top: 10px;
 
     .price-input {
       flex: 1 1 200px;
@@ -60,23 +105,6 @@
     .promotion-checkbox {
       margin-top: 10px;
       align-self: center;
-    }
-  }
-
-  .quantity-control {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 8px 0;
-
-    input {
-      width: 60px;
-      text-align: center;
-    }
-
-    button {
-      height: 36px;
-      width: 36px;
     }
   }
 }

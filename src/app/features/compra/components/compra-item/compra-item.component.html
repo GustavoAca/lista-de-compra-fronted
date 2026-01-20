@@ -9,28 +9,34 @@
       <mat-checkbox [formControl]="estaNoCarrinhoControl" color="primary">
         <span class="item-name">{{ itemOriginal.nome }}</span>
       </mat-checkbox>
-      <span class="item-quantity">
-        {{ itemOriginal.quantidade }} {{ itemOriginal.unidadeMedida }}
-      </span>
       <div class="quantity-control">
         <button
           mat-icon-button
           type="button"
           (click)="decreaseQuantity()"
           [disabled]="quantidadeControl.value <= 1"
+          matTooltip="Diminuir quantidade"
         >
           <mat-icon>remove</mat-icon>
         </button>
 
-        <input
-          matInput
-          type="number"
-          min="1"
-          [formControl]="quantidadeControl"
-          (blur)="normalizeQuantity()"
-        />
+        <mat-form-field appearance="outline" class="quantity-input">
+          <input
+            matInput
+            type="number"
+            min="1"
+            [formControl]="quantidadeControl"
+            (blur)="normalizeQuantity()"
+            matTooltip="Quantidade"
+          />
+        </mat-form-field>
 
-        <button mat-icon-button type="button" (click)="increaseQuantity()">
+        <button
+          mat-icon-button
+          type="button"
+          (click)="increaseQuantity()"
+          matTooltip="Aumentar quantidade"
+        >
           <mat-icon>add</mat-icon>
         </button>
       </div>
@@ -85,7 +91,6 @@
             (blur)="formatToTwoDecimals(valorOfertaControl)"
           />
           <span matTextPrefix>R$</span>
-          <span matTextPrefix>R$</span>
 
           <mat-error *ngIf="valorOfertaControl?.hasError('required')"
             >Valor da oferta é obrigatório.</mat-error
@@ -105,7 +110,6 @@
             [formControl]="valorOriginalNaLojaControl"
             (blur)="formatToTwoDecimals(valorOriginalNaLojaControl)"
           />
-          <span matTextPrefix>R$</span>
           <span matTextPrefix>R$</span>
           <mat-error *ngIf="valorOriginalNaLojaControl?.hasError('required')"
             >Valor original é obrigatório.</mat-error

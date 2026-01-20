@@ -13,7 +13,8 @@ import { ReactiveFormsModule } from '@angular/forms'; // Import ReactiveFormsMod
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatIconModule } from '@angular/material/icon'; // Added MatIconModule as it might be used
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip'; // Added MatTooltipModule
 
 @Component({
   selector: 'app-compra-item',
@@ -28,7 +29,8 @@ import { MatIconModule } from '@angular/material/icon'; // Added MatIconModule a
     MatCheckboxModule,
     MatFormFieldModule,
     MatInputModule,
-    MatIconModule, // Added
+    MatIconModule,
+    MatTooltipModule // Added
   ],
 })
 export class CompraItemComponent implements OnInit {

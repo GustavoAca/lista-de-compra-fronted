@@ -1,25 +1,46 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ChangeDetectorRef
+} from '@angular/core';
+import {
+  AbstractControl,
+  FormArray,
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators
+} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, forkJoin, of, Subscription, combineLatest, debounceTime, map, startWith, switchMap, tap, expand, takeWhile } from 'rxjs';
-import { ListaCompraService } from '@app/features/lista/services/lista-compra.service';
-import { ListaModel } from '@app/features/lista/models/lista.model';
-import { ItemListaModel } from '@app/features/lista/models/item-lista.model'; // Updated import
-import { ItemOferta } from '@app/features/lista/models/item-oferta.model';
-import { ItemCompra, ListaCompraDetalhada } from '@app/features/compra/models/item-compra.model';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { CommonModule } from '@angular/common';
-import { CompraItemComponent } from '../../components/compra-item/compra-item.component';
-import { LoadingSpinnerComponent } from '@app/shared/components/loading-spinner/loading-spinner.component';
-import { Page } from '@app/shared/pipes/page.model'; // Import Page
+import {
+  Observable,
+  Subscription,
+  of,
+  switchMap,
+  map,
+  expand,
+  reduce,
+  debounceTime,
+  startWith
+} from 'rxjs';
 
-// Angular Material Imports
+import { CommonModule } from '@angular/common';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+
+import { ListaCompraService } from '@app/features/lista/services/lista-compra.service';
+import { ListaModel } from '@app/features/lista/models/lista.model';
+import { ItemListaModel } from '@app/features/lista/models/item-lista.model';
+import { ItemCompra, ListaCompraDetalhada } from '@app/features/compra/models/item-compra.model';
+import { Page } from '@app/shared/pipes/page.model';
+
+import { CompraItemComponent } from '../../components/compra-item/compra-item.component';
+import { LoadingSpinnerComponent } from '@app/shared/components/loading-spinner/loading-spinner.component';
 
 interface ItemCompraForm {
   id: string;
@@ -50,11 +71,12 @@ interface ItemCompraForm {
   ]
 })
 export class IniciarCompraComponent implements OnInit, OnDestroy {
+
   shoppingForm: FormGroup;
   itemsFormArray: FormArray;
   listaId: string | null = null;
   listaDetalhes: ListaCompraDetalhada | null = null;
-  totalCompra: number = 0;
+  totalCompra = 0;
 
   private subscriptions = new Subscription();
 
@@ -63,110 +85,132 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private listaCompraService: ListaCompraService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private cdr: ChangeDetectorRef
   ) {
     this.shoppingForm = this.fb.group({
-      items: this.fb.array([]),
+      items: this.fb.array([])
     });
+
     this.itemsFormArray = this.shoppingForm.get('items') as FormArray;
   }
 
+  // =======================
+  // Lifecycle
+  // =======================
+
   ngOnInit(): void {
     this.listaId = this.route.snapshot.paramMap.get('id');
-    if (this.listaId) {
-      this.loadShoppingList(this.listaId);
-    } else {
-      this.snackBar.open('ID da lista não fornecido.', 'Fechar', { duration: 3000 });
-      this.router.navigate(['/home']);
+
+    if (!this.listaId) {
+      this.handleError('ID da lista não fornecido.');
+      return;
     }
+
+    this.loadShoppingList(this.listaId);
   }
 
-  loadShoppingList(id: string): void {
-    this._fetchListaAndItsItems(id).subscribe(
-      ({ lista, itemListaModels }: { lista: ListaModel, itemListaModels: ItemListaModel[] }) => {
-        const itensCompra = this._mapToItemCompra(lista, itemListaModels);
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
+
+  // =======================
+  // Data loading
+  // =======================
+
+  private loadShoppingList(id: string): void {
+    this.fetchListaAndItems(id).subscribe({
+      next: ({ lista, itens }) => {
+        const itensCompra = this.mapToItemCompra(itens);
 
         this.listaDetalhes = {
           id: lista.id,
           nome: lista.nome,
           itens: itensCompra
         };
-        this.buildForm(this.listaDetalhes.itens);
+
+        this.buildForm(itensCompra);
         this.setupTotalCalculation();
       },
-      (error: any) => {
-        this.snackBar.open('Erro ao carregar a lista de compras.', 'Fechar', { duration: 3000 });
-        console.error('Erro ao carregar lista:', error);
-        this.router.navigate(['/home']);
-      }
+      error: err => this.handleError('Erro ao carregar a lista de compras.', err)
+    });
+  }
+
+  private fetchListaAndItems(
+    listaId: string
+  ): Observable<{ lista: ListaModel; itens: ItemListaModel[] }> {
+    return this.listaCompraService.getListaById(listaId).pipe(
+      switchMap(lista =>
+        this.fetchAllItemListaModels(listaId).pipe(
+          map(itens => ({ lista, itens }))
+        )
+      )
     );
   }
 
-  private _fetchListaAndItsItems(id: string): Observable<{ lista: ListaModel, itemListaModels: ItemListaModel[] }> {
-    return this.listaCompraService.getListaById(id).pipe(
-      switchMap((lista: ListaModel) => {
-        // If lista is null/undefined or has no items, directly return an empty result for items
-        if (!lista) {
-          return of({ lista, itemListaModels: [] });
-        }
-        return this._fetchAllItemListaModels(id).pipe(
-          map(itemListaModels => ({ lista, itemListaModels }))
-        );
-      })
+  private fetchAllItemListaModels(listaId: string): Observable<ItemListaModel[]> {
+    const pageSize = 10;
+
+    return this.listaCompraService.getItensPorLista(listaId, 0, pageSize).pipe(
+      expand(page =>
+        page.last
+          ? of()
+          : this.listaCompraService.getItensPorLista(
+              listaId,
+              page.number + 1,
+              pageSize
+            )
+      ),
+      map(page => page.content),
+      reduce(
+        (acc, items) => [...acc, ...items],
+        [] as ItemListaModel[]
+      )
     );
   }
 
-  private _mapToItemCompra(lista: ListaModel, itemListaModels: ItemListaModel[]): ItemCompra[] {
-    return itemListaModels.map(itemLista => {
-      const itemOferta = itemLista.itemOferta;
+  // =======================
+  // Mapping
+  // =======================
+
+  private mapToItemCompra(itens: ItemListaModel[]): ItemCompra[] {
+    return itens.map(itemLista => {
+      const oferta = itemLista.itemOferta;
 
       return {
         id: itemLista.id,
         listaCompraId: itemLista.listaCompraId,
-        itemOferta: itemOferta,
+        itemOferta: oferta,
         quantidade: itemLista.quantidade,
-        nome: itemOferta.item?.nome || 'Nome Desconhecido',
-        // unidadeMedida: itemOferta.item.unidadeMedida || '', // Removed as Item does not have this property
-        // observacao: itemOferta.item.observacao || '', // Removed as Item does not have this property
-        precoOriginal: itemOferta.preco,
-
-        vendedor: itemOferta.vendedor || { id: '', nome: 'Desconhecido' },
+        nome: oferta.item?.nome ?? 'Nome não informado',
+        precoOriginal: oferta.preco,
+        vendedor: oferta.vendedor ?? { id: '', nome: 'Desconhecido' },
         estaNoCarrinho: false,
-        precoAtual: itemOferta.preco,
-        emOfertaNaLoja: itemOferta.hasPromocaoAtiva,
-        valorOferta: itemOferta.hasPromocaoAtiva ? itemOferta.preco : null,
-        valorOriginalNaLoja: itemOferta.preco
+        precoAtual: oferta.preco,
+        emOfertaNaLoja: oferta.hasPromocaoAtiva,
+        valorOferta: oferta.hasPromocaoAtiva ? oferta.preco : null,
+        valorOriginalNaLoja: oferta.preco
       } as ItemCompra;
     });
   }
 
-  // New private method to fetch all items for a given list, handling pagination
-  private _fetchAllItemListaModels(listaId: string): Observable<ItemListaModel[]> {
-    let allItems: ItemListaModel[] = [];
-    let currentPage = 0;
+  // =======================
+  // Form
+  // =======================
 
-    return this.listaCompraService.getItensPorLista(listaId, currentPage, 10).pipe( // Assuming page size of 10
-      tap((page: Page<ItemListaModel>) => {
-        allItems = allItems.concat(page.content);
-        currentPage++;
-      }),
-      expand((page: Page<ItemListaModel>) => page.last ? of() : this.listaCompraService.getItensPorLista(listaId, currentPage, 10)),
-      takeWhile((page: Page<ItemListaModel>) => !page.last, true), // Include the last page in the result stream
-      map(() => allItems) // Once all pages are fetched, emit the accumulated items
-    );
-  }
+  private buildForm(items: ItemCompra[]): void {
+    this.itemsFormArray.clear();
 
-  buildForm(items: ItemCompra[]): void {
     items.forEach(item => {
       this.itemsFormArray.push(this.createItemFormGroup(item));
     });
+
+    // 🔴 ESSENCIAL PARA A RENDERIZAÇÃO
+    this.itemsFormArray.updateValueAndValidity({ emitEvent: false });
+    this.cdr.detectChanges();
   }
 
-  getItemFormGroup(index: number): FormGroup {
-    return this.itemsFormArray.at(index) as FormGroup;
-  }
-
-  createItemFormGroup(item: ItemCompra): FormGroup {
+  private createItemFormGroup(item: ItemCompra): FormGroup {
     return this.fb.group({
       id: [item.id],
       estaNoCarrinho: [item.estaNoCarrinho],
@@ -174,55 +218,85 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
       emOfertaNaLoja: [item.emOfertaNaLoja],
       valorOferta: [item.valorOferta],
       valorOriginalNaLoja: [item.valorOriginalNaLoja],
-      quantidade: [item.quantidade]
+      quantidade: [item.quantidade, [Validators.required, Validators.min(1)]]
     });
   }
 
-  setupTotalCalculation(): void {
+  getItemFormGroup(index: number): FormGroup {
+    return this.itemsFormArray.at(index) as FormGroup;
+  }
+
+  trackByItemId(index: number, control: AbstractControl): string {
+    return control.get('id')?.value;
+  }
+
+  // =======================
+  // Total calculation
+  // =======================
+
+  private setupTotalCalculation(): void {
     this.subscriptions.add(
       this.itemsFormArray.valueChanges
         .pipe(
           debounceTime(300),
           startWith(this.itemsFormArray.value),
-          map((items: ItemCompraForm[]) => this.calculateTotal(items))
+          map(items => this.calculateTotal(items))
         )
-        .subscribe(total => {
-          this.totalCompra = total;
-        })
+        .subscribe(total => (this.totalCompra = total))
     );
   }
 
-  calculateTotal(items: ItemCompraForm[]): number {
-    return items.reduce((sum, itemForm) => {
-      if (itemForm.estaNoCarrinho) {
-        const precoUnitario = itemForm.emOfertaNaLoja && itemForm.valorOferta !== null && itemForm.valorOferta > 0
-                              ? itemForm.valorOferta
-                              : itemForm.precoAtual;
-        return sum + (precoUnitario * itemForm.quantidade);
-      }
-      return sum;
+  private calculateTotal(items: ItemCompraForm[]): number {
+    return items.reduce((total, item) => {
+      if (!item.estaNoCarrinho) return total;
+
+      const precoUnitario =
+        item.emOfertaNaLoja && item.valorOferta
+          ? item.valorOferta
+          : item.precoAtual;
+
+      return total + precoUnitario * item.quantidade;
     }, 0);
   }
 
-  trackByItemId(index: number, itemGroup: AbstractControl): string {
-    return (itemGroup as FormGroup).get('id')?.value;
-  }
+  // =======================
+  // Actions
+  // =======================
 
   finalizarCompra(): void {
     this.itemsFormArray.markAllAsTouched();
 
-    if (this.shoppingForm.valid) {
-      const dadosDaCompra = this.shoppingForm.value.items.filter((item: ItemCompraForm) => item.estaNoCarrinho);
-      console.log('Compra finalizada com sucesso!', dadosDaCompra);
-      this.snackBar.open('Compra finalizada com sucesso!', 'Fechar', { duration: 3000 });
-      this.router.navigate(['/compra/sucesso']);
-    } else {
-      this.snackBar.open('Verifique os itens do carrinho. Existem campos inválidos.', 'Fechar', { duration: 3000 });
-      console.error('Formulário inválido', this.shoppingForm.errors);
+    if (!this.shoppingForm.valid) {
+      this.snackBar.open(
+        'Existem itens inválidos no carrinho.',
+        'Fechar',
+        { duration: 3000 }
+      );
+      return;
     }
+
+    const itensSelecionados = this.shoppingForm.value.items.filter(
+      (item: ItemCompraForm) => item.estaNoCarrinho
+    );
+
+    console.log('Compra finalizada:', itensSelecionados);
+
+    this.snackBar.open(
+      'Compra finalizada com sucesso!',
+      'Fechar',
+      { duration: 3000 }
+    );
+
+    this.router.navigate(['/compra/sucesso']);
   }
 
-  ngOnDestroy(): void {
-    this.subscriptions.unsubscribe();
+  // =======================
+  // Utils
+  // =======================
+
+  private handleError(message: string, error?: any): void {
+    console.error(message, error);
+    this.snackBar.open(message, 'Fechar', { duration: 3000 });
+    this.router.navigate(['/home']);
   }
 }

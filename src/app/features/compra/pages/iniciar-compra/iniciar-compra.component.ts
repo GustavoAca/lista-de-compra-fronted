@@ -1,18 +1,18 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin, of, Subscription, combineLatest, debounceTime, map, startWith, switchMap } from 'rxjs'; // Added forkJoin, of, switchMap
+import { Observable, forkJoin, of, Subscription, combineLatest, debounceTime, map, startWith, switchMap, tap, expand, takeWhile } from 'rxjs';
 import { ListaCompraService } from '@app/features/lista/services/lista-compra.service';
 import { ListaModel } from '@app/features/lista/models/lista.model';
-import { ItemLista } from '@app/features/lista/models/item.model'; // Import ItemLista
-import { ItemOferta } from '@app/features/lista/models/item-oferta.model'; // Import ItemOferta
+import { ItemListaModel } from '@app/features/lista/models/item-lista.model'; // Updated import
+import { ItemOferta } from '@app/features/lista/models/item-oferta.model';
 import { ItemCompra, ListaCompraDetalhada } from '@app/features/compra/models/item-compra.model';
-import { ItemOfertaService } from '@app/features/lista/services/item-oferta.service'; // Inject ItemOfertaService
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
 import { CompraItemComponent } from '../../components/compra-item/compra-item.component';
 import { LoadingSpinnerComponent } from '@app/shared/components/loading-spinner/loading-spinner.component';
+import { Page } from '@app/shared/pipes/page.model'; // Import Page
 
 // Angular Material Imports
 import { MatCardModule } from '@angular/material/card';
@@ -63,7 +63,6 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private listaCompraService: ListaCompraService,
-    private itemOfertaService: ItemOfertaService, // Inject ItemOfertaService
     private snackBar: MatSnackBar
   ) {
     this.shoppingForm = this.fb.group({
@@ -83,79 +82,14 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
   }
 
   loadShoppingList(id: string): void {
-    this.listaCompraService.getListaById(id).pipe(
-      switchMap((lista: ListaModel) => {
-        if (!lista || !lista.itensLista || lista.itensLista.length === 0) {
-          return of({ lista, enrichedItems: [] });
-        }
+    this._fetchListaAndItsItems(id).subscribe(
+      ({ lista, itemListaModels }: { lista: ListaModel, itemListaModels: ItemListaModel[] }) => {
+        const itensCompra = this._mapToItemCompra(lista, itemListaModels);
 
-        const itemOfertaObservables = lista.itensLista.map((itemLista: ItemLista) => { // Use ItemLista type here
-          if (itemLista.itemOfertaId) {
-            return this.itemOfertaService.getItemOfertaById(itemLista.itemOfertaId as string).pipe(
-              map(itemOferta => ({ itemLista, itemOferta }))
-            );
-          } else {
-            return of({ itemLista, itemOferta: undefined });
-          }
-        });
-        return forkJoin(itemOfertaObservables).pipe(
-          map(results => ({ lista, enrichedItems: results }))
-        );
-      })
-    ).subscribe(
-      ({ lista, enrichedItems }) => {
         this.listaDetalhes = {
           id: lista.id,
           nome: lista.nome,
-          itens: enrichedItems.map(res => {
-            const itemOferta = res.itemOferta;
-            const itemLista = res.itemLista;
-
-            if (!itemOferta) {
-              return {
-                id: itemLista.id,
-                listaCompraId: itemLista.listaCompraId,
-                itemOferta: {
-                  id: itemLista.itemOfertaId as string,
-                  dataInicioPromocao: '',
-                  dataFimPromocao: '',
-                  hasPromocaoAtiva: false,
-                  preco: 0,
-                  vendedor: { id: '', nome: 'Desconhecido' },
-                  item: { id: '', nome: 'Item Desconhecido', isAtivo: false }
-                },
-                quantidade: itemLista.quantidade,
-                nome: 'Item Desconhecido',
-                unidadeMedida: '',
-                observacao: '',
-                precoOriginal: 0,
-                vendedor: { id: '', nome: 'Desconhecido' },
-                estaNoCarrinho: false,
-                precoAtual: 0,
-                emOfertaNaLoja: false,
-                valorOferta: null,
-                valorOriginalNaLoja: null
-              } as ItemCompra;
-            }
-
-            return {
-              id: itemLista.id,
-              listaCompraId: itemLista.listaCompraId,
-              itemOferta: itemOferta,
-              quantidade: itemLista.quantidade,
-              nome: itemOferta.item.nome,
-              // unidadeMedida: itemOferta.item.unidadeMedida || '', // Removed as Item does not have this property
-              // observacao: itemOferta.item.observacao || '', // Removed as Item does not have this property
-              precoOriginal: itemOferta.preco,
-
-              vendedor: itemOferta.vendedor || { id: '', nome: 'Desconhecido' },
-              estaNoCarrinho: false,
-              precoAtual: itemOferta.preco,
-              emOfertaNaLoja: itemOferta.hasPromocaoAtiva,
-              valorOferta: itemOferta.hasPromocaoAtiva ? itemOferta.preco : null,
-              valorOriginalNaLoja: itemOferta.preco
-            } as ItemCompra;
-          })
+          itens: itensCompra
         };
         this.buildForm(this.listaDetalhes.itens);
         this.setupTotalCalculation();
@@ -166,7 +100,61 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
         this.router.navigate(['/home']);
       }
     );
-  } // Added missing closing brace for loadShoppingList
+  }
+
+  private _fetchListaAndItsItems(id: string): Observable<{ lista: ListaModel, itemListaModels: ItemListaModel[] }> {
+    return this.listaCompraService.getListaById(id).pipe(
+      switchMap((lista: ListaModel) => {
+        // If lista is null/undefined or has no items, directly return an empty result for items
+        if (!lista) {
+          return of({ lista, itemListaModels: [] });
+        }
+        return this._fetchAllItemListaModels(id).pipe(
+          map(itemListaModels => ({ lista, itemListaModels }))
+        );
+      })
+    );
+  }
+
+  private _mapToItemCompra(lista: ListaModel, itemListaModels: ItemListaModel[]): ItemCompra[] {
+    return itemListaModels.map(itemLista => {
+      const itemOferta = itemLista.itemOferta;
+
+      return {
+        id: itemLista.id,
+        listaCompraId: itemLista.listaCompraId,
+        itemOferta: itemOferta,
+        quantidade: itemLista.quantidade,
+        nome: itemOferta.item?.nome || 'Nome Desconhecido',
+        // unidadeMedida: itemOferta.item.unidadeMedida || '', // Removed as Item does not have this property
+        // observacao: itemOferta.item.observacao || '', // Removed as Item does not have this property
+        precoOriginal: itemOferta.preco,
+
+        vendedor: itemOferta.vendedor || { id: '', nome: 'Desconhecido' },
+        estaNoCarrinho: false,
+        precoAtual: itemOferta.preco,
+        emOfertaNaLoja: itemOferta.hasPromocaoAtiva,
+        valorOferta: itemOferta.hasPromocaoAtiva ? itemOferta.preco : null,
+        valorOriginalNaLoja: itemOferta.preco
+      } as ItemCompra;
+    });
+  }
+
+  // New private method to fetch all items for a given list, handling pagination
+  private _fetchAllItemListaModels(listaId: string): Observable<ItemListaModel[]> {
+    let allItems: ItemListaModel[] = [];
+    let currentPage = 0;
+
+    return this.listaCompraService.getItensPorLista(listaId, currentPage, 10).pipe( // Assuming page size of 10
+      tap((page: Page<ItemListaModel>) => {
+        allItems = allItems.concat(page.content);
+        currentPage++;
+      }),
+      expand((page: Page<ItemListaModel>) => page.last ? of() : this.listaCompraService.getItensPorLista(listaId, currentPage, 10)),
+      takeWhile((page: Page<ItemListaModel>) => !page.last, true), // Include the last page in the result stream
+      map(() => allItems) // Once all pages are fetched, emit the accumulated items
+    );
+  }
 
   buildForm(items: ItemCompra[]): void {
     items.forEach(item => {

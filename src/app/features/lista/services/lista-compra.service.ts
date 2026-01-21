@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ListaModel } from '../models/lista.model'; // Updated import
@@ -10,6 +10,7 @@ import {
   ListaCompraCriacao,
 } from '../models/lista-compra-dto.model';
 import { ConcluirListaRequestDTO } from '@app/features/compra/models/concluir-lista-request.dto';
+import { API_CONTEXT } from '../../../core/interceptors/api-context';
 
 @Injectable({
   providedIn: 'root',
@@ -28,13 +29,14 @@ export class ListaCompraService {
         page,
         size,
       },
+      context: new HttpContext().set(API_CONTEXT, 'list'),
     });
   }
 
   getItensPorLista(
     listaId: string,
     page = 0,
-    size = 10,
+    size = 10
   ): Observable<Page<ItemListaModel>> {
     const url = `${this.apiPath}/${listaId}/itens`;
     return this.http.get<Page<ItemListaModel>>(url, {
@@ -42,38 +44,49 @@ export class ListaCompraService {
         page,
         size,
       },
+      context: new HttpContext().set(API_CONTEXT, 'list'),
     });
   }
 
   getListaById(listaId: string): Observable<ListaModel> {
     // Updated return type
     const url = `${this.apiPath}/${listaId}`;
-    return this.http.get<ListaModel>(url);
+    return this.http.get<ListaModel>(url, {
+      context: new HttpContext().set(API_CONTEXT, 'list'),
+    });
   }
 
   adicionarItensALista(
     listaId: string,
-    itensParaAdicionar: { itemOfertaId: string; quantidade: number }[],
+    itensParaAdicionar: { itemOfertaId: string; quantidade: number }[]
   ): Observable<any> {
     const url = `${this.apiPath}/${listaId}/adicionar-itens`;
-    return this.http.post(url, itensParaAdicionar);
+    return this.http.post(url, itensParaAdicionar, {
+      context: new HttpContext().set(API_CONTEXT, 'list'),
+    });
   }
 
   alterarItens(
     listaId: string,
-    itensAlterados: ItemAlterado[],
+    itensAlterados: ItemAlterado[]
   ): Observable<any> {
     const url = `${this.apiPath}/${listaId}/alterar-itens`;
-    return this.http.put(url, itensAlterados);
+    return this.http.put(url, itensAlterados, {
+      context: new HttpContext().set(API_CONTEXT, 'list'),
+    });
   }
 
   criarLista(listaCompraDTO: ListaCompraCriacao): Observable<any> {
     console.table(listaCompraDTO);
-    return this.http.post(this.apiPath, listaCompraDTO);
+    return this.http.post(this.apiPath, listaCompraDTO, {
+      context: new HttpContext().set(API_CONTEXT, 'list'),
+    });
   }
 
   concluirCompra(dto: ConcluirListaRequestDTO): Observable<void> {
     const url = `${this.apiPath}/concluir`;
-    return this.http.put<void>(url, dto);
+    return this.http.put<void>(url, dto, {
+      context: new HttpContext().set(API_CONTEXT, 'list'),
+    });
   }
 }

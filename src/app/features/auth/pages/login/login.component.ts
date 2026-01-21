@@ -70,11 +70,11 @@ export class LoginComponent {
   }
 
   loginComGoogle(): void {
-    window.location.href = `${environment.apiUrl}/oauth/google`;
+    window.location.href = `${environment.securityApiUrl}/oauth/google`;
   }
 
   loginComGithub(): void {
-    window.location.href = `${environment.apiUrl}/oauth/github`;
+    window.location.href = `${environment.securityApiUrl}/oauth/github`;
   }
 
   onAlertClosed(): void {

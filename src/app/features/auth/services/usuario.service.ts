@@ -1,11 +1,12 @@
 import { SessionTimeoutService } from './../../../core/services/session-timeout.service';
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { LoginRequest, LoginResponse } from '../models/login.model';
 import { Router } from '@angular/router';
 import { JwtHelperService } from '@auth0/angular-jwt';
 import { DecodedToken } from '../models/decodedToken.model';
+import { API_CONTEXT } from '../../../core/interceptors/api-context';
 
 @Injectable({
   providedIn: 'root',
@@ -21,24 +22,36 @@ export class UsuarioService {
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
     const url = `${this.authApiPath}/login`;
-    return this.http.post<LoginResponse>(url, credentials).pipe(
-      tap((response) => {
-        this.sessionTimeoutService.setExpirationTime(response.expiresIn);
-        this.decodeAndStoreToken(response.accessToken, response.refreshToken);
-        this.sessionTimeoutService.startTokenExpirationTimer();
+    return this.http
+      .post<LoginResponse>(url, credentials, {
+        context: new HttpContext().set(API_CONTEXT, 'security'),
       })
-    );
+      .pipe(
+        tap((response) => {
+          this.sessionTimeoutService.setExpirationTime(response.expiresIn);
+          this.decodeAndStoreToken(response.accessToken, response.refreshToken);
+          this.sessionTimeoutService.startTokenExpirationTimer();
+        })
+      );
   }
 
   refreshToken(refreshToken: string): Observable<LoginResponse> {
     const url = `${this.authApiPath}/atualizar-token`;
-    return this.http.post<LoginResponse>(url, { refreshToken }).pipe(
-      tap((response) => {
-        this.sessionTimeoutService.setExpirationTime(response.expiresIn);
-        this.decodeAndStoreToken(response.accessToken, response.refreshToken);
-        this.sessionTimeoutService.startTokenExpirationTimer();
-      })
-    );
+    return this.http
+      .post<LoginResponse>(
+        url,
+        { refreshToken },
+        {
+          context: new HttpContext().set(API_CONTEXT, 'security'),
+        }
+      )
+      .pipe(
+        tap((response) => {
+          this.sessionTimeoutService.setExpirationTime(response.expiresIn);
+          this.decodeAndStoreToken(response.accessToken, response.refreshToken);
+          this.sessionTimeoutService.startTokenExpirationTimer();
+        })
+      );
   }
 
   logout(): void {

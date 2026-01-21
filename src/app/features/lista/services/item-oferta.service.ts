@@ -1,8 +1,9 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Page } from '../../../shared/pipes/page.model'; // Corrected path
 import { ItemOferta } from '../models/item-oferta.model'; // Adjust path
+import { API_CONTEXT } from '../../../core/interceptors/api-context';
 
 @Injectable({
   providedIn: 'root',
@@ -24,17 +25,22 @@ export class ItemOfertaService {
         page,
         size,
       },
+      context: new HttpContext().set(API_CONTEXT, 'list'),
     });
   }
 
   getItensOfertaByIds(ids: string[]): Observable<ItemOferta[]> {
     const url = `${this.itemOfertasApiPath}/buscar-por-ids`;
-    return this.http.post<ItemOferta[]>(url, ids);
+    return this.http.post<ItemOferta[]>(url, ids, {
+      context: new HttpContext().set(API_CONTEXT, 'list'),
+    });
   }
 
   getItemOfertaById(id: string): Observable<ItemOferta> {
     const url = `${this.itemOfertasApiPath}/${id}`;
-    return this.http.get<ItemOferta>(url);
+    return this.http.get<ItemOferta>(url, {
+      context: new HttpContext().set(API_CONTEXT, 'list'),
+    });
   }
 }
 

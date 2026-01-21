@@ -1,8 +1,9 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Page } from '../../../shared/pipes/page.model'; // Corrected path
 import { VendedorModel } from '../models/vendedor.model'; // Updated import
+import { API_CONTEXT } from '../../../core/interceptors/api-context';
 
 @Injectable({
   providedIn: 'root',
@@ -21,13 +22,14 @@ export class VendedorService {
         page,
         size,
       },
+      context: new HttpContext().set(API_CONTEXT, 'list'),
     });
   }
 
   getVendedoresByName(
     nome: string,
     page = 0,
-    size = 20,
+    size = 20
   ): Observable<Page<VendedorModel>> {
     return this.http.get<Page<VendedorModel>>(
       `${this.vendedoresApiPath}/buscar-por-nome`,
@@ -37,7 +39,8 @@ export class VendedorService {
           page,
           size,
         },
-      },
+        context: new HttpContext().set(API_CONTEXT, 'list'),
+      }
     );
   }
 }

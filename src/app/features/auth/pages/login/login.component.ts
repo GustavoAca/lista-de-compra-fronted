@@ -1,5 +1,3 @@
-import { LoadingSpinnerComponent } from './../../../../shared/components/loading-spinner/loading-spinner.component';
-import { environment } from './../../../../../environments/environment';
 import { Component, inject } from '@angular/core';
 import {
   FormBuilder,
@@ -11,7 +9,13 @@ import { CommonModule } from '@angular/common';
 import { UsuarioService } from '../../services/usuario.service';
 import { LoginRequest } from '../../models/login.model';
 import { Router } from '@angular/router';
-import { AlertMessageComponent } from '../../../../shared/components/alert-message/alert-message.component';
+import { OauthService } from '../../services/oauth.service';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-login',
@@ -19,8 +23,12 @@ import { AlertMessageComponent } from '../../../../shared/components/alert-messa
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    LoadingSpinnerComponent,
-    AlertMessageComponent,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
@@ -29,10 +37,11 @@ export class LoginComponent {
   loginForm: FormGroup;
   private fb = inject(FormBuilder);
   private usuarioService = inject(UsuarioService);
+  private oauthService = inject(OauthService);
   private router = inject(Router);
   loading: boolean = false;
-  mensagemErro: string = '';
-  deveExibirMensagem: boolean = false;
+  error: string = '';
+  hidePassword = true;
 
   constructor() {
     var token = localStorage.getItem('access_token');
@@ -41,15 +50,16 @@ export class LoginComponent {
       this.router.navigate(['/home']);
     }
     this.loginForm = this.fb.group({
-      username: ['', Validators.email],
-      password: ['', Validators.required],
+      username: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(4)]],
     });
   }
 
   onSubmit(): void {
     if (this.loginForm.valid) {
-      const credentials: LoginRequest = this.loginForm.value as LoginRequest;
       this.loading = true;
+      this.error = '';
+      const credentials: LoginRequest = this.loginForm.value as LoginRequest;
       this.usuarioService.login(credentials).subscribe({
         next: (response) => {
           localStorage.setItem('access_token', response.accessToken);
@@ -58,27 +68,22 @@ export class LoginComponent {
         },
         error: (err) => {
           this.loading = false;
-          this.deveExibirMensagem = true;
-          this.mensagemErro = err.error?.detail;
+          this.error = err.error?.detail || 'Email ou senha inválidos';
         },
         complete: () => {
           this.loading = false;
         },
       });
-    } else {
     }
   }
 
-  loginComGoogle(): void {
-    window.location.href = `${environment.securityApiUrl}/oauth/google`;
+  loginWithGoogle(): void {
+    this.loading = true;
+    this.oauthService.autenticarGoogle('google');
   }
 
-  loginComGithub(): void {
-    window.location.href = `${environment.securityApiUrl}/oauth/github`;
-  }
-
-  onAlertClosed(): void {
-    this.deveExibirMensagem = false;
-    this.mensagemErro = '';
+  loginWithGithub(): void {
+    this.loading = true;
+    this.oauthService.autenticarGithub('github');
   }
 }

@@ -5,6 +5,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { environment } from './../../../../../environments/environment';
 import { CommonModule } from '@angular/common';
 import { UsuarioService } from '../../services/usuario.service';
 import { LoginRequest } from '../../models/login.model';
@@ -79,11 +80,11 @@ export class LoginComponent {
 
   loginWithGoogle(): void {
     this.loading = true;
-    this.oauthService.autenticarGoogle('google');
+    window.location.href = `${environment.securityApiUrl}/oauth/google`;
   }
 
   loginWithGithub(): void {
     this.loading = true;
-    this.oauthService.autenticarGithub('github');
+    window.location.href = `${environment.securityApiUrl}/oauth/github`;
   }
 }

@@ -29,7 +29,7 @@
     </ng-container>
   </div>
 
-  <button mat-fab color="primary" (click)="createList()" class="fab-create-list">
+  <button *ngIf="!loading && lists.length !== 0" mat-fab color="primary" (click)="createList()" class="fab-create-list">
     <mat-icon>add</mat-icon>
   </button>
 </div>

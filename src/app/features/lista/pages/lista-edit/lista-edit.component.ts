@@ -478,11 +478,9 @@ export class ListaEditComponent implements OnInit, OnDestroy {
 
   saveList(): void {
     this.listaForm.markAllAsTouched(); // Trigger validation
-    if (this.listaForm.invalid || this.itensLista.length === 0) {
-      this.showError(
-        'Verifique os campos obrigatórios e adicione itens à lista.',
-        'error',
-      );
+    // Only validate 'nome' as 'vendedorId' might not be directly manageable from UI for existing lists
+    if (this.listaForm.get('nome')?.invalid || this.itensLista.length === 0) {
+      this.showError('Verifique o nome da lista e adicione itens à lista.', 'error');
       return;
     }
 
@@ -491,13 +489,29 @@ export class ListaEditComponent implements OnInit, OnDestroy {
     const updatedLista: ListaModel = {
       ...this.lista, // Keep existing properties
       nome: this.listaForm.get('nome')?.value,
-      vendedor: this.listaForm.get('vendedor')?.value, // Assuming vendor can be updated
+      // vendedor: this.listaForm.get('vendedor')?.value, // Removed vendor update
       // If vendorId is different, update here
       // id: this.listaId, // Ensure ID is passed
       // version: this.lista.version, // Ensure version is passed for optimistic locking
     };
 
-    this.router.navigate(['/home']);
+    // First, update the list details (only name now)
+    this.listaCompraService.atualizarLista(updatedLista).pipe(
+      // Then, if there are pending item quantity changes, persist them
+      switchMap(() => this.persistPendingChanges().pipe(
+        tap(() => {
+          this.loadingInitial = false;
+          this.showError('Lista e alterações salvas com sucesso!', 'success');
+          // Optionally navigate back or refresh here
+          this.router.navigate(['/home']);
+        })
+      ))
+    ).subscribe({
+      error: (err: any) => {
+        this.loadingInitial = false;
+        this.showError(err.error?.detail || 'Erro ao salvar a lista.');
+      }
+    });
   }
 
   // =========================

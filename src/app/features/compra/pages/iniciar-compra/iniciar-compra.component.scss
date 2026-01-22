@@ -1,86 +1,326 @@
 /* src/app/features/compra/pages/iniciar-compra/iniciar-compra.component.scss */
 .iniciar-compra-container {
-  padding: 16px; // Reduced padding for better mobile fit
-  margin: 16px auto; // Reduced margin for better mobile fit
-  max-width: 100%; // Default to full width for smaller screens
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f5f5f5; // Light background for the page
+}
 
-  @media (min-width: 768px) {
-    // Apply max-width for larger screens
-    max-width: 900px;
-  }
+.item-main-row {
+  display: flex;
+  align-items: center;
+  gap: 8px; // espaço exato entre checkbox e texto
+}
 
-  mat-card {
-    box-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.2),
-      0px 4px 5px 0px rgba(0, 0, 0, 0.14),
-      0px 1px 10px 0px rgba(0, 0, 0, 0.12); // Elevated card shadow
-  }
+.item-checkbox {
+  margin: 0; // remove espaçamentos extras do Angular Material
+}
 
-  mat-card-title {
+.item-name {
+  margin: 0; // evita quebra ou desalinhamento
+  line-height: 1.2;
+}
+
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background-color: var(--mdc-filled-button-container-color); // Use primary color from theme
+    color: black;
+  box-shadow: 0px 2px 4px -1px rgba(0, 0, 0, 0.2),
+              0px 4px 5px 0px rgba(0, 0, 0, 0.14),
+              0px 1px 10px 0px rgba(0, 0, 0, 0.12); // Elevated header
+
+  .header-content {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 1.5rem; // Larger title for full page
+    flex-direction: column;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.5rem;
     font-weight: 500;
   }
 
-  mat-card-subtitle {
-    font-size: 0.9rem;
-    color: #616161;
+  .subtitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    opacity: 0.8;
+    margin: 4px 0 0;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  button {
+    color: white; // Icon button color
+  }
+}
+
+.page-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto; // Allow content to scroll if it overflows
+  max-width: 900px; // Max width for content on larger screens
+  margin: 0 auto; // Center content
+  width: 100%; // Full width on smaller screens
+  box-sizing: border-box; // Include padding in width
+}
+
+.items-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); // Responsive grid
+  gap: 20px;
+}
+
+.item-card {
+  transition: box-shadow 0.3s ease-in-out;
+  &.checked {
+    background-color: #e8f5e9; // Light green for checked items
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); // Slightly more prominent shadow
+  }
+}
+
+.item-layout {
+  display: flex;
+  padding: 16px; // Padding inside the card
+  gap: 16px;
+}
+
+.item-checkbox {
+  // Styles for the checkbox if needed
+  margin-top: 4px; // Align checkbox with item header
+}
+
+.item-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; // Align top of name and controls
+  margin-bottom: 8px;
+}
+
+.item-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-grow: 1;
+}
+
+h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 500;
+  &.strikethrough {
+    text-decoration: line-through;
+    color: #9e9e9e;
+  }
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px; // Smaller gap for quantity controls
+  margin-left: 16px; // Space from item name
+  flex-shrink: 0; // Don't shrink when space is tight
+
+  .qty-button {
+    height: 32px;
+    width: 32px;
+    line-height: 32px;
+    font-size: 18px; // Icon size
+  }
+
+  .quantity {
+    min-width: 30px; // Ensure quantity display has enough space
+    text-align: center;
+    font-weight: 500;
+  }
+}
+
+.sale-chip {
+  cursor: pointer;
+  // Custom styling for chip if needed
+  mat-chip {
+    // Override default mat-chip styles if necessary
+  }
+}
+
+.price-section {
+  margin-top: 16px;
+  border-top: 1px solid #eee; // Separator for price section
+  padding-top: 16px;
+}
+
+.price-row, .subtotal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.label {
+  color: #616161;
+  font-size: 0.9rem;
+}
+
+.price {
+  font-weight: 500;
+  &.line-through {
+    text-decoration: line-through;
+    color: #9e9e9e;
+  }
+}
+
+.price-input {
+  width: 100%;
+  margin-top: 8px;
+  margin-bottom: 16px; // Space before divider
+}
+
+.subtotal-value {
+  text-align: right;
+  strong {
+    font-size: 1.1rem;
+    color: var(--mdc-theme-primary); // Primary color for subtotal
+  }
+  .savings-text {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    font-size: 0.85rem;
+    color: #2e7d32; // Green for savings
+    margin-top: 4px;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      margin-right: 4px;
+    }
+  }
+}
+
+mat-divider {
+  margin: 16px 0;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 16px;
+  color: #9e9e9e;
+
+  mat-icon {
+    font-size: 80px;
+    width: 80px;
+    height: 80px;
+    margin-bottom: 16px;
+  }
+
+  h2 {
+    margin: 0 0 8px;
+    font-size: 1.5rem;
+  }
+
+  p {
+    font-size: 1rem;
+  }
+}
+
+.page-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background-color: white; // White background for footer
+  border-top: 1px solid #eee;
+  box-shadow: 0px -2px 4px -1px rgba(0, 0, 0, 0.1); // Shadow above footer
+  position: sticky; // Make footer stick to bottom
+  bottom: 0;
+  z-index: 10;
+
+  .totals-summary {
+    display: flex;
+    flex-direction: column;
+    p {
+      margin: 0;
+      font-size: 1rem;
+      strong {
+        font-size: 1.1rem;
+        color: var(--mdc-theme-primary);
+      }
+    }
+    .savings-total {
+      font-size: 0.9rem;
+      color: #2e7d32;
+    }
+  }
+
+  .finish-button {
+    min-width: 150px;
+    height: 48px;
+    font-size: 1.1rem;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .page-header, .page-footer {
+    padding: 12px 16px;
+  }
+
+  .page-content {
+    padding: 16px;
   }
 
   .items-list {
-    display: flex;
+    grid-template-columns: 1fr; // Single column on small screens
+  }
+
+  .item-layout {
     flex-direction: column;
-    gap: 16px;
-    margin-top: 20px;
+    align-items: flex-start;
   }
 
-  .total-section {
-    margin-top: 30px;
-    padding-top: 15px;
-    border-top: 1px solid #eee;
-    text-align: right;
-
-    h3 {
-      font-size: 1.5rem;
-      color: var(--primary-color, #3f51b5);
-      margin: 0; // Remove default margin
-    }
+  .item-checkbox {
+    margin-bottom: 8px;
   }
 
-  mat-card-actions {
-    margin-top: 20px;
-    display: flex;
-    justify-content: flex-end;
+  .item-details {
+    width: 100%; // Full width on small screens
+  }
+
+  .item-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .quantity-controls {
+    margin-left: 0;
+    margin-top: 8px;
+  }
+
+  .sale-chip {
+    margin-top: 8px;
+  }
+
+  .page-footer {
+    flex-direction: column;
     gap: 10px;
-  }
-
-  .empty-shopping-list {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    text-align: center;
-    color: #757575;
-
-    mat-icon {
-      font-size: 72px;
-      height: 72px;
-      width: 72px;
-      color: #9e9e9e;
-      margin-bottom: 20px;
-    }
-
-    h2 {
-      font-size: 1.8rem;
-      margin-bottom: 10px;
-      color: #424242;
-    }
-
-    p {
-      font-size: 1rem;
-      line-height: 1.5;
+    .finish-button {
+      width: 100%;
     }
   }
 }

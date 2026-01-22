@@ -16,7 +16,6 @@ export class VendedorService {
   constructor() {}
 
   getVendedores(page = 0, size = 20): Observable<Page<VendedorModel>> {
-    // Updated type
     return this.http.get<Page<VendedorModel>>(this.vendedoresApiPath, {
       params: {
         page,

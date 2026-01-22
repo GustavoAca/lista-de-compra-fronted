@@ -15,4 +15,6 @@ export interface ListaModel {
   itensLista: ItemLista[];
   version: number;
   statusLista: StatusLista;
+  createdDate: Date;
+  modifiedDate: Date;
 }

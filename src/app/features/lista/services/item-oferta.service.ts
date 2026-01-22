@@ -17,7 +17,7 @@ export class ItemOfertaService {
   getItemOfertasByVendedor(
     vendedorId: string,
     page = 0,
-    size = 10
+    size = 20
   ): Observable<Page<ItemOferta>> {
     const url = `${this.itemOfertasApiPath}/vendedor/${vendedorId}`;
     return this.http.get<Page<ItemOferta>>(url, {

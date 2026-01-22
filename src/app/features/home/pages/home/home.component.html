@@ -1,13 +1,35 @@
 <div class="home-container">
-  <h1>Bem-vindo à sua Lista de Compras!</h1>
-  <p>Aqui você poderá gerenciar suas compras de forma fácil e rápida.</p>
-
-  <div class="lists-summary">
-    <h2>Suas Listas</h2>
-    <app-lista-card-grid></app-lista-card-grid>
+  <div class="content">
+     <div *ngIf="loading && lists.length === 0" class="loading-state">
+    <mat-spinner></mat-spinner>
   </div>
 
-  <button mat-fab color="primary" [routerLink]="['/lista/criar']" class="fab-create-list">
+    <ng-container *ngIf="!loading">
+      <div *ngIf="!loading && lists.length === 0" class="empty-state">
+    <mat-icon class="empty-icon">shopping_cart</mat-icon>
+    <h2>Nenhuma lista criada</h2>
+    <p>Crie sua primeira lista de compras para começar</p>
+    <button mat-raised-button color="primary" (click)="createList()">
+      Criar primeira lista
+    </button>
+  </div>
+
+      <app-infinite-scroll
+    *ngIf="lists.length > 0"
+    [isLoading]="loadingItens"
+    [isLastPage]="isLastPage"
+    (scrolledToEnd)="loadLists()"
+  >
+    <app-lista-card-grid
+      [lists]="lists"
+      (editList)="editList($event)"
+      (startShopping)="startShopping($event)">
+    </app-lista-card-grid>
+  </app-infinite-scroll>
+    </ng-container>
+  </div>
+
+  <button mat-fab color="primary" (click)="createList()" class="fab-create-list">
     <mat-icon>add</mat-icon>
   </button>
 </div>

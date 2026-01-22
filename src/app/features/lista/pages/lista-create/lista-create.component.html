@@ -1,24 +1,22 @@
 <div class="lista-create-container">
-  <app-loading-spinner *ngIf="loading" size="md"></app-loading-spinner>
+  <mat-toolbar color="primary">
+    <button mat-icon-button [routerLink]="['/home']">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <span>Criar Nova Lista</span>
+  </mat-toolbar>
 
-  <app-alert-message
-    *ngIf="deveExibirMensagem"
-    [message]="mensagemErro"
-    type="error"
-    [autoClose]="true"
-    (closed)="onAlertClosed()"
-  ></app-alert-message>
+  <mat-progress-spinner
+    *ngIf="loading"
+    mode="indeterminate"
+    diameter="50"
+  ></mat-progress-spinner>
 
-  <button mat-icon-button [routerLink]="['/home']">
-    <mat-icon>arrow_back</mat-icon>
-  </button>
-
-  <div *ngIf="!loading && !deveExibirMensagem" class="lista-content">
-    <div class="list-header-flex">
-      <form [formGroup]="listaForm" class="list-name-form">
-
+  <mat-card *ngIf="!loading" class="lista-card">
+    <mat-card-content>
+      <form [formGroup]="listaForm" class="list-form">
         <!-- Nome da lista -->
-        <mat-form-field appearance="outline" class="list-name-input">
+        <mat-form-field appearance="outline" class="full-width">
           <mat-label>Nome da Lista</mat-label>
           <input
             matInput
@@ -31,7 +29,7 @@
         </mat-form-field>
 
         <!-- Autocomplete de vendedor -->
-        <mat-form-field appearance="outline" class="list-vendedor-input">
+        <mat-form-field appearance="outline" class="full-width">
           <mat-label>Vendedor</mat-label>
 
           <input
@@ -64,42 +62,47 @@
             O vendedor é obrigatório.
           </mat-error>
         </mat-form-field>
+
+        <span class="total-value-display">
+          Total: {{ totalListaValor | currency: 'BRL' }}
+        </span>
       </form>
 
-      <span class="total-value-display">
-        {{ totalListaValor | currency: 'BRL' }}
-      </span>
-    </div>
-
-    <!-- Lista de itens -->
-    <div *ngIf="itensLista.length > 0; else noItems" class="item-list-container">
-      <app-item-list-display
-        [items]="itensLista"
-        (quantityIncrement)="incrementarQuantidade($event)"
-        (quantityDecrement)="decrementarQuantidade($event)"
-        (itemRemove)="removerItem($event)"
-      ></app-item-list-display>
-
-      <div class="total-items-summary">
-        Total de Itens: {{ totalItens }}
+      <!-- Lista de itens -->
+      <div *ngIf="itensLista.length > 0; else noItems" class="item-list-section">
+        <h3>Itens da Lista ({{ totalItens }} itens)</h3>
+        <app-item-list-display
+          [items]="itensLista"
+          (quantityIncrement)="incrementarQuantidade($event)"
+          (quantityDecrement)="decrementarQuantidade($event)"
+          (itemRemove)="removerItem($event)"
+        ></app-item-list-display>
       </div>
 
-      <div class="create-list-actions">
-        <button
-          mat-flat-button
-          color="accent"
-          (click)="salvarLista()"
-          [disabled]="listaForm.invalid || itensLista.length === 0 || loading"
-        >
-          Criar Lista
-        </button>
-      </div>
-    </div>
+      <ng-template #noItems>
+        <div class="empty-items-state">
+          <mat-icon>add_shopping_cart</mat-icon>
+          <p>Adicione itens à sua nova lista!</p>
+        </div>
+      </ng-template>
 
-    <ng-template #noItems>
-      <p><i>Adicione itens à sua nova lista!</i></p>
-    </ng-template>
-  </div>
+      <div *ngIf="error" class="error-message">
+        <mat-icon>error</mat-icon>
+        {{ error }}
+      </div>
+    </mat-card-content>
+    <mat-card-actions class="card-actions">
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="salvarLista()"
+        [disabled]="listaForm.invalid || itensLista.length === 0 || loading"
+      >
+        <mat-icon>save</mat-icon>
+        Criar Lista
+      </button>
+    </mat-card-actions>
+  </mat-card>
 
   <button
     mat-fab

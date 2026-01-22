@@ -1,67 +1,30 @@
-<app-infinite-scroll
-  class="grid-container"
-  [isLoading]="loading"
-  [isLastPage]="isLastPage"
-  (scrolledToEnd)="loadNextPage()"
->
-  <!-- Loading inicial -->
-  <div *ngIf="loading && listas.length === 0" class="loading-container">
-    <app-loading-spinner size="lg"></app-loading-spinner>
-  </div>
+<div class="lists-grid">
+  <mat-card *ngFor="let list of lists" class="list-card" appearance="outlined">
+    <mat-card-header>
+      <mat-card-title>{{ list.nome }}</mat-card-title>
+      <mat-card-subtitle>
+        Atualizada em {{ formatDate(list.createdDate) }}
+      </mat-card-subtitle>
+    </mat-card-header>
 
-  <!-- Mensagem de erro -->
-  <app-alert-message
-    *ngIf="deveExibirMensagem"
-    (closed)="onAlertClosed()"
-    [message]="mensagemErro"
-    type="error"
-    [autoClose]="true"
-  >
-  </app-alert-message>
+    <mat-card-content>
+      <div class="list-info">
+        <div class="info-item total">
+          <mat-icon>attach_money</mat-icon>
+          <span>R$ {{ list.valorTotal.toFixed(2) }}</span>
+        </div>
+      </div>
+    </mat-card-content>
 
-  <!-- Conteúdo -->
-  <div *ngIf="listas.length > 0; else noLists">
-    <mat-accordion>
-      <mat-expansion-panel *ngFor="let lista of listas">
-        <mat-expansion-panel-header>
-          <mat-panel-title>
-            <strong>{{ lista.nome }}</strong>
-            <span>{{ lista.statusLista }} </span>
-          </mat-panel-title>
-
-          <mat-panel-description>
-            <span>{{ lista.totalItens }} itens</span>
-            <span class="total-value">
-              {{ lista.valorTotal | currency: "BRL" : "symbol" : "1.2-2" }}
-            </span>
-          </mat-panel-description>
-
-          <button
-            mat-icon-button
-            color="primary"
-            [routerLink]="['/compra/iniciar', lista.id]"
-            (click)="$event.stopPropagation()"
-          >
-            <mat-icon>shopping_cart</mat-icon>
-          </button>
-        </mat-expansion-panel-header>
-
-        <ng-template matExpansionPanelContent>
-          <app-lista-itens-view [lista]="lista"></app-lista-itens-view>
-        </ng-template>
-      </mat-expansion-panel>
-    </mat-accordion>
-  </div>
-
-  <!-- Estado vazio -->
-  <ng-template #noLists>
-    <div *ngIf="!loading" class="no-lists-message">
-      <p><i>Você ainda não tem nenhuma lista de compras.</i></p>
-    </div>
-  </ng-template>
-
-  <!-- Loading de scroll -->
-  <div *ngIf="loading && listas.length > 0" class="loading-more">
-    <app-loading-spinner size="sm"></app-loading-spinner>
-  </div>
-</app-infinite-scroll>
+    <mat-card-actions>
+      <button mat-button (click)="onEditList(list.id)">
+        <mat-icon>edit</mat-icon>
+        Editar
+      </button>
+      <button mat-raised-button color="primary" (click)="onStartShopping(list)">
+        <mat-icon>shopping_cart</mat-icon>
+        Iniciar Compra
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

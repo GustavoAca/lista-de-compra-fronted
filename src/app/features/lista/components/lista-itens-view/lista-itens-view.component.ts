@@ -6,11 +6,11 @@ import { LoadingSpinnerComponent } from '../../../../shared/components/loading-s
 import { AlertMessageComponent } from '../../../../shared/components/alert-message/alert-message.component';
 import { Page } from '../../../../shared/pipes/page.model';
 // MatPaginatorModule and PageEvent removed
-import { ListaModel } from '../../models/lista.model'; // Updated import
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { InfiniteScrollComponent } from '../../../../shared/components/infinite-scroll/infinite-scroll.component';
+import { ListaModel } from '../../models/lista.model';
 
 @Component({
   selector: 'app-lista-itens-view',

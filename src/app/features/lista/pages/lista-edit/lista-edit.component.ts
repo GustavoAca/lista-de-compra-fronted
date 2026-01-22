@@ -10,7 +10,7 @@ import { Subject, Subscription, Observable, of } from 'rxjs';
 import { debounceTime, switchMap, tap, expand, takeWhile, finalize } from 'rxjs/operators';
 
 import { ListaCompraService } from '../../services/lista-compra.service';
-import { ListaModel } from '../../models/lista.model'; // Updated from Lista
+import { ListaModel } from '../../models/lista.model';
 import { ItemListaModel } from '../../models/item-lista.model'; // Updated from ItemListaDTO
 import { ItemAlterado } from '../../models/item-alterado.model';
 

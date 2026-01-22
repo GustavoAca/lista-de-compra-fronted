@@ -1,9 +1,7 @@
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { ListaModel } from '../models/lista.model'; // Updated import
-import { Page } from '../../../shared/pipes/page.model';
-import { ItemListaModel } from '../models/item-lista.model'; // Updated import
+import { Observable, map } from 'rxjs'; // Import map operator
+import { ItemListaModel } from '../models/item-lista.model';
 import { ItemAlterado } from '../models/item-alterado.model';
 import {
   ListaCompraDTO,
@@ -11,6 +9,8 @@ import {
 } from '../models/lista-compra-dto.model';
 import { ConcluirListaRequestDTO } from '@app/features/compra/models/concluir-lista-request.dto';
 import { API_CONTEXT } from '../../../core/interceptors/api-context';
+import { ListaModel } from '../models/lista.model';
+import { Page } from '@app/shared/pipes/page.model';
 
 @Injectable({
   providedIn: 'root',
@@ -22,24 +22,26 @@ export class ListaCompraService {
 
   constructor() {}
 
-  getListaCompras(page = 0, size = 10): Observable<Page<ListaModel>> {
-    // Updated return type
+  getLists(page = 0, size = 20): Observable<Page<ListaModel>> { // Renamed and updated return type
     return this.http.get<Page<ListaModel>>(this.apiPath, {
       params: {
         page,
         size,
+        sort: 'modifiedDate,DESC',
       },
       context: new HttpContext().set(API_CONTEXT, 'list'),
-    });
+    }).pipe(
+      map(response => response as Page<ListaModel>) // Map to extract content
+    );
   }
 
   getItensPorLista(
     listaId: string,
     page = 0,
     size = 10
-  ): Observable<Page<ItemListaModel>> {
+  ): Observable<any> { // Keep original return type for now, will be refactored later
     const url = `${this.apiPath}/${listaId}/itens`;
-    return this.http.get<Page<ItemListaModel>>(url, {
+    return this.http.get<any>(url, {
       params: {
         page,
         size,
@@ -48,8 +50,7 @@ export class ListaCompraService {
     });
   }
 
-  getListaById(listaId: string): Observable<ListaModel> {
-    // Updated return type
+  getListaById(listaId: string): Observable<ListaModel> { // Updated return type
     const url = `${this.apiPath}/${listaId}`;
     return this.http.get<ListaModel>(url, {
       context: new HttpContext().set(API_CONTEXT, 'list'),

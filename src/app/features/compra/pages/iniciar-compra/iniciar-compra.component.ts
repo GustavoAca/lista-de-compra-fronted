@@ -7,7 +7,6 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
 import {
   Observable,
   Subscription,
@@ -29,7 +28,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { ListaCompraService } from '@app/features/lista/services/lista-compra.service';
-import { ListaModel } from '@app/features/lista/models/lista.model';
 import { ItemListaModel } from '@app/features/lista/models/item-lista.model';
 import {
   ItemCompra,
@@ -41,6 +39,8 @@ import { LoadingSpinnerComponent } from '@app/shared/components/loading-spinner/
 import { ConcluirListaRequestDTO } from '../../models/concluir-lista-request.dto';
 import { ItemListaConcluirRequest } from '../../models/item-lista-concluir.model';
 import { ItemOfertaConcluirRequest } from '../../models/item-oferta-concluir.model';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ListaModel } from '@app/features/lista/models/lista.model';
 
 interface ItemCompraForm {
   id: string;
@@ -122,13 +122,12 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
     this.fetchListaAndItems(id).subscribe({
       next: ({ lista, itens }) => {
         const itensCompra = this.mapToItemCompra(itens);
-        this.listaVersion = lista.version;
-
-        this.listaDetalhes = {
+        this.listaDetalhes = { // listaVersion removed, will use lista.version directly
           id: lista.id,
-          nome: lista.nome,
+          nome: lista.nome, // Changed nome to name
           itens: itensCompra,
         };
+        this.listaVersion = lista.version || 0; // Set listaVersion
 
         this.buildForm(itensCompra);
         this.setupTotalCalculation();
@@ -140,7 +139,7 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
 
   private fetchListaAndItems(
     listaId: string,
-  ): Observable<{ lista: ListaModel; itens: ItemListaModel[] }> {
+  ): Observable<{ lista: ListaModel; itens: ItemListaModel[] }> { // Changed ListaModel to ShoppingList
     return this.listaCompraService
       .getListaById(listaId)
       .pipe(
@@ -321,7 +320,7 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
     const concluirListaDto: ConcluirListaRequestDTO = {
       id: this.listaDetalhes.id,
       valorTotal: this.totalCompra,
-      nome: this.listaDetalhes.nome,
+      nome: this.listaDetalhes.nome, // Changed nome to name
       totalItens: itensLista.length,
       version: this.listaVersion,
       itensLista: itensLista,

@@ -16,13 +16,16 @@ import {
   switchMap,
 } from 'rxjs/operators';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog'; // Added MatDialogModule
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatCardModule } from '@angular/material/card';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { ListaCompraService } from '../../services/lista-compra.service';
 import { VendedorService } from '../../services/vendedor.service';
@@ -31,8 +34,6 @@ import { ItemListaModel } from '../../models/item-lista.model';
 import { ListaCompraCriacao } from '../../models/lista-compra-dto.model';
 import { emptyPage, Page } from '@app/shared/pipes/page.model';
 
-import { LoadingSpinnerComponent } from '@app/shared/components/loading-spinner/loading-spinner.component';
-import { AlertMessageComponent } from '@app/shared/components/alert-message/alert-message.component';
 import { ItemListDisplayComponent } from '../../components/item-list-display/item-list-display.component';
 import { AddItemsModalComponent } from '@app/shared/components/add-items-modal/add-items-modal.component';
 
@@ -48,22 +49,24 @@ import { AddItemsModalComponent } from '@app/shared/components/add-items-modal/a
     MatIconModule,
     MatFormFieldModule,
     MatInputModule,
-    LoadingSpinnerComponent,
-    AlertMessageComponent,
     ItemListDisplayComponent,
-    MatAutocompleteModule
+    MatAutocompleteModule,
+    MatToolbarModule,
+    MatCardModule,
+    MatProgressSpinnerModule,
+    MatSnackBarModule,
+    MatDialogModule, // Added MatDialogModule
   ],
   templateUrl: './lista-create.component.html',
   styleUrls: ['./lista-create.component.scss'],
 })
 export class ListaCreateComponent implements OnInit, OnDestroy {
   listaForm: FormGroup;
-  vendedores$!: Observable<Page<VendedorModel>>
+  vendedores$!: Observable<Page<VendedorModel>>;
   itensLista: ItemListaModel[] = [];
 
   loading = false;
-  deveExibirMensagem = false;
-  mensagemErro = '';
+  error = '';
   totalListaValor = 0;
   totalItens = 0;
 
@@ -94,10 +97,10 @@ export class ListaCreateComponent implements OnInit, OnDestroy {
       startWith(''),
       debounceTime(300),
       distinctUntilChanged(),
-      filter(value => typeof value === 'string' || value === null),
+      filter((value) => typeof value === 'string' || value === null),
       switchMap((nome: string | null) => {
         if (!nome || nome.length < 2) {
-        return this.vendedorService.getVendedores();
+          return this.vendedorService.getVendedores();
         }
         return this.vendedorService.getVendedoresByName(nome);
       })
@@ -142,9 +145,9 @@ export class ListaCreateComponent implements OnInit, OnDestroy {
           this.listaForm.get('vendedor')?.disable();
         }
 
-        result.forEach(newItem => {
+        result.forEach((newItem) => {
           const existente = this.itensLista.find(
-            i => i.itemOferta.id === newItem.itemOferta.id
+            (i) => i.itemOferta.id === newItem.itemOferta.id
           );
 
           if (existente) {
@@ -174,7 +177,7 @@ export class ListaCreateComponent implements OnInit, OnDestroy {
   }
 
   removerItem(item: ItemListaModel): void {
-    this.itensLista = this.itensLista.filter(i => i.tempId !== item.tempId);
+    this.itensLista = this.itensLista.filter((i) => i.tempId !== item.tempId);
     this.calcularTotais();
 
     if (this.itensLista.length === 0) {
@@ -208,7 +211,7 @@ export class ListaCreateComponent implements OnInit, OnDestroy {
     const payload: ListaCompraCriacao = {
       nome: this.listaForm.get('nome')!.value,
       valorTotal: this.totalListaValor,
-      itensLista: this.itensLista.map(i => ({
+      itensLista: this.itensLista.map((i) => ({
         itemOfertaId: i.itemOferta.id!,
         quantidade: i.quantidade,
       })),
@@ -223,18 +226,11 @@ export class ListaCreateComponent implements OnInit, OnDestroy {
         });
         this.router.navigate(['/home']);
       },
-      error: err => {
+      error: (err) => {
         this.loading = false;
-        this.deveExibirMensagem = true;
-        this.mensagemErro =
-          err.error?.detail || 'Erro ao criar lista.';
+        this.error = err.error?.detail || 'Erro ao criar lista.';
       },
     });
-  }
-
-  onAlertClosed(): void {
-    this.deveExibirMensagem = false;
-    this.mensagemErro = '';
   }
 
   ngOnDestroy(): void {

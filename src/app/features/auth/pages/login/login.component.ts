@@ -69,7 +69,7 @@ export class LoginComponent {
         },
         error: (err) => {
           this.loading = false;
-          this.error = err.error?.detail || 'Email ou senha inválidos';
+          this.error = err.error?.detail || 'Usuário ou senha inválidos'; // Changed error message
         },
         complete: () => {
           this.loading = false;

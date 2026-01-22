@@ -102,7 +102,7 @@ export class ListaCreateComponent implements OnInit, OnDestroy {
         if (!nome || nome.length < 2) {
           return this.vendedorService.getVendedores();
         }
-        return this.vendedorService.getVendedoresByName(nome);
+        return this.vendedorService.searchVendedores(nome, 0, 10);
       })
     );
   }

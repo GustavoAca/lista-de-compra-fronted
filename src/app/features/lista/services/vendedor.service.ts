@@ -25,7 +25,7 @@ export class VendedorService {
     });
   }
 
-  getVendedoresByName(
+  searchVendedores(
     nome: string,
     page = 0,
     size = 20

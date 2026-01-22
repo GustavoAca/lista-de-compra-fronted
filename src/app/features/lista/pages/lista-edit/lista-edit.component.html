@@ -1,50 +1,111 @@
 <div class="lista-edit-container">
+  <mat-toolbar color="primary" class="toolbar">
+    <button mat-icon-button (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <div class="toolbar-title">
+      <span>Editar Lista de Compras</span>
+      <p class="list-name">{{ listaForm.get('nome')?.value  }}</p>
+    </div>
+  </mat-toolbar>
+
   <app-loading-spinner *ngIf="loadingInitial" size="md"></app-loading-spinner>
 
   <app-alert-message
     (closed)="onAlertClosed()"
-    *ngIf="deveExibirMensagem"
-    [message]="mensagemErro"
+    *ngIf="!loadingInitial && error"
+    [message]="error"
     type="error"
     [autoClose]="true"
   >
   </app-alert-message>
 
-  <button mat-icon-button [routerLink]="['/home']">
-    <mat-icon>arrow_back</mat-icon>
-  </button>
 
-  <div
-    *ngIf="!loadingInitial && !deveExibirMensagem && lista"
-    class="lista-content"
-  >
-    <div class="list-header">
-      <h2>{{ lista.nome }}</h2>
-      <span class="total-value-display">
-        {{ totalListaValor | currency : "BRL" }}
-      </span>
-    </div>
+  <mat-card *ngIf="!loadingInitial && !error && lista" class="lista-card">
+    <mat-card-content>
+      <form [formGroup]="listaForm" class="list-form">
+        <!-- Nome da lista -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nome da Lista</mat-label>
+          <input
+            matInput
+            formControlName="nome"
+            placeholder="Ex: Compras do mês"
+          />
+          <mat-error *ngIf="listaForm.get('nome')?.hasError('required')">
+            O nome da lista é obrigatório.
+          </mat-error>
+        </mat-form-field>
 
-    <!-- ITENS DA LISTA -->
-    <ng-container *ngIf="itensPage && itensPage.content && itensPage.content.length > 0; else noItems">
-      <app-item-list-display
-        [items]="itensPage!.content"
-        [isEditMode]="true"
-        (quantityIncrement)="incrementarQuantidade($event)"
-        (quantityDecrement)="decrementarQuantidade($event)"
-      ></app-item-list-display>
+        <span class="total-value-display">
+          Total: {{ totalListaValor | currency: 'BRL' }}
+        </span>
+      </form>
 
-      <div class="total-items-summary">
-        Total de Itens na Lista: {{ itensPage.totalElements }}
+      <!-- Lista de itens -->
+      <div *ngIf="itensLista.length > 0; else noItems" class="item-list-section">
+        <h3>Itens da Lista ({{ itensLista.length }} itens)</h3>
+        <app-item-list-display
+          [items]="itensLista"
+          [isEditMode]="true"
+          (quantityIncrement)="incrementarQuantidade($event)"
+          (quantityDecrement)="decrementarQuantidade($event)"
+          (itemRemove)="removerItem($event)"
+        ></app-item-list-display>
       </div>
-    </ng-container>
 
-    <ng-template #noItems>
-      <p><i>Esta lista não possui itens. Adicione alguns!</i></p>
-    </ng-template>
+      <ng-template #noItems>
+        <div class="empty-items-state">
+          <mat-icon>add_shopping_cart</mat-icon>
+          <p>Esta lista não possui itens. Adicione alguns!</p>
+        </div>
+      </ng-template>
+
+      <div *ngIf="error" class="error-message">
+        <mat-icon>error</mat-icon>
+        {{ error }}
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Ações (com botão de excluir) -->
+  <div class="actions" *ngIf="!loadingInitial && !error && lista">
+    <button
+      mat-stroked-button
+      color="warn"
+      (click)="deleteList()"
+      [disabled]="loadingInitial"
+      type="button">
+      <mat-icon>delete</mat-icon>
+      Excluir Lista
+    </button>
+    <div class="spacer"></div>
+    <button
+      mat-button
+      type="button"
+      (click)="goBack()"
+      [disabled]="loadingInitial">
+      Cancelar
+    </button>
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="saveList()"
+      [disabled]="loadingInitial || listaForm.invalid || itensLista.length === 0"
+      type="button">
+      <mat-spinner *ngIf="loadingInitial" diameter="20"></mat-spinner>
+      <mat-icon *ngIf="!loadingInitial">check</mat-icon>
+      <span *ngIf="!loadingInitial">Salvar Alterações</span>
+    </button>
   </div>
 
-  <button mat-fab color="primary" class="fab-add-item" (click)="openAddItemsModal()">
+  <button
+    mat-fab
+    color="accent"
+    class="fab-add-item"
+    (click)="openAddItemsModal()"
+    [disabled]="loadingInitial"
+  >
     <mat-icon>add</mat-icon>
   </button>
 </div>

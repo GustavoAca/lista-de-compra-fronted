@@ -20,8 +20,7 @@ import { InfiniteScrollComponent } from '@app/shared/components/infinite-scroll/
     CommonModule,
     MatButtonModule,
     MatIconModule,
-    MatDialogModule,
-    MatProgressSpinnerModule, // Add MatProgressSpinnerModule
+    MatProgressSpinnerModule,
     ListaCardGridComponent,
     InfiniteScrollComponent
   ],
@@ -40,7 +39,6 @@ export class HomeComponent implements OnInit {
   isLastPage = false;
 
   private router = inject(Router);
-  private dialog = inject(MatDialog);
   private shoppingListService = inject(ListaCompraService); // Use original service name for injection
 
   ngOnInit(): void {
@@ -82,14 +80,8 @@ export class HomeComponent implements OnInit {
     this.router.navigate(['/lista/editar', id]);
   }
 
-  startShopping(list: ListaModel): void {
-    this.dialog.open(IniciarCompraComponent, {
-      width: '90vw',
-      maxWidth: '700px',
-      maxHeight: '90vh',
-      data: { list },
-      panelClass: 'shopping-modal',
-    });
+  iniciarCompra(list: ListaModel): void {
+    this.router.navigate(['/compra/iniciar', list.id]);
   }
 
   formatDate(date: Date): string {

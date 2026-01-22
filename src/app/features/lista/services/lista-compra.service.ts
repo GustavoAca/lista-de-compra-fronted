@@ -90,4 +90,26 @@ export class ListaCompraService {
       context: new HttpContext().set(API_CONTEXT, 'list'),
     });
   }
+
+  removerItemDaLista(listaId: string, itemListaId: string): Observable<void> {
+    const url = `${this.apiPath}/${listaId}/itens/${itemListaId}`;
+    return this.http.delete<void>(url, {
+      context: new HttpContext().set(API_CONTEXT, 'list'),
+    });
+  }
+
+  deletarLista(listaId: string): Observable<void> {
+    const url = `${this.apiPath}/${listaId}`;
+    return this.http.delete<void>(url, {
+      context: new HttpContext().set(API_CONTEXT, 'list'),
+    });
+  }
+
+  atualizarLista(lista: ListaModel): Observable<ListaModel> {
+    const url = `${this.apiPath}/${lista.id}`;
+    return this.http.put<ListaModel>(url, lista, {
+      context: new HttpContext().set(API_CONTEXT, 'list'),
+    });
+  }
 }
+

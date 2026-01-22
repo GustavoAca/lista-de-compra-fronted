@@ -17,7 +17,12 @@
       </div>
 
       <form [formGroup]="shoppingForm" *ngIf="listaDetalhes">
-        <div formArrayName="items" class="items-list">
+        <div *ngIf="listaDetalhes.itens.length === 0" class="empty-shopping-list">
+          <mat-icon>remove_shopping_cart</mat-icon>
+          <h2>Sua lista de compras está vazia!</h2>
+          <p>Adicione itens à sua lista antes de iniciar uma compra.</p>
+        </div>
+        <div formArrayName="items" class="items-list" *ngIf="listaDetalhes.itens.length > 0">
           <ng-container *ngFor="let itemFormGroup of itemsFormArray.controls; let i = index; trackBy: trackByItemId">
             <app-compra-item
               [itemForm]="getItemFormGroup(i)"
@@ -26,7 +31,7 @@
           </ng-container>
         </div>
 
-        <div class="total-section">
+        <div class="total-section" *ngIf="listaDetalhes.itens.length > 0">
           <h3>Total da Compra: {{ totalCompra | currency:'BRL':'symbol':'1.2-2' }}</h3>
         </div>
       </form>

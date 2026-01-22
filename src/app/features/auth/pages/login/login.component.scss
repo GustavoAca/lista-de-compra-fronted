@@ -10,6 +10,7 @@
 .login-card {
   max-width: 450px;
   width: 100%;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Added subtle shadow */
 }
 
 .login-header {
@@ -26,7 +27,7 @@
       width: 64px;
       height: 64px;
       font-size: 64px;
-      color: #1976d2;
+      color: #757575; /* Changed to a neutral grey */
     }
 
     h1 {

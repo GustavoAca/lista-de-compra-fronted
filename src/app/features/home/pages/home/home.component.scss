@@ -23,10 +23,6 @@
   gap: 16px;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 64px 16px;
-
   .empty-icon {
     font-size: 80px;
     width: 80px;
@@ -34,6 +30,10 @@
     color: #9e9e9e;
     margin: 0 auto 16px;
   }
+
+.empty-state {
+  text-align: center;
+  padding: 64px 16px;
 
   h2 {
     margin: 0 0 8px;

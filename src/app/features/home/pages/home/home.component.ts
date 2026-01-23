@@ -12,6 +12,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner'; /
 import { ListaModel } from '@app/features/lista/models/lista.model';
 import { Page } from '@app/shared/pipes/page.model';
 import { InfiniteScrollComponent } from '@app/shared/components/infinite-scroll/infinite-scroll.component';
+import { LoadingSpinnerComponent } from '@app/shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-home',
@@ -22,7 +23,8 @@ import { InfiniteScrollComponent } from '@app/shared/components/infinite-scroll/
     MatIconModule,
     MatProgressSpinnerModule,
     ListaCardGridComponent,
-    InfiniteScrollComponent
+    InfiniteScrollComponent,
+    LoadingSpinnerComponent,
   ],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
@@ -34,8 +36,7 @@ export class HomeComponent implements OnInit {
 
   page = 0;
 
-  loading = false;
-  loadingItens = false;
+  loadingLista = false;
   isLastPage = false;
 
   private router = inject(Router);
@@ -46,11 +47,11 @@ export class HomeComponent implements OnInit {
   }
 
   loadLists(): void {
-    if (this.loadingItens || this.isLastPage) {
+    if (this.loadingLista || this.isLastPage) {
       return;
     }
 
-    this.loadingItens = true;
+    this.loadingLista = true;
 
     this.shoppingListService.getLists(this.page).subscribe({
       next: (response) => {
@@ -62,12 +63,10 @@ export class HomeComponent implements OnInit {
 
         this.page++;
 
-        this.loadingItens = false;
-        this.loading = false;
+        this.loadingLista = false;
       },
       error: () => {
-        this.loadingItens = false;
-        this.loading = false;
+        this.loadingLista = false;
       },
     });
   }

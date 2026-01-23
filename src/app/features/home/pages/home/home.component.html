@@ -1,35 +1,43 @@
 <div class="home-container">
   <div class="content">
-     <div *ngIf="loading && lists.length === 0" class="loading-state">
-    <mat-spinner></mat-spinner>
-  </div>
+    <div *ngIf="loadingLista" class="loading-state">
+      <mat-icon class="empty-icon">shopping_cart</mat-icon>
+      <app-loading-spinner [type]="'bar'"></app-loading-spinner>
+    </div>
 
-    <ng-container *ngIf="!loading">
-      <div *ngIf="!loading && lists.length === 0" class="empty-state">
-    <mat-icon class="empty-icon">shopping_cart</mat-icon>
-    <h2>Nenhuma lista criada</h2>
-    <p>Crie sua primeira lista de compras para começar</p>
-    <button mat-raised-button color="primary" (click)="createList()">
-      Criar primeira lista
-    </button>
-  </div>
+    <ng-container *ngIf="!loadingLista">
+      <div *ngIf="!loadingLista && lists.length === 0" class="empty-state">
+        <mat-icon class="empty-icon">shopping_cart</mat-icon>
+        <h2>Nenhuma lista criada</h2>
+        <p>Crie sua primeira lista de compras para começar</p>
+        <button mat-raised-button color="primary" (click)="createList()">
+          Criar primeira lista
+        </button>
+      </div>
 
       <app-infinite-scroll
-    *ngIf="lists.length > 0"
-    [isLoading]="loadingItens"
-    [isLastPage]="isLastPage"
-    (scrolledToEnd)="loadLists()"
-  >
-    <app-lista-card-grid
-      [lists]="lists"
-      (editList)="editList($event)"
-      (startShopping)="iniciarCompra($event)">
-    </app-lista-card-grid>
-  </app-infinite-scroll>
+        *ngIf="lists.length > 0"
+        [isLoading]="loadingLista"
+        [isLastPage]="isLastPage"
+        (scrolledToEnd)="loadLists()"
+      >
+        <app-lista-card-grid
+          [lists]="lists"
+          (editList)="editList($event)"
+          (startShopping)="iniciarCompra($event)"
+        >
+        </app-lista-card-grid>
+      </app-infinite-scroll>
     </ng-container>
   </div>
 
-  <button *ngIf="!loading && lists.length !== 0" mat-fab color="primary" (click)="createList()" class="fab-create-list">
+  <button
+    *ngIf="!loadingLista && lists.length !== 0"
+    mat-fab
+    color="primary"
+    (click)="createList()"
+    class="fab-create-list"
+  >
     <mat-icon>add</mat-icon>
   </button>
 </div>

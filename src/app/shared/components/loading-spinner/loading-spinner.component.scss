@@ -8,3 +8,8 @@
 .spinner {
   display: block;
 }
+
+.progress-wrapper {
+  width: 50vw;          // 50% da largura da viewport
+  margin: 0 auto;       // centraliza horizontalmente
+}

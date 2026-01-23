@@ -387,7 +387,8 @@ export class ListaEditComponent implements OnInit, OnDestroy {
     }
 
     const dialogRef = this.dialog.open(AddItemsModalComponent, {
-      width: '800px',
+      width: '95vw',
+      maxWidth: '800px',
       data: {
         vendedorId,
         existingItems: this.itensLista.map((item) => ({

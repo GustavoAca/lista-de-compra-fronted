@@ -13,6 +13,7 @@ import { ListaModel } from '@app/features/lista/models/lista.model';
 import { Page } from '@app/shared/pipes/page.model';
 import { InfiniteScrollComponent } from '@app/shared/components/infinite-scroll/infinite-scroll.component';
 import { LoadingSpinnerComponent } from '@app/shared/components/loading-spinner/loading-spinner.component';
+import { FabButtonComponent } from '@app/shared/components/fab-button/fab-button.component';
 
 @Component({
   selector: 'app-home',
@@ -25,6 +26,7 @@ import { LoadingSpinnerComponent } from '@app/shared/components/loading-spinner/
     ListaCardGridComponent,
     InfiniteScrollComponent,
     LoadingSpinnerComponent,
+    FabButtonComponent,
   ],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],

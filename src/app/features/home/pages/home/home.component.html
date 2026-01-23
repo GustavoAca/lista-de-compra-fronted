@@ -31,13 +31,10 @@
     </ng-container>
   </div>
 
-  <button
+  <app-fab-button
     *ngIf="!loadingLista && lists.length !== 0"
-    mat-fab
-    color="primary"
-    (click)="createList()"
-    class="fab-create-list"
-  >
-    <mat-icon>add</mat-icon>
-  </button>
+    (fabClick)="createList()"
+    [icon]="'shopping_cart'"
+    [ariaLabel]="'Criar nova lista'">
+  </app-fab-button>
 </div>

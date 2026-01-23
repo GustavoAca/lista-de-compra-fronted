@@ -36,6 +36,7 @@ import { emptyPage, Page } from '@app/shared/pipes/page.model';
 
 import { ItemListDisplayComponent } from '../../components/item-list-display/item-list-display.component';
 import { AddItemsModalComponent } from '@app/shared/components/add-items-modal/add-items-modal.component';
+import { FabButtonComponent } from '@app/shared/components/fab-button/fab-button.component';
 
 @Component({
   selector: 'app-lista-create',
@@ -56,6 +57,7 @@ import { AddItemsModalComponent } from '@app/shared/components/add-items-modal/a
     MatProgressSpinnerModule,
     MatSnackBarModule,
     MatDialogModule, // Added MatDialogModule
+    FabButtonComponent
   ],
   templateUrl: './lista-create.component.html',
   styleUrls: ['./lista-create.component.scss'],

@@ -44,6 +44,7 @@ import { ItemListDisplayComponent } from '../../components/item-list-display/ite
 import { AddItemsModalComponent } from '../../../../shared/components/add-items-modal/add-items-modal.component';
 import { ItemOferta } from '../../models/item-oferta.model';
 import { ConfirmationDialogComponent } from '@app/shared/components/confirmation-dialog/confirmation-dialog.component'; // Import ConfirmationDialogComponent
+import { FabButtonComponent } from '@app/shared/components/fab-button/fab-button.component';
 
 @Component({
   selector: 'app-lista-edit',
@@ -64,6 +65,7 @@ import { ConfirmationDialogComponent } from '@app/shared/components/confirmation
     MatInputModule,
     MatAutocompleteModule,
     MatProgressSpinnerModule,
+    FabButtonComponent
   ],
   templateUrl: './lista-edit.component.html',
   styleUrl: './lista-edit.component.scss',

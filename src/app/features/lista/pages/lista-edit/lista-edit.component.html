@@ -94,13 +94,8 @@
     </div>
   </div>
 
-  <button
-    mat-fab
-    color="accent"
-    class="fab-add-item"
-    (click)="openAddItemsModal()"
-    [disabled]="loadingInitial"
-  >
-    <mat-icon>add</mat-icon>
-  </button>
+   <app-fab-button
+    (fabClick)="openAddItemsModal()"
+    [ariaLabel]="'Criar nova lista'">
+  </app-fab-button>
 </div>

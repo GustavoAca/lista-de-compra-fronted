@@ -16,7 +16,6 @@ import { MatInputModule } from '@angular/material/input'; // New
 import { ListaCompraService } from '@app/features/lista/services/lista-compra.service';
 import { ItemListaModel } from '@app/features/lista/models/item-lista.model';
 import { ListaModel } from '@app/features/lista/models/lista.model';
-import { ItemOferta } from '@app/features/lista/models/item-oferta.model'; // New
 import { ShoppingItem } from '../../models/shopping-item.model'; // New
 import { ItemAlterado } from '@app/features/lista/models/item-alterado.model'; // New
 import { ConcluirListaRequestDTO } from '../../models/concluir-lista-request.dto'; // New

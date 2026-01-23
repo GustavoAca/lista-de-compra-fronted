@@ -128,27 +128,66 @@
 
 /* ================= QUANTIDADE ================= */
 
+mat-icon {
+  height: 24px;
+  width: 24px;
+  line-height: 24px;
+  overflow: visible;
+}
+
 .quantity-controls {
   display: flex;
   align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
+  gap: 6px;
 
   .qty-button {
     width: 32px;
     height: 32px;
-    line-height: 32px;
-    font-size: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .quantity {
-    min-width: 30px;
-    text-align: center;
+    min-width: 42px;
+    height: 32px;
+    line-height: 32px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
     font-weight: 500;
+    font-size: 0.95rem;
+    text-align: center;
+  }
+
+  .qty-button mat-icon {
+    font-size: 20px;
+    line-height: normal; // importante para evitar corte
   }
 }
 
 /* ================= PREÇOS ================= */
+
+.price {
+  font-weight: 500;
+}
+
+.editable {
+  cursor: pointer;
+  border-bottom: 1px dashed transparent;
+}
+
+.editable:hover {
+  border-bottom-color: #999;
+}
+
+.price-input {
+  width: 110px;
+  text-align: right;
+  padding: 4px 6px;
+}
 
 .price-section {
   margin-top: 16px;
@@ -288,9 +327,9 @@ mat-divider {
 }
 
 .finish-button {
-  min-width: 180px;   // tamanho padrão de CTA
-  height: 48px;       // padrão Material
-  flex-shrink: 0;     // impede compressão
+  min-width: 180px; // tamanho padrão de CTA
+  height: 48px; // padrão Material
+  flex-shrink: 0; // impede compressão
 }
 
 /* ================= RESPONSIVO ================= */

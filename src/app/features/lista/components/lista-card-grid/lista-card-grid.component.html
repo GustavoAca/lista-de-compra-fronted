@@ -1,7 +1,16 @@
 <div class="lists-grid">
   <mat-card *ngFor="let list of lists" class="list-card" appearance="outlined">
     <mat-card-header>
-      <mat-card-title>{{ list.nome }}</mat-card-title>
+      <mat-card-title class="card-title-container">
+        <span>{{ list.nome }}</span>
+
+        <mat-icon
+          *ngIf="list.statusLista === 'FINALIZADA'"
+          class="status-icon"
+          color="primary"
+          >check_circle</mat-icon
+        >
+      </mat-card-title>
       <mat-card-subtitle>
         Atualizada em {{ formatDate(list.createdDate) }}
       </mat-card-subtitle>
@@ -10,21 +19,43 @@
     <mat-card-content>
       <div class="list-info">
         <div class="info-item total">
-          <mat-icon>attach_money</mat-icon>
-          <span>R$ {{ list.valorTotal.toFixed(2) }}</span>
+          R$
+          <span> {{ list.valorTotal.toFixed(2) }}</span>
         </div>
       </div>
     </mat-card-content>
 
     <mat-card-actions>
-      <button mat-button (click)="onEditList(list.id)">
+      <button
+        mat-button
+        *ngIf="list.statusLista !== 'FINALIZADA'"
+        (click)="onEditList(list.id)"
+      >
         <mat-icon>edit</mat-icon>
         Editar
       </button>
-      <button mat-raised-button color="primary" (click)="onStartShopping(list)">
-        <mat-icon>shopping_cart</mat-icon>
-        Iniciar Compra
-      </button>
+
+      <ng-container *ngIf="list.statusLista !== 'FINALIZADA'; else viewButton">
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="onStartShopping(list)"
+        >
+          <mat-icon>shopping_cart</mat-icon>
+          Iniciar Compra
+        </button>
+      </ng-container>
+
+      <ng-template #viewButton>
+        <button
+          mat-stroked-button
+          color="primary"
+          (click)="onViewPurchase(list.id)"
+        >
+          <mat-icon>visibility</mat-icon>
+          Visualizar Compra
+        </button>
+      </ng-template>
     </mat-card-actions>
   </mat-card>
 </div>

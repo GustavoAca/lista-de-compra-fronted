@@ -4,8 +4,8 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatExpansionModule } from '@angular/material/expansion';
-
 import { ListaModel } from '../../models/lista.model';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-lista-card-grid',
@@ -25,12 +25,19 @@ export class ListaCardGridComponent {
   @Output() editList = new EventEmitter<string>();
   @Output() startShopping = new EventEmitter<ListaModel>();
 
+  constructor(private router: Router) {}
+
   onEditList(id: string): void {
     this.editList.emit(id);
   }
 
   onStartShopping(list: ListaModel): void {
     this.startShopping.emit(list);
+  }
+
+  onViewPurchase(id: string): void {
+    //Navegar para uma futura página de visualização
+    //this.router.navigate(['/compras', 'visualizar', id]);
   }
 
   formatDate(date: Date): string {

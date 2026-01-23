@@ -2,9 +2,9 @@ import { ItemLista } from "./item.model";
 import { VendedorModel } from "./vendedor.model"; // Import VendedorModel
 
 enum StatusLista {
-  AGUARDANDO = 'Aguardando',
-  FINALIZADA = 'Finalizada',
-  CANCELADA = 'Cancelada'
+  AGUARDANDO = 'AGUARDANDO',
+  FINALIZADA = 'FINALIZADA',
+  CANCELADA = 'CANCELADA'
 }
 
 export interface ListaModel {

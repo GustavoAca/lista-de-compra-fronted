@@ -25,8 +25,41 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
+  mat-card-subtitle {
+    font-size: 0.75rem; // menor que o padrão
+    opacity: 0.7; // visual secundário
+    margin-top: 4px;
+    color: #757575;
+    letter-spacing: 0.02em;
+  }
+
   mat-card-header {
-    margin-bottom: 16px;
+    position: relative;
+    padding-right: 40px; // espaço para o ícone no canto
+
+    .status-icon {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+    }
+  }
+
+  .card-title-container {
+    display: flex;
+    justify-content: space-between; // 👈 empurra o ícone para a direita
+    align-items: center;
+    width: 100%;
+  }
+
+  .status-icon {
+    font-size: 20px;
+  }
+
+  .status-icon {
+    font-size: 20px;
   }
 
   .list-info {
@@ -69,16 +102,19 @@
   }
 
   mat-card-actions {
+    width: 100%;
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    box-sizing: border-box;
+    align-items: center;
+    justify-content: center; // 👈 centraliza o grupo de botões
+    gap: 12px;
 
     padding: 16px;
+    box-sizing: border-box;
 
     button {
-      min-width: 0;
-      flex: 1 1 auto;
+      flex: 0 0 auto; // 👈 não estica
+      min-width: 140px; // opcional, mantém padrão visual
     }
   }
 }
@@ -94,5 +130,3 @@
     grid-template-columns: 1fr;
   }
 }
-
-

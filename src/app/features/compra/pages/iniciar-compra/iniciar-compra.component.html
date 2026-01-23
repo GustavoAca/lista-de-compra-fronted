@@ -131,24 +131,26 @@
 
     <!-- Footer -->
     <div class="page-footer">
-      <div class="totals-summary">
-        <p>
-          Total ({{ checkedCount }} itens):
-          <strong>R$ {{ total.toFixed(2) }}</strong>
-        </p>
-        <p *ngIf="savings > 0" class="savings-total">
-          Economia total: <strong>R$ {{ savings.toFixed(2) }}</strong>
-        </p>
+      <div class="footer-content">
+        <div class="totals-summary">
+          <p>
+            Total ({{ checkedCount }} itens):
+            <strong>R$ {{ total.toFixed(2) }}</strong>
+          </p>
+          <p *ngIf="savings > 0" class="savings-total">
+            Economia total: <strong>R$ {{ savings.toFixed(2) }}</strong>
+          </p>
+        </div>
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="finishShopping()"
+          [disabled]="checkedCount === 0"
+          class="finish-button"
+        >
+          Finalizar Compra
+        </button>
       </div>
-      <button
-        mat-raised-button
-        color="primary"
-        (click)="finishShopping()"
-        [disabled]="checkedCount === 0"
-        class="finish-button"
-      >
-        Finalizar Compra
-      </button>
     </div>
   </ng-container>
 </div>

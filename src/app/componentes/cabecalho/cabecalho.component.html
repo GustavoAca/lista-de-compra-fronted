@@ -1,12 +1,13 @@
 <header class="main-header">
   <div class="header-content">
-    <a class="logo-title" routerLink="/home">
-      <h3>Nossa Compra</h3>
-    </a>
+    <div class="title-container">
+      <button mat-icon-button *ngIf="showBackButton" (click)="navigateBack()" aria-label="Voltar para a home">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h3 class="page-title">{{ pageTitle }}</h3>
+    </div>
     <nav>
-      <!-- Espaço para futuras funcionalidades, ex: -->
-      <!-- <a routerLink="/minhas-listas">Minhas Listas</a> -->
-      <!-- <a routerLink="/perfil">Perfil</a> -->
+      <!-- Espaço para futuras funcionalidades -->
     </nav>
     <button class="logout-button" (click)="logout()">Sair</button>
   </div>

@@ -19,24 +19,20 @@
   margin: 0 auto;
 }
 
-.logo-title {
-  color: white;
-  text-decoration: none;
-  display: flex; /* Para alinhar a imagem verticalmente, se necessário */
+.title-container {
+  display: flex;
   align-items: center;
-}
+  gap: 8px;
 
-.logo-image {
-  height: 40px; /* Ajuste a altura conforme necessário */
-  width: auto; /* Mantém a proporção da imagem */
-  /*
-    Tentar remover o fundo branco da imagem usando mix-blend-mode.
-    Isso funciona melhor se o logo for uma imagem escura em fundo branco e o fundo do header for colorido/escuro.
-    Pode ser necessário ajustar ou usar 'filter' dependendo do seu logo real.
-    Ex: filter: invert(1) para logos pretas em fundos brancos, se o fundo do header for claro e você quiser a logo preta.
-    Ou se o logo for branco em fundo branco e o header for escuro.
-  */
-  mix-blend-mode: darken;
+  button {
+    color: white;
+  }
+
+  .page-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 500;
+  }
 }
 
 nav a {
@@ -72,8 +68,8 @@ nav a {
     padding: 0 1rem;
   }
 
-  .logo-title {
-    /* Font size removed, as it's an image now */
+  .title-container .page-title {
+    font-size: 1.1rem;
   }
 
   .logout-button {

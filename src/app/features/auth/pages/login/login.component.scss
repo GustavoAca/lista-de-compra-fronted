@@ -14,6 +14,9 @@
 }
 
 .login-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   margin-bottom: 24px;
 
@@ -85,35 +88,25 @@ mat-form-field {
 }
 
 .divider {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 12px;               // espaço entre linha e texto
   margin: 24px 0;
-  position: relative;
-  width: 100%; /* Ensure full width for divider */
+  width: 100%;
+}
 
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    width: 40%;
-    height: 1px;
-    background-color: #e0e0e0;
-  }
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;                 // ocupa o espaço restante
+  height: 1px;
+  background-color: #e0e0e0;
+}
 
-  &::before {
-    left: 0;
-  }
-
-  &::after {
-    right: 0;
-  }
-
-  span {
-    background-color: white;
-    padding: 0 16px;
-    color: #666;
-    font-size: 14px;
-  }
+.divider span {
+  white-space: nowrap;     // evita quebra do texto
+  color: #666;
+  font-size: 14px;
 }
 
 .social-buttons {
@@ -138,6 +131,17 @@ mat-form-field {
 
 @media (max-width: 600px) {
   .social-buttons {
-    flex-direction: column;
+    gap: 8px; // menos espaço entre botões
+  }
+
+  .social-buttons .social-button {
+    height: 40px;          // menor que 48px
+    padding: 0 8px;        // reduz padding lateral
+    flex: 1 1 50%;
+  }
+
+  .social-buttons .social-button img {
+    width: 18px;
+    height: 18px;
   }
 }

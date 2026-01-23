@@ -8,11 +8,9 @@ import { LOCALE_ID } from '@angular/core';
 registerLocaleData(localePt);
 
 bootstrapApplication(AppComponent, {
+  ...appConfig,
   providers: [
+    ...(appConfig.providers ?? []),
     { provide: LOCALE_ID, useValue: 'pt-BR' }
   ]
-});
-
-bootstrapApplication(AppComponent, appConfig)
-  .catch((err) => console.error(err));
-
+}).catch(err => console.error(err));

@@ -7,15 +7,18 @@ const routes: Routes = [
   {
     path: 'iniciar/:id', // Ex: /compra/iniciar/123
     component: IniciarCompraComponent,
+    data: { title: 'Iniciar Compra', showBackButton: true }
   },
   {
     path: 'visualizar/:id',
     component: ListaVisualizarComponent,
+    data: { title: 'Visualizar Compra', showBackButton: true }
   },
   // TODO: Adicionar rota para tela de sucesso ou resumo da compra
   {
     path: 'sucesso',
     component: IniciarCompraComponent, // Placeholder, crie um componente de sucesso
+    data: { title: 'Compra Finalizada', showBackButton: true }
   }
 ];
 

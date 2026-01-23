@@ -9,18 +9,22 @@ export const routes: Routes = [
   {
     path: 'home',
     component: HomeComponent,
+    data: { title: 'Minhas Listas' }
   },
   {
     path: 'login',
     component: LoginComponent,
+    data: { hideHeader: true }
   },
   {
     path: 'lista/editar/:id',
     component: ListaEditComponent,
+    data: { title: 'Editar Lista', showBackButton: true }
   },
   {
     path: 'lista/criar',
     component: ListaCreateComponent,
+    data: { title: 'Criar Nova Lista', showBackButton: true }
   },
   {
     path: 'compra', // New route for the compra feature
@@ -31,5 +35,9 @@ export const routes: Routes = [
     redirectTo: 'login',
     pathMatch: 'full',
   },
-  { path: 'oauth/callback/:provider', component: OauthCallbackComponent }
+  { 
+    path: 'oauth/callback/:provider', 
+    component: OauthCallbackComponent,
+    data: { hideHeader: true }
+  }
 ];

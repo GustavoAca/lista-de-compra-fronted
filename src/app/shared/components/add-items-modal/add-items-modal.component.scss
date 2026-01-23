@@ -6,6 +6,8 @@ h2 { // Targeting the Angular Material dialog title
 
 mat-mdc-dialog-content { // Targeting the Angular Material dialog content
   padding: 20px 24px 24px 24px; // Default content padding usually
+  max-height: 60vh; /* Set a maximum height relative to viewport height */
+  overflow-y: auto; /* Enable vertical scrolling */
 }
 
 .modal-content-wrapper {
@@ -13,6 +15,10 @@ mat-mdc-dialog-content { // Targeting the Angular Material dialog content
   display: flex;
   flex-direction: column;
   gap: 15px;
+
+  app-infinite-scroll {
+    flex-grow: 1;
+  }
 }
 
 .seller-select-full-width {

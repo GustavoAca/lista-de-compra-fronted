@@ -17,7 +17,7 @@ export class ItemOfertaService {
   getItemOfertasByVendedor(
     vendedorId: string,
     page = 0,
-    size = 20
+    size = 20,
   ): Observable<Page<ItemOferta>> {
     const url = `${this.itemOfertasApiPath}/vendedor/${vendedorId}`;
     return this.http.get<Page<ItemOferta>>(url, {
@@ -42,5 +42,22 @@ export class ItemOfertaService {
       context: new HttpContext().set(API_CONTEXT, 'list'),
     });
   }
-}
 
+  buscarPorVendedorENomeItem(
+    vendedorId: string,
+    itemNome: string,
+    currentItemOffferPage: any,
+    pageSize: number,
+  ): Observable<Page<ItemOferta>> {
+    const url = `${this.itemOfertasApiPath}/buscar-por-vendedor-e-nome-item`;
+    return this.http.get<Page<ItemOferta>>(url, {
+      params: {
+        vendedorId,
+        itemNome,
+        page: currentItemOffferPage,
+        size: pageSize,
+      },
+      context: new HttpContext().set(API_CONTEXT, 'list'),
+    });
+  }
+}

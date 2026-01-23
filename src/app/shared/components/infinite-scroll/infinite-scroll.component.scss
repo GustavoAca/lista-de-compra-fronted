@@ -1,5 +1,5 @@
 .infinite-scroll-container {
-  max-height: none; // Example: set a default max-height
+  height: 100%; // Make the container fill the available height
   overflow-y: auto;
   // Any other default styles for the scrollable container
 

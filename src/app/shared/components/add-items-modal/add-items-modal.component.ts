@@ -1,11 +1,4 @@
-import { ItemListaModel } from '../../../features/lista/models/item-lista.model'; // Updated import
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  Inject,
-  inject,
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject, inject } from '@angular/core';
 import {
   MatDialogRef,
   MAT_DIALOG_DATA,
@@ -15,9 +8,11 @@ import {
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
-import { VendedorModel } from '../../../features/lista/models/vendedor.model'; // Updated import
+import { VendedorModel } from '../../../features/lista/models/vendedor.model';
 import { ItemOferta } from '../../../features/lista/models/item-oferta.model';
+import { ItemListaModel } from '../../../features/lista/models/item-lista.model';
 import { Page } from '../../pipes/page.model';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -37,7 +32,7 @@ import { ItemOfertaService } from '../../../features/lista/services/item-oferta.
  */
 export interface AddItemsModalData {
   vendedorId: string | null;
-  existingItems: ItemListaModel[]; // New property
+  existingItems: ItemListaModel[];
 }
 
 @Component({
@@ -58,99 +53,95 @@ export interface AddItemsModalData {
     MatDialogActions,
   ],
   templateUrl: './add-items-modal.component.html',
-  styleUrl: './add-items-modal.component.scss',
+  styleUrls: ['./add-items-modal.component.scss'],
 })
 export class AddItemsModalComponent implements OnInit, OnDestroy {
   // ===== Injeções =====
-  private dialogRef = inject(
-    MatDialogRef<
-      AddItemsModalComponent,
-      ItemListaModel[] // Updated from ItemListaDTO
-    >
-  );
+  private dialogRef = inject(MatDialogRef<AddItemsModalComponent, ItemListaModel[]>);
   private vendedorService = inject(VendedorService);
   private itemOfertaService = inject(ItemOfertaService);
 
-  // ===== Estado de vendedor =====
-  sellers: VendedorModel[] = []; // Updated from VendedorDTO
-  selectedSellerControl = new FormControl<VendedorModel | null>(null); // Updated from VendedorDTO
-  sellerPage: Page<VendedorModel> | null = null; // Updated from VendedorDTO
-  loadingSellers = false;
+  // ===== Form Controls =====
+  selectedSellerControl = new FormControl<VendedorModel | null>(null);
+  itemSearchControl = new FormControl<string>('');
+
+  // ===== Estado de vendedores =====
+  sellers: VendedorModel[] = [];
   currentSellerPage = 0;
   isLastSellerPage = false;
+  loadingSellers = false;
 
   // ===== Estado de ofertas =====
   itemOffers: ItemOferta[] = [];
-  itemOfferPage: Page<ItemOferta> | null = null;
-  loadingItemOffers = false;
   currentItemOfferPage = 0;
   isLastItemOfferPage = false;
+  loadingItemOffers = false;
+  readonly pageSize = 10;
 
-  // ===== Seleção =====
-  selectedItems = new Map<
-    string,
-    ItemListaModel // Updated from ItemListaDTO
-  >();
+  // ===== Seleção de itens =====
+  selectedItems = new Map<string, ItemListaModel>();
 
+  // ===== Outras variáveis =====
   errorMessage: string | null = null;
+  readonly isDirectSellerMode: boolean;
+  readonly vendedorId: string | null;
 
   // ===== Subscriptions =====
   private sellerSubscription?: Subscription;
   private itemOfferSubscription?: Subscription;
   private sellerValueChangesSubscription?: Subscription;
+  private searchValueChangesSubscription?: Subscription;
 
-  // ===== Controle de fluxo =====
-  readonly isDirectSellerMode: boolean;
-  readonly vendedorId: string | null;
-
-  constructor(
-    @Inject(MAT_DIALOG_DATA) public data: AddItemsModalData
-  ) {
+  constructor(@Inject(MAT_DIALOG_DATA) public data: AddItemsModalData) {
     this.vendedorId = data?.vendedorId ?? null;
     this.isDirectSellerMode = !!this.vendedorId;
   }
 
-  // ============================================================
-  // Lifecycle
-  // ============================================================
-
+  // ===================== LIFECYCLE =====================
   ngOnInit(): void {
-    if (this.data && this.data.existingItems && this.data.existingItems.length > 0) {
+    // Preenche itens selecionados existentes
+    if (this.data?.existingItems?.length) {
       this.data.existingItems.forEach(item => {
         this.selectedItems.set(item.itemOferta.id, item);
       });
     }
 
+    // Modo vendedor direto
     if (this.isDirectSellerMode) {
-      // Fluxo direto: vendedor já definido
-      this.loadItemOffers(true); // Call with true to clear existingItems in case of reload, then re-add below
-      return;
+      this.loadItemOffers(true);
+    } else {
+      // Modo seleção de vendedor
+      this.loadSellers(true);
+
+      this.sellerValueChangesSubscription =
+        this.selectedSellerControl.valueChanges.subscribe(seller => {
+          if (!seller) {
+            this.resetItemOffers(true);
+            return;
+          }
+          this.loadItemOffers(true);
+        });
     }
 
-    // Fluxo normal: escolher vendedor
-    this.loadSellers(true);
-
-    this.sellerValueChangesSubscription =
-      this.selectedSellerControl.valueChanges.subscribe((seller) => {
-        if (!seller) {
-          this.resetItemOffers();
-          return;
-        }
-
-        this.loadItemOffers(true);
-      });
+    // Busca por nome
+    this.searchValueChangesSubscription =
+      this.itemSearchControl.valueChanges
+        .pipe(debounceTime(400), distinctUntilChanged())
+        .subscribe(() => {
+          this.currentItemOfferPage = 0;
+          this.isLastItemOfferPage = false;
+          this.loadItemOffers(true);
+        });
   }
 
   ngOnDestroy(): void {
     this.sellerSubscription?.unsubscribe();
     this.itemOfferSubscription?.unsubscribe();
     this.sellerValueChangesSubscription?.unsubscribe();
+    this.searchValueChangesSubscription?.unsubscribe();
   }
 
-  // ============================================================
-  // Vendedores
-  // ============================================================
-
+  // ===================== Vendedores =====================
   loadSellers(reset = false): void {
     if (this.isDirectSellerMode) return;
 
@@ -163,79 +154,70 @@ export class AddItemsModalComponent implements OnInit, OnDestroy {
     if (this.loadingSellers || this.isLastSellerPage) return;
 
     this.loadingSellers = true;
-
-    this.sellerSubscription = this.vendedorService
-      .getVendedores(this.currentSellerPage, 10)
+    this.sellerSubscription = this.vendedorService.getVendedores(this.currentSellerPage, this.pageSize)
       .subscribe({
-        next: (response) => {
+        next: response => {
           this.sellers.push(...response.content);
           this.isLastSellerPage = response.last;
           this.currentSellerPage++;
           this.loadingSellers = false;
         },
-        error: (err) => {
+        error: err => {
           this.loadingSellers = false;
-          this.errorMessage =
-            err.error?.detail || 'Erro ao carregar vendedores.';
-        },
+          this.errorMessage = err.error?.detail || 'Erro ao carregar vendedores.';
+        }
       });
   }
 
-  // ============================================================
-  // Ofertas
-  // ============================================================
-
+  // ===================== Ofertas =====================
   public resolveSellerId(): string | null {
-    return this.isDirectSellerMode
-      ? this.vendedorId
-      : this.selectedSellerControl.value?.id ?? null;
+    return this.isDirectSellerMode ? this.vendedorId : this.selectedSellerControl.value?.id ?? null;
+  }
+
+  private resetItemOffers(clearSelected = false): void {
+    this.itemOffers = [];
+    this.currentItemOfferPage = 0;
+    this.isLastItemOfferPage = false;
+    this.loadingItemOffers = false;
+
+    if (clearSelected) this.selectedItems.clear();
   }
 
   loadItemOffers(reset = false): void {
     const sellerId = this.resolveSellerId();
-    if (!sellerId) return;
+    if (!sellerId || this.loadingItemOffers || this.isLastItemOfferPage) return;
 
-    if (reset) {
-      this.currentItemOfferPage = 0;
-      this.isLastItemOfferPage = false;
-      this.itemOffers = [];
-      this.selectedItems.clear();
-    }
-
-    if (this.loadingItemOffers || this.isLastItemOfferPage) return;
+    if (reset) this.resetItemOffers(false);
 
     this.loadingItemOffers = true;
     this.errorMessage = null;
 
+    const search = this.itemSearchControl.value?.trim() ?? '';
+
     this.itemOfferSubscription = this.itemOfertaService
-      .getItemOfertasByVendedor(sellerId, this.currentItemOfferPage, 10)
+      .buscarPorVendedorENomeItem(sellerId, search, this.currentItemOfferPage, this.pageSize)
       .subscribe({
-        next: (response) => {
-          this.itemOffers.push(...response.content);
-          this.isLastItemOfferPage = response.last;
+        next: page => {
+          if (this.currentItemOfferPage === 0) {
+            // Substitui a lista
+            this.itemOffers = page.content;
+          } else {
+            // Adiciona para paginação
+            this.itemOffers.push(...page.content);
+          }
+
+          this.isLastItemOfferPage = page.last;
           this.currentItemOfferPage++;
           this.loadingItemOffers = false;
         },
-        error: (err) => {
+        error: () => {
+          this.errorMessage = 'Erro ao carregar itens';
           this.loadingItemOffers = false;
-          this.errorMessage =
-            err.error?.detail || 'Erro ao carregar itens do vendedor.';
-        },
+        }
       });
   }
 
-  private resetItemOffers(): void {
-    this.itemOffers = [];
-    this.itemOfferPage = null;
-    this.currentItemOfferPage = 0;
-    this.isLastItemOfferPage = false;
-    this.selectedItems.clear();
-  }
-
-  // ============================================================
-  // Quantidade
-  // ============================================================
-
+  // ===================== Quantidade =====================
   getQuantity(itemOferta: ItemOferta): number {
     return this.selectedItems.get(itemOferta.id)?.quantidade ?? 0;
   }
@@ -247,7 +229,7 @@ export class AddItemsModalComponent implements OnInit, OnDestroy {
     }
 
     this.selectedItems.set(itemOferta.id, {
-      itemOferta: itemOferta, // Store the full object
+      itemOferta,
       quantidade: quantity,
     });
   }
@@ -258,18 +240,11 @@ export class AddItemsModalComponent implements OnInit, OnDestroy {
 
   decrementQuantity(itemOferta: ItemOferta): void {
     const current = this.getQuantity(itemOferta);
-    if (current > 0) {
-      this.onQuantityChange(itemOferta, current - 1);
-    }
-    else {
-      this.selectedItems.delete(itemOferta.id);
-    }
+    if (current > 0) this.onQuantityChange(itemOferta, current - 1);
+    else this.selectedItems.delete(itemOferta.id);
   }
 
-  // ============================================================
-  // Ações
-  // ============================================================
-
+  // ===================== Ações =====================
   onConfirm(): void {
     this.dialogRef.close(Array.from(this.selectedItems.values()));
   }

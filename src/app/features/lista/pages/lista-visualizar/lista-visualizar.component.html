@@ -1,0 +1,44 @@
+<div class="page-container" *ngIf="!isPageLoading; else initialLoading">
+  <header class="page-header" *ngIf="list">
+    <h1>{{ list.nome }}</h1>
+    <div class="total-value">
+      <span>Valor Total da Compra:</span>
+      <strong class="price">{{ list.valorTotal | currency:'BRL' }}</strong>
+    </div>
+  </header>
+
+  <app-infinite-scroll
+    [isLoading]="areItemsLoading"
+    [isLastPage]="isLastPage"
+    (scrolledToEnd)="loadMoreItems()">
+
+    <div class="items-grid">
+      <mat-card *ngFor="let item of items" class="item-card">
+        <mat-card-header>
+          <mat-card-title>{{ item.itemOferta.item.nome || 'Produto sem nome' }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="item-content">
+          <div class="item-detail">
+            <mat-icon>shopping_cart</mat-icon>
+            <span>Quantidade: {{ item.quantidade }}</span>
+          </div>
+          <div class="item-detail">
+            <mat-icon>attach_money</mat-icon>
+            <span>Preço Unitário: {{ item.precoUnitario | currency:'BRL' }}</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <div class="loading-more" *ngIf="areItemsLoading">
+      <app-loading-spinner></app-loading-spinner>
+    </div>
+
+  </app-infinite-scroll>
+</div>
+
+<ng-template #initialLoading>
+  <div class="loading-container">
+    <app-loading-spinner></app-loading-spinner>
+  </div>
+</ng-template>

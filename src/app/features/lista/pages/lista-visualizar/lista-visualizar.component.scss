@@ -1,0 +1,72 @@
+:host {
+  display: block;
+  padding: 24px;
+}
+
+.page-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+
+  h1 {
+    margin: 0 0 8px 0;
+    font-size: 2em;
+    font-weight: 500;
+  }
+
+  .total-value {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.2em;
+
+    .price {
+      color: #388e3c; // A green color for positive value
+      font-weight: 600;
+    }
+  }
+}
+
+.items-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.item-card {
+  transition: box-shadow 0.2s;
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .item-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .item-detail {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #666;
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+.loading-container,
+.loading-more {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+}

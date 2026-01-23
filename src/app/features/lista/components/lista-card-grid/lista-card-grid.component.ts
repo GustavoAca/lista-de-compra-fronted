@@ -36,8 +36,7 @@ export class ListaCardGridComponent {
   }
 
   onViewPurchase(id: string): void {
-    //Navegar para uma futura página de visualização
-    //this.router.navigate(['/compras', 'visualizar', id]);
+    this.router.navigate(['/compra', 'visualizar', id]);
   }
 
   formatDate(date: Date): string {

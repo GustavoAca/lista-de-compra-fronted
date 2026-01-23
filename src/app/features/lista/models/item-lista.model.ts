@@ -7,4 +7,5 @@ export interface ItemListaModel {
   itemOferta: ItemOferta;
   quantidade: number;
   version?: number;
+  precoUnitario?: number;
 }

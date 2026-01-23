@@ -2,36 +2,30 @@
 
 <mat-dialog-content>
   <!-- Busca por nome do item -->
-<mat-form-field
-  appearance="outline"
-  class="full-width"
->
-  <mat-label>Buscar item</mat-label>
-
-  <input
-    matInput
-    type="text"
-    placeholder="Digite o nome do item"
-    [formControl]="itemSearchControl"
-  />
-
-  <button
-    *ngIf="itemSearchControl.value"
-    matSuffix
-    mat-icon-button
-    aria-label="Limpar"
-    (click)="itemSearchControl.setValue('')"
-  >
-    <mat-icon>close</mat-icon>
-  </button>
-</mat-form-field>
+  <div class="search-container">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Buscar item</mat-label>
+      <input
+        matInput
+        type="text"
+        placeholder="Digite o nome do item"
+        [formControl]="itemSearchControl"
+      />
+      <button
+        *ngIf="itemSearchControl.value"
+        matSuffix
+        mat-icon-button
+        aria-label="Limpar"
+        (click)="itemSearchControl.setValue('')"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-form-field>
+  </div>
 
   <div class="modal-content-wrapper">
-
     <!-- Loading -->
-    <app-loading-spinner
-      *ngIf="loadingSellers || loadingItemOffers"
-      size="md">
+    <app-loading-spinner *ngIf="loadingSellers || loadingItemOffers" size="md">
     </app-loading-spinner>
 
     <!-- Erro -->
@@ -53,11 +47,7 @@
 
     <!-- Nenhum item disponível -->
     <div
-      *ngIf="
-        !loadingItemOffers &&
-        resolveSellerId() &&
-        itemOffers.length === 0
-      "
+      *ngIf="!loadingItemOffers && resolveSellerId() && itemOffers.length === 0"
       class="no-items-message"
     >
       <p><i>Nenhum item disponível para este vendedor.</i></p>
@@ -78,7 +68,7 @@
             </span>
 
             <span class="item-price">
-              {{ item.preco | currency:'BRL' }}
+              {{ item.preco | currency: "BRL" }}
             </span>
 
             <span
@@ -86,7 +76,7 @@
               [class.on-promotion]="item.hasPromocaoAtiva"
             >
               Promoção:
-              {{ item.hasPromocaoAtiva ? 'Sim' : 'Não' }}
+              {{ item.hasPromocaoAtiva ? "Sim" : "Não" }}
             </span>
           </span>
 
@@ -103,17 +93,13 @@
               {{ getQuantity(item) }}
             </span>
 
-            <button
-              mat-icon-button
-              (click)="incrementQuantity(item)"
-            >
+            <button mat-icon-button (click)="incrementQuantity(item)">
               <mat-icon>add</mat-icon>
             </button>
           </span>
         </li>
       </ul>
     </app-infinite-scroll>
-
   </div>
 </mat-dialog-content>
 

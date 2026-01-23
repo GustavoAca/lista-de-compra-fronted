@@ -10,6 +10,30 @@ mat-mdc-dialog-content { // Targeting the Angular Material dialog content
   overflow-y: auto; /* Enable vertical scrolling */
 }
 
+.search-container {
+  display: flex;
+  justify-content: center; // centraliza horizontalmente
+  padding: 16px;
+
+  .full-width {
+    width: 100%;
+    max-width: 800px; // opcional
+  }
+
+  mat-form-field {
+    width: 100%; // garante que o form-field ocupe todo o espaço
+  }
+
+  input.mat-input-element {
+    text-align: left; // centraliza o texto se necessário
+  }
+
+  button[mat-icon-button] {
+    margin-left: 0; // matSuffix já posiciona o botão
+  }
+}
+
+
 .modal-content-wrapper {
   max-width: 600px;
   display: flex;

@@ -101,10 +101,11 @@ export class AddItemsModalComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     // Preenche itens selecionados existentes
     if (this.data?.existingItems?.length) {
-      this.data.existingItems.forEach(item => {
-        this.selectedItems.set(item.itemOferta.id, item);
-      });
-    }
+              this.data.existingItems.forEach(item => {
+                if (item.itemOferta) { // Add null/undefined check here
+                  this.selectedItems.set(item.itemOferta.id, item);
+                }
+              });    }
 
     // Modo vendedor direto
     if (this.isDirectSellerMode) {

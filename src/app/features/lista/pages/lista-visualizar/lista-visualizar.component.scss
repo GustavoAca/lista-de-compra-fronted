@@ -11,7 +11,7 @@
 .page-header {
   margin-bottom: 24px;
   padding-bottom: 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  border-bottom: 1px solid var(--app-text-color-disabled-light);
 
   h1 {
     margin: 0 0 8px 0;
@@ -26,7 +26,7 @@
     font-size: 1.2em;
 
     .price {
-      color: #388e3c; // A green color for positive value
+      color: var(--app-success-color); // A green color for positive value
       font-weight: 600;
     }
   }
@@ -54,7 +54,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #666;
+    color: var(--app-text-color-secondary);
     mat-icon {
       font-size: 20px;
       width: 20px;

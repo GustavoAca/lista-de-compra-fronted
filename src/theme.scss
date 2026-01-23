@@ -1,0 +1,25 @@
+:root {
+  // Define custom CSS variables for easier theming
+  // Base colors derived loosely from Angular Material's azure-blue theme or common Material defaults
+  --app-primary-color: #3f51b5; // Example: indigo 500
+  --app-primary-lighter-color: #c5cae9; // Example: indigo 100
+  --app-on-primary-color: #ffffff; // White text on primary
+
+  --app-accent-color: #ff4081; // Example: pink A200
+  --app-on-accent-color: #ffffff; // White text on accent
+
+  --app-warn-color: #f44336;   // Red for errors
+  --app-on-warn-color: #ffffff; // White text on warn
+
+  // Semantic Colors (could be based on Material's palettes or custom)
+  --app-success-color: #388e3c; // Deep green for success
+  --app-error-text-color: #f44336;   // Red for errors (text specifically)
+  --app-info-color: #2196f3;    // Blue for info
+  --app-warning-color: #ff9800; // Orange for warnings
+
+  // Text Colors
+  --app-text-color-primary: rgba(0, 0, 0, 0.87);
+  --app-text-color-secondary: rgba(0, 0, 0, 0.6);
+  --app-text-color-disabled: rgba(0, 0, 0, 0.38);
+  --app-text-color-disabled-light: rgba(0, 0, 0, 0.08); // Light gray for borders
+}

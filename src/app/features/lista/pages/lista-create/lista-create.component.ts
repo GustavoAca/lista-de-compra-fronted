@@ -44,7 +44,6 @@ import { FabButtonComponent } from '@app/shared/components/fab-button/fab-button
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    RouterLink,
     CurrencyPipe,
     MatButtonModule,
     MatIconModule,

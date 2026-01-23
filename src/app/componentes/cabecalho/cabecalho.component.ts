@@ -10,7 +10,7 @@ import { filter, map, mergeMap } from 'rxjs/operators';
 @Component({
   selector: 'app-cabecalho',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule],
+  imports: [CommonModule, MatButtonModule, MatIconModule],
   templateUrl: './cabecalho.component.html',
   styleUrls: ['./cabecalho.component.scss']
 })

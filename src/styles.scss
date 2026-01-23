@@ -1,5 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
-@import '@angular/material/prebuilt-themes/indigo-pink.css';
+@use 'theme.scss'; // Importando o tema customizado com variáveis CSS
 
 html, body {
   height: 100%;

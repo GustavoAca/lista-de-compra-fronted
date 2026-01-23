@@ -26,13 +26,13 @@ mat-mdc-dialog-content { // Targeting the Angular Material dialog content
 }
 
 .error-message {
-  color: red;
+  color: var(--app-error-color);
   text-align: center;
 }
 
 .no-items-message {
   text-align: center;
-  color: gray;
+  color: var(--app-text-color-disabled);
 }
 
 // .item-list-container styles removed
@@ -47,7 +47,7 @@ mat-mdc-dialog-content { // Targeting the Angular Material dialog content
     justify-content: space-between;
     align-items: center;
     padding: 10px 0;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--app-text-color-disabled-light);
 
     &:last-child {
       border-bottom: none;
@@ -65,15 +65,15 @@ mat-mdc-dialog-content { // Targeting the Angular Material dialog content
   }
 
   .item-price {
-    color: green;
+    color: var(--app-success-color);
   }
 
   .item-promotion {
     font-size: 0.8em;
-    color: gray;
+    color: var(--app-text-color-disabled);
 
     &.on-promotion {
-      color: orange;
+      color: var(--app-warning-color);
       font-weight: bold;
     }
   }

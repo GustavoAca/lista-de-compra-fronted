@@ -3,8 +3,8 @@
 }
 
 .main-header {
-  background-color: #007bff;
-  color: white;
+  background-color: var(--app-primary-color);
+  color: var(--app-on-primary-color);
   padding: 0 2rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   height: 60px; /* Altura fixa do header */
@@ -25,7 +25,7 @@
   gap: 8px;
 
   button {
-    color: white;
+    color: var(--app-on-primary-color);
   }
 
   .page-title {
@@ -36,7 +36,7 @@
 }
 
 nav a {
-  color: white;
+  color: var(--app-on-primary-color);
   text-decoration: none;
   margin: 0 1rem;
   font-weight: 500;
@@ -49,8 +49,8 @@ nav a {
 
 .logout-button {
   background-color: transparent;
-  color: white;
-  border: 1px solid white;
+  color: var(--app-on-primary-color);
+  border: 1px solid var(--app-on-primary-color);
   padding: 0.5rem 1rem;
   border-radius: 5px;
   cursor: pointer;
@@ -58,8 +58,8 @@ nav a {
   transition: background-color 0.2s, color 0.2s;
 
   &:hover {
-    background-color: white;
-    color: #007bff;
+    background-color: var(--app-on-primary-color);
+    color: var(--app-primary-color);
   }
 }
 

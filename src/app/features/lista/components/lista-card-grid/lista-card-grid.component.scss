@@ -29,7 +29,7 @@
     font-size: 0.75rem; // menor que o padrão
     opacity: 0.7; // visual secundário
     margin-top: 4px;
-    color: #757575;
+    color: var(--app-text-color-disabled);
     letter-spacing: 0.02em;
   }
 
@@ -73,11 +73,11 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      color: #666;
+      color: var(--app-text-color-secondary);
       font-size: 14px;
 
       &.total {
-        color: #1976d2;
+        color: var(--app-primary-color);
         font-weight: 600;
         align-items: end;
       }
@@ -91,7 +91,7 @@
   }
 
   .description {
-    color: #666;
+    color: var(--app-text-color-secondary);
     font-size: 14px;
     margin: 0;
     overflow: hidden;

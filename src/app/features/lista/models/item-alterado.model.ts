@@ -1,4 +1,4 @@
 export interface ItemAlterado {
-  id: string;
+  id?: string;
   quantidade: number;
 }

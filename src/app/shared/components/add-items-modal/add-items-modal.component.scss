@@ -73,15 +73,50 @@ mat-mdc-dialog-content { // Targeting the Angular Material dialog content
   margin: 0;
 
   li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     padding: 10px 0;
     border-bottom: 1px solid var(--app-text-color-disabled-light);
 
     &:last-child {
       border-bottom: none;
     }
+  }
+
+  .item-display-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; // Allow wrapping of content
+    row-gap: 8px; // Space between wrapped rows
+  }
+
+  .item-checkbox-name {
+    display: flex;
+    align-items: flex-start; // Align checkbox to top of potentially multiline name
+    flex-grow: 1; // Allow it to take available space
+    padding-right: 10px; // Add some padding to the right
+    mat-checkbox {
+      white-space: normal; // Allow text to wrap inside checkbox label
+      .mdc-form-field {
+        align-items: flex-start; // Ensure content aligns with checkbox
+      }
+    }
+  }
+
+  .item-name {
+    font-weight: bold;
+    word-break: break-word; // Allow long names to break
+  }
+
+  .flex-spacer {
+    flex: 1 1 auto;
+  }
+
+  .item-details-right {
+    display: flex;
+    align-items: center;
+    gap: 15px; // Space between price, promotion, quantity
+    flex-wrap: wrap; // Allow these details to wrap if necessary
+    justify-content: flex-end; // Align to the right
   }
 
   .item-info {

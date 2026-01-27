@@ -20,7 +20,7 @@
     <div class="page-content">
       <div class="items-list" *ngIf="items.length > 0; else noItems">
         <mat-card
-          *ngFor="let item of items"
+          *ngFor="let item of items; trackBy: trackByItemId"
           [class.checked]="item.checked"
           class="item-card"
         >
@@ -40,37 +40,41 @@
             <div class="item-details">
               <!-- Header do item -->
               <div class="item-header">
-                <div class="item-info">
-                  <div class="quantity-controls">
-                    <button
-                      mat-icon-button
-                      (click)="updateQuantity(item, -1)"
-                      [disabled]="item.quantidade <= 1"
-                      class="qty-button"
-                    >
-                      <mat-icon>remove</mat-icon>
-                    </button>
-                    <span class="quantity"
-                      >{{ item.quantidade }} {{ item.unit }}</span
-                    >
-                    <button
-                      mat-icon-button
-                      (click)="updateQuantity(item, 1)"
-                      class="qty-button"
-                    >
-                      <mat-icon>add</mat-icon>
-                    </button>
-                  </div>
-                  <!-- Badge de promoção -->
-                  <mat-chip
-                    [highlighted]="item.onSale"
-                    (click)="toggleSale(item)"
-                    class="sale-chip"
-                  >
-                    <mat-icon matChipAvatar>local_offer</mat-icon>
-                    {{ item.onSale ? "Em Promoção" : "Marcar Promoção" }}
-                  </mat-chip>
-                </div>
+                              <div class="item-info">
+                                <div class="actions-group">
+                                  <mat-chip
+                                    [highlighted]="item.onSale"
+                                    (click)="toggleSale(item)"
+                                    class="sale-chip"
+                                  >
+                                    <mat-icon matChipAvatar>local_offer</mat-icon>
+                                    {{ item.onSale ? "Em Promoção" : "Marcar Promoção" }}
+                                  </mat-chip>
+                                  <button mat-icon-button color="warn" (click)="removerItem(item)">
+                                    <mat-icon>delete</mat-icon>
+                                  </button>
+                                </div>
+                                <div class="quantity-controls">
+                                  <button
+                                    mat-icon-button
+                                    (click)="updateQuantity(item, -1)"
+                                    [disabled]="item.quantidade <= 0"
+                                    class="qty-button"
+                                  >
+                                    <mat-icon>remove</mat-icon>
+                                  </button>
+                                  <span class="quantity">
+                                    {{ item.quantidade }} {{ item.unit }}</span
+                                  >
+                                  <button
+                                    mat-icon-button
+                                    (click)="updateQuantity(item, 1)"
+                                    class="qty-button"
+                                  >
+                                    <mat-icon>add</mat-icon>
+                                  </button>
+                                </div>
+                              </div>
               </div>
 
               <!-- Seção de preços -->
@@ -81,7 +85,6 @@
                   class="price-input"
                 >
                   <mat-label>Preço</mat-label>
-                  <span matPrefix>R$&nbsp;</span>
                   <input
                     matInput
                     type="text"
@@ -136,4 +139,9 @@
     </div>
     </div>
   </ng-container>
+
+  <app-fab-button
+    (fabClick)="openAddItemsModal()"
+    [ariaLabel]="'Adicionar novos itens'"
+  ></app-fab-button>
 </div>

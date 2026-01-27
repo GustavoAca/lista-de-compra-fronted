@@ -20,6 +20,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatCheckboxModule } from '@angular/material/checkbox'; // Add this import
 
 import { InfiniteScrollComponent } from '../infinite-scroll/infinite-scroll.component';
 import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.component';
@@ -46,6 +47,7 @@ export interface AddItemsModalData {
     MatInputModule,
     MatButtonModule,
     MatIconModule,
+    MatCheckboxModule, // New
     InfiniteScrollComponent,
     LoadingSpinnerComponent,
     CurrencyPipe,
@@ -243,6 +245,15 @@ export class AddItemsModalComponent implements OnInit, OnDestroy {
     const current = this.getQuantity(itemOferta);
     if (current > 0) this.onQuantityChange(itemOferta, current - 1);
     else this.selectedItems.delete(itemOferta.id);
+  }
+
+  toggleItemSelection(itemOferta: ItemOferta): void {
+    const currentQuantity = this.getQuantity(itemOferta);
+    if (currentQuantity === 0) {
+      this.onQuantityChange(itemOferta, 1); // Check and set quantity to 1
+    } else {
+      this.onQuantityChange(itemOferta, 0); // Uncheck and set quantity to 0
+    }
   }
 
   // ===================== Ações =====================

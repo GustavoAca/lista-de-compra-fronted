@@ -62,41 +62,51 @@
     >
       <ul class="item-list">
         <li *ngFor="let item of itemOffers">
-          <span class="item-info">
-            <span class="item-name">
-              {{ item.item.nome }}
-            </span>
-
-            <span class="item-price">
-              {{ item.preco | currency: "BRL" }}
-            </span>
-
-            <span
-              class="item-promotion"
-              [class.on-promotion]="item.hasPromocaoAtiva"
+          <div class="item-display-row">
+            <mat-checkbox
+              [checked]="getQuantity(item) > 0"
+              (change)="toggleItemSelection(item)"
+              class="item-checkbox-name"
             >
-              Promoção:
-              {{ item.hasPromocaoAtiva ? "Sim" : "Não" }}
+              <span class="item-name">
+                {{ item.item.nome }}
+              </span>
+            </mat-checkbox>
+
+            <span class="flex-spacer"></span>
+
+            <span class="item-details-right">
+              <span class="item-price">
+                {{ item.preco | currency: "BRL" }}
+              </span>
+
+              <span
+                class="item-promotion"
+                [class.on-promotion]="item.hasPromocaoAtiva"
+              >
+                Promoção:
+                {{ item.hasPromocaoAtiva ? "Sim" : "Não" }}
+              </span>
+
+              <span class="quantity-controls">
+                <button
+                  mat-icon-button
+                  (click)="decrementQuantity(item)"
+                  [disabled]="getQuantity(item) === 0"
+                >
+                  <mat-icon>remove</mat-icon>
+                </button>
+
+                <span class="quantity-value">
+                  {{ getQuantity(item) }}
+                </span>
+
+                <button mat-icon-button (click)="incrementQuantity(item)">
+                  <mat-icon>add</mat-icon>
+                </button>
+              </span>
             </span>
-          </span>
-
-          <span class="quantity-controls">
-            <button
-              mat-icon-button
-              (click)="decrementQuantity(item)"
-              [disabled]="getQuantity(item) === 0"
-            >
-              <mat-icon>remove</mat-icon>
-            </button>
-
-            <span class="quantity-value">
-              {{ getQuantity(item) }}
-            </span>
-
-            <button mat-icon-button (click)="incrementQuantity(item)">
-              <mat-icon>add</mat-icon>
-            </button>
-          </span>
+          </div>
         </li>
       </ul>
     </app-infinite-scroll>

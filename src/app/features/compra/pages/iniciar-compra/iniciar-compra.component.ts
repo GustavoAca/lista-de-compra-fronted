@@ -1,9 +1,10 @@
-import { Component, OnInit, OnDestroy, inject, LOCALE_ID, Inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, LOCALE_ID, Inject, ChangeDetectorRef } from '@angular/core';
 import { Observable, Subscription, of, switchMap, map, expand, reduce } from 'rxjs';
 
 import { CommonModule, CurrencyPipe, DecimalPipe, registerLocaleData } from '@angular/common'; // Added CurrencyPipe and DecimalPipe
 import localePt from '@angular/common/locales/pt';
 registerLocaleData(localePt);
+
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,6 +15,7 @@ import { MatChipsModule } from '@angular/material/chips'; // New
 import { MatDividerModule } from '@angular/material/divider'; // New
 import { MatFormFieldModule } from '@angular/material/form-field'; // New
 import { MatInputModule } from '@angular/material/input'; // New
+import { MatDialog, MatDialogModule } from '@angular/material/dialog'; // New
 
 import { ListaCompraService } from '@app/features/lista/services/lista-compra.service';
 import { ItemListaModel } from '@app/features/lista/models/item-lista.model';
@@ -22,8 +24,12 @@ import { ListaModel } from '@app/features/lista/models/lista.model';
 import { ItemAlterado } from '@app/features/lista/models/item-alterado.model'; // New
 import { ConcluirListaRequestDTO } from '../../models/concluir-lista-request.dto'; // New
 import { ItemListaConcluirRequest } from '../../models/item-lista-concluir.model'; // New
+import { ItemOferta } from '@app/features/lista/models/item-oferta.model'; // New
 
 import { LoadingSpinnerComponent } from '@app/shared/components/loading-spinner/loading-spinner.component';
+import { AddItemsModalComponent } from '@app/shared/components/add-items-modal/add-items-modal.component'; // New
+import { FabButtonComponent } from '@app/shared/components/fab-button/fab-button.component'; // New
+import { ConfirmationDialogComponent } from '@app/shared/components/confirmation-dialog/confirmation-dialog.component'; // New
 import { ActivatedRoute, Router } from '@angular/router';
 
 interface ShoppingItem extends ItemListaModel {
@@ -53,6 +59,8 @@ interface ShoppingItem extends ItemListaModel {
     MatDividerModule, // New
     MatFormFieldModule, // New
     MatInputModule, // New
+    MatDialogModule, // New
+    FabButtonComponent, // New
   ],
   providers: [CurrencyPipe, DecimalPipe, { provide: LOCALE_ID, useValue: 'pt' }]
 })
@@ -74,6 +82,8 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
     private snackBar: MatSnackBar,
     private decimalPipe: DecimalPipe,
     private currencyPipe: CurrencyPipe,
+    private dialog: MatDialog, // New: Inject MatDialog
+    private cdr: ChangeDetectorRef, // New
     @Inject(LOCALE_ID) private locale: string,
   ) {}
 
@@ -222,7 +232,10 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
   }
 
   finishShopping(): void {
-    const checkedItems = this.items.filter(item => item.checked);
+    let checkedItems = this.items.filter(item => item.checked);
+
+    // Filter out items that do not have valid itemOferta or itemOferta.id
+    checkedItems = checkedItems.filter(item => item.itemOferta?.id);
 
     if (checkedItems.length === 0) {
       this.snackBar.open('Adicione pelo menos um item ao carrinho', 'OK', {
@@ -250,14 +263,14 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
       version: item.version,
       listaCompraId: this.list.id, // Added missing property
       itemOferta: { // Map to ItemOfertaConcluirRequest
-        id: item.itemOferta.id,
-        itemId: item.itemOferta.item!.id,
-        vendedorId: item.itemOferta.vendedor!.id,
+        id: item.itemOferta!.id, // Non-null assertion after filtering
+        itemId: item.itemOferta!.item!.id, // Non-null assertion after filtering
+        vendedorId: item.itemOferta!.vendedor!.id, // Non-null assertion after filtering
         hasPromocaoAtiva: item.onSale,
         preco: item.price,
-        dataInicioPromocao: item.itemOferta.dataInicioPromocao ? new Date(item.itemOferta.dataInicioPromocao) : undefined,
-        dataFinalPromocao: item.itemOferta.dataFimPromocao ? new Date(item.itemOferta.dataFimPromocao) : undefined,
-        version: item.itemOferta.version,
+        dataInicioPromocao: item.itemOferta?.dataInicioPromocao ? new Date(item.itemOferta.dataInicioPromocao) : undefined,
+        dataFinalPromocao: item.itemOferta?.dataFimPromocao ? new Date(item.itemOferta.dataFimPromocao) : undefined,
+        version: item.itemOferta?.version, // Added null check for version
       }
     }));
 
@@ -277,13 +290,143 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
         this.router.navigate(['/home']);
       },
       error: err => {
-        this.snackBar.open(err.error?.detail || 'Erro ao finalizar a compra.', 'Fechar', { duration: 3000 });
         this.loading = false;
+        this.snackBar.open(err.error?.detail || 'Erro ao finalizar a compra.', 'Fechar', { duration: 3000 });
       }
     });
   }
 
   // =======================
-  // Utils (Removed handleError, using snackbar directly)
+  // Modal de adicionar itens
   // =======================
+  openAddItemsModal(): void {
+    const vendedorId = this.resolveVendedorId();
+
+    if (!vendedorId) {
+      this.snackBar.open(
+        'Não foi possível determinar o vendedor para adicionar itens.',
+        'Fechar',
+        { duration: 3000 },
+      );
+      return;
+    }
+
+    const dialogRef = this.dialog.open(AddItemsModalComponent, {
+      width: '95vw',
+      maxWidth: '800px',
+      data: {
+        vendedorId,
+        existingItems: this.items
+          .filter(item => item.itemOferta?.id) // Filter out items without a valid itemOferta.id
+          .map((item) => ({
+            itemOfertaId: item.itemOferta!.id, // Now it's safe to use non-null assertion
+            quantidade: item.quantidade,
+          })),
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (!result || result.length === 0) return;
+      this.addItemsToLista(result);
+    });
+  }
+
+  private addItemsToLista(
+    itens: { itemOferta: ItemOferta; quantidade: number }[],
+  ): void {
+    console.log('addItemsToLista: Starting, setting loading to true.');
+    this.loading = true;
+    const payload = itens.map((i) => ({
+      itemOfertaId: i.itemOferta.id,
+      quantidade: i.quantidade,
+    }));
+
+    console.log('addItemsToLista: Calling service adicionarItensALista.');
+    this.listaCompraService
+      .adicionarItensALista(this.listaId, payload)
+      .subscribe({
+        next: (newItemsListaModel: ItemListaModel[]) => {
+          console.log('addItemsToLista: Service call succeeded.');
+          const newShoppingItems: ShoppingItem[] = newItemsListaModel.map(itemLista => ({
+            ...itemLista,
+            checked: false, // Default to unchecked
+            onSale: itemLista.itemOferta?.hasPromocaoAtiva ?? false, // Added null check
+            price: itemLista.itemOferta?.preco ?? 0, // Added null check
+            name: itemLista.itemOferta?.item?.nome ?? 'Item sem nome', // Updated null check
+            unit: 'un', // Assuming 'un' if unit is not available
+            editingPrice: false, // Initialize editing state
+          }));
+          this.items = [...this.items, ...newShoppingItems]; // Re-assign array to trigger change detection
+          this.updateCalculations();
+          this.loading = false;
+          this.cdr.detectChanges(); // Manually trigger change detection
+          this.snackBar.open('Itens adicionados com sucesso!', 'Fechar', { duration: 3000 });
+          console.log('addItemsToLista: Loading set to false, UI updated.');
+        },
+        error: (err: any) => {
+          console.error('addItemsToLista: Service call failed.', err);
+          this.loading = false;
+          this.cdr.detectChanges(); // Manually trigger change detection
+          this.snackBar.open(err.error?.detail || 'Erro ao adicionar itens.', 'Fechar', { duration: 3000 });
+        },
+        complete: () => {
+          console.log('addItemsToLista: Subscription completed.');
+        }
+      });
+      console.log('addItemsToLista: Service call initiated, subscription active.');
+  }
+
+  private resolveVendedorId(): string | null {
+    // Prioritize getting vendedorId from the first item in this.items
+    if (
+      this.items.length > 0 &&
+      this.items[0]?.itemOferta?.vendedor?.id
+    ) {
+      return this.items[0].itemOferta.vendedor.id;
+    }
+    // Fallback to the list's vendor if present (though this.list might not have it directly if only items have vendors)
+    // In this component, it's safer to rely on existing items for vendor context.
+    return null; // If no items, no vendor context
+  }
+
+  removerItem(itemToRemove: ShoppingItem): void {
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+      data: {
+        title: 'Confirmar Exclusão',
+        message: `Tem certeza que deseja remover o item "${itemToRemove.name}" da lista?`,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result) {
+        this.loading = true; // Set loading
+        var itensAlterados: ItemAlterado[] = [];
+        const itemAlterado: ItemAlterado = {
+          id: itemToRemove.id,
+          quantidade: 0,
+        };
+        itensAlterados.push(itemAlterado);
+        this.listaCompraService
+          .alterarItens(this.listaId, itensAlterados)
+          .subscribe({
+            next: () => {
+              this.items = this.items.filter(
+                (item) => item.id !== itemToRemove.id,
+              ); // Remove from local array
+              this.updateCalculations();
+              this.loading = false;
+              this.snackBar.open('Item removido com sucesso!', 'Fechar', { duration: 3000 });
+            },
+            error: (err: any) => {
+              this.loading = false;
+              this.snackBar.open(err.error?.detail || 'Erro ao remover item da lista.', 'Fechar', { duration: 3000 });
+            },
+          });
+      }
+    });
+  }
+
+  trackByItemId(index: number, item: ShoppingItem): string {
+    return item.id!;
+  }
 }

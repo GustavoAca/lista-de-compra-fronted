@@ -267,12 +267,10 @@ export class ListaEditComponent implements OnInit, OnDestroy {
   }
 
   decrementarQuantidade(item: ItemListaModel): void {
-    if (item.quantidade <= 0) {
-      // Allow 0 to enable removal
-      item.quantidade = 0;
-      // Consider removing item from list if quantity goes to 0 here or in removerItem
+    if (item.quantidade > 0) {
+      item.quantidade--;
+      this.registerItemChange(item);
     }
-    this.registerItemChange(item);
   }
 
   // =========================

@@ -75,29 +75,19 @@
 
               <!-- Seção de preços -->
               <div class="price-section">
-                <!-- Preço estimado -->
-                <div class="price-row">
-                  <span class="label">Preço estimado:</span>
-                  <span [class.line-through]="item.onSale" class="price">
-                    R$ {{ item.priceEstimated.toFixed(2) }}
-                  </span>
-                </div>
-
-                <!-- Campo de preço promocional -->
+                <!-- Campo de preço -->
                 <mat-form-field
-                  *ngIf="item.onSale"
                   appearance="outline"
                   class="price-input"
                 >
-                  <mat-label>Preço na promoção</mat-label>
+                  <mat-label>Preço</mat-label>
                   <span matPrefix>R$&nbsp;</span>
                   <input
                     matInput
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    [value]="item.priceActual"
-                    (input)="updatePrice(item, $any($event.target).value)"
+                    type="text"
+                    inputmode="decimal"
+                    [value]="item.price | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt'"
+                    (blur)="updatePrice(item, $any($event.target).value)"
                   />
                 </mat-form-field>
 
@@ -108,10 +98,6 @@
                   <span class="label">Subtotal:</span>
                   <div class="subtotal-value">
                     <strong>R$ {{ getItemSubtotal(item).toFixed(2) }}</strong>
-                    <p *ngIf="getItemSavings(item) > 0" class="savings-text">
-                      <mat-icon>savings</mat-icon>
-                      Economizou R$ {{ getItemSavings(item).toFixed(2) }}
-                    </p>
                   </div>
                 </div>
               </div>
@@ -136,9 +122,6 @@
         <p>
           Total ({{ checkedCount }} itens):
           <strong>R$ {{ total.toFixed(2) }}</strong>
-        </p>
-        <p *ngIf="savings > 0" class="savings-total">
-          Economia total: <strong>R$ {{ savings.toFixed(2) }}</strong>
         </p>
       </div>
       <button

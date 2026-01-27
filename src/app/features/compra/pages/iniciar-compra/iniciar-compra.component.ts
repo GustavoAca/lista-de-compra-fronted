@@ -1,7 +1,9 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, LOCALE_ID, Inject } from '@angular/core';
 import { Observable, Subscription, of, switchMap, map, expand, reduce } from 'rxjs';
 
-import { CommonModule, CurrencyPipe } from '@angular/common'; // Added CurrencyPipe
+import { CommonModule, CurrencyPipe, DecimalPipe, registerLocaleData } from '@angular/common'; // Added CurrencyPipe and DecimalPipe
+import localePt from '@angular/common/locales/pt';
+registerLocaleData(localePt);
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,13 +18,22 @@ import { MatInputModule } from '@angular/material/input'; // New
 import { ListaCompraService } from '@app/features/lista/services/lista-compra.service';
 import { ItemListaModel } from '@app/features/lista/models/item-lista.model';
 import { ListaModel } from '@app/features/lista/models/lista.model';
-import { ShoppingItem } from '../../models/shopping-item.model'; // New
+// import { ShoppingItem } from '../../models/shopping-item.model'; // Removed this import as it's defined here
 import { ItemAlterado } from '@app/features/lista/models/item-alterado.model'; // New
 import { ConcluirListaRequestDTO } from '../../models/concluir-lista-request.dto'; // New
 import { ItemListaConcluirRequest } from '../../models/item-lista-concluir.model'; // New
 
 import { LoadingSpinnerComponent } from '@app/shared/components/loading-spinner/loading-spinner.component';
 import { ActivatedRoute, Router } from '@angular/router';
+
+interface ShoppingItem extends ItemListaModel {
+  checked: boolean;
+  onSale: boolean;
+  price: number;
+  name: string;
+  unit: string;
+  editingPrice: boolean; // New property to control price editing
+}
 
 @Component({
   selector: 'app-iniciar-compra',
@@ -43,6 +54,7 @@ import { ActivatedRoute, Router } from '@angular/router';
     MatFormFieldModule, // New
     MatInputModule, // New
   ],
+  providers: [CurrencyPipe, DecimalPipe, { provide: LOCALE_ID, useValue: 'pt' }]
 })
 export class IniciarCompraComponent implements OnInit, OnDestroy {
   listaId!: string;
@@ -60,6 +72,9 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
     public router: Router, // Injected as public in constructor
     private listaCompraService: ListaCompraService,
     private snackBar: MatSnackBar,
+    private decimalPipe: DecimalPipe,
+    private currencyPipe: CurrencyPipe,
+    @Inject(LOCALE_ID) private locale: string,
   ) {}
 
   // =======================
@@ -100,10 +115,10 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
           ...itemLista,
           checked: false, // Default to unchecked
           onSale: itemLista.itemOferta.hasPromocaoAtiva,
-          priceActual: itemLista.itemOferta.preco,
-          priceEstimated: itemLista.itemOferta.preco,
+          price: itemLista.itemOferta.preco,
           name: itemLista.itemOferta.item?.nome ?? 'Item sem nome',
           unit: 'un', // Assuming 'un' if unit is not available
+          editingPrice: false, // Initialize editing state
         }));
         this.updateCalculations();
         this.loading = false;
@@ -138,17 +153,25 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
 
   toggleSale(item: ShoppingItem): void {
     item.onSale = !item.onSale;
-    if (!item.onSale) {
-      item.priceActual = item.priceEstimated;
-    }
     this.updateCalculations();
     // Potentially update backend for item.onSale state
     this.updateItemStateInBackend(item);
   }
 
   updatePrice(item: ShoppingItem, value: string): void {
-    const price = parseFloat(value) || 0;
-    item.priceActual = price;
+    // Clean the input string: remove currency symbol, replace thousand separators, and change decimal comma to dot
+    const cleanValue = value
+      .replace(new RegExp(`[^\\d,]+`, 'g'), '') // Remove everything that is not a digit or comma
+      .replace(/\./g, '') // Remove thousand separators (dots)
+      .replace(',', '.'); // Replace comma with dot for decimal
+
+    let price = parseFloat(cleanValue);
+
+    if (isNaN(price)) {
+      price = 0; // Default to 0 if parsing fails
+    }
+
+    item.price = parseFloat(price.toFixed(2)); // Ensure two decimal places for precision
     this.updateCalculations();
     this.updateItemStateInBackend(item);
   }
@@ -184,26 +207,18 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
     this.checkedCount = this.items.filter(item => item.checked).length;
     this.total = this.items.reduce((sum, item) => {
       if (!item.checked) return sum;
-      const price = item.onSale ? item.priceActual : item.priceEstimated;
-      return sum + (item.quantidade * price);
+      return sum + (item.quantidade * item.price);
     }, 0);
 
-    this.savings = this.items.reduce((sum, item) => {
-      if (!item.checked || !item.onSale || item.priceActual >= item.priceEstimated) return sum;
-      return sum + (item.quantidade * (item.priceEstimated - item.priceActual));
-    }, 0);
+    this.savings = 0; // Savings are no longer calculated
   }
 
   getItemSubtotal(item: ShoppingItem): number {
-    const price = item.onSale ? item.priceActual : item.priceEstimated;
-    return item.quantidade * price;
+    return item.quantidade * item.price;
   }
 
   getItemSavings(item: ShoppingItem): number {
-    if (item.onSale && item.priceActual < item.priceEstimated) {
-      return item.quantidade * (item.priceEstimated - item.priceActual);
-    }
-    return 0;
+    return 0; // Savings are no longer calculated
   }
 
   finishShopping(): void {
@@ -239,7 +254,7 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
         itemId: item.itemOferta.item!.id,
         vendedorId: item.itemOferta.vendedor!.id,
         hasPromocaoAtiva: item.onSale,
-        preco: item.priceActual,
+        preco: item.price,
         dataInicioPromocao: item.itemOferta.dataInicioPromocao ? new Date(item.itemOferta.dataInicioPromocao) : undefined,
         dataFinalPromocao: item.itemOferta.dataFimPromocao ? new Date(item.itemOferta.dataFimPromocao) : undefined,
         version: item.itemOferta.version,

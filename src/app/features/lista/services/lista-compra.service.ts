@@ -11,6 +11,7 @@ import { ConcluirListaRequestDTO } from '@app/features/compra/models/concluir-li
 import { API_CONTEXT } from '../../../core/interceptors/api-context';
 import { ListaModel } from '../models/lista.model';
 import { Page } from '@app/shared/pipes/page.model';
+import { ListaCompraEdicaoRequest } from '../models/lista-compra-edicao-request.model'; // New import
 
 @Injectable({
   providedIn: 'root',
@@ -39,9 +40,9 @@ export class ListaCompraService {
     listaId: string,
     page = 0,
     size = 10
-  ): Observable<any> { // Keep original return type for now, will be refactored later
+  ): Observable<Page<ItemListaModel>> { // Keep original return type for now, will be refactored later
     const url = `${this.apiPath}/${listaId}/itens`;
-    return this.http.get<any>(url, {
+    return this.http.get<Page<ItemListaModel>>(url, {
       params: {
         page,
         size,
@@ -60,9 +61,9 @@ export class ListaCompraService {
   adicionarItensALista(
     listaId: string,
     itensParaAdicionar: { itemOfertaId: string; quantidade: number }[]
-  ): Observable<any> {
+  ): Observable<ItemListaModel[]> {
     const url = `${this.apiPath}/${listaId}/adicionar-itens`;
-    return this.http.post(url, itensParaAdicionar, {
+    return this.http.post<ItemListaModel[]>(url, itensParaAdicionar, {
       context: new HttpContext().set(API_CONTEXT, 'list'),
     });
   }
@@ -70,16 +71,15 @@ export class ListaCompraService {
   alterarItens(
     listaId: string,
     itensAlterados: ItemAlterado[]
-  ): Observable<any> {
+  ): Observable<void> {
     const url = `${this.apiPath}/${listaId}/alterar-itens`;
-    return this.http.put(url, itensAlterados, {
+    return this.http.put<void>(url, itensAlterados, {
       context: new HttpContext().set(API_CONTEXT, 'list'),
     });
   }
 
-  criarLista(listaCompraDTO: ListaCompraCriacao): Observable<any> {
-    console.table(listaCompraDTO);
-    return this.http.post(this.apiPath, listaCompraDTO, {
+  criarLista(listaCompraDTO: ListaCompraCriacao): Observable<ListaModel> {
+    return this.http.post<ListaModel>(this.apiPath, listaCompraDTO, {
       context: new HttpContext().set(API_CONTEXT, 'list'),
     });
   }
@@ -108,6 +108,13 @@ export class ListaCompraService {
   atualizarLista(lista: ListaModel): Observable<ListaModel> {
     const url = `${this.apiPath}/${lista.id}`;
     return this.http.put<ListaModel>(url, lista, {
+      context: new HttpContext().set(API_CONTEXT, 'list'),
+    });
+  }
+
+  atualizarListaCompleta(request: ListaCompraEdicaoRequest): Observable<ListaModel> {
+    const url = `${this.apiPath}`;
+    return this.http.put<ListaModel>(url, request, {
       context: new HttpContext().set(API_CONTEXT, 'list'),
     });
   }

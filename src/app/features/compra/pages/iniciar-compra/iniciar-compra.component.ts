@@ -334,19 +334,16 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
   private addItemsToLista(
     itens: { itemOferta: ItemOferta; quantidade: number }[],
   ): void {
-    console.log('addItemsToLista: Starting, setting loading to true.');
     this.loading = true;
     const payload = itens.map((i) => ({
       itemOfertaId: i.itemOferta.id,
       quantidade: i.quantidade,
     }));
 
-    console.log('addItemsToLista: Calling service adicionarItensALista.');
     this.listaCompraService
       .adicionarItensALista(this.listaId, payload)
       .subscribe({
         next: (newItemsListaModel: ItemListaModel[]) => {
-          console.log('addItemsToLista: Service call succeeded.');
           const newShoppingItems: ShoppingItem[] = newItemsListaModel.map(itemLista => ({
             ...itemLista,
             checked: false, // Default to unchecked
@@ -361,19 +358,13 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
           this.loading = false;
           this.cdr.detectChanges(); // Manually trigger change detection
           this.snackBar.open('Itens adicionados com sucesso!', 'Fechar', { duration: 3000 });
-          console.log('addItemsToLista: Loading set to false, UI updated.');
         },
         error: (err: any) => {
-          console.error('addItemsToLista: Service call failed.', err);
           this.loading = false;
           this.cdr.detectChanges(); // Manually trigger change detection
           this.snackBar.open(err.error?.detail || 'Erro ao adicionar itens.', 'Fechar', { duration: 3000 });
-        },
-        complete: () => {
-          console.log('addItemsToLista: Subscription completed.');
         }
       });
-      console.log('addItemsToLista: Service call initiated, subscription active.');
   }
 
   private resolveVendedorId(): string | null {

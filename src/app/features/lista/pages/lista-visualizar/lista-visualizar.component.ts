@@ -49,7 +49,6 @@ export class ListaVisualizarComponent implements OnInit {
         this.loadMoreItems(); // Load first page of items
       },
       error: (err) => {
-        console.error("Erro ao carregar detalhes da lista:", err);
         this.isPageLoading = false;
       }
     });
@@ -64,14 +63,25 @@ export class ListaVisualizarComponent implements OnInit {
     this.listaCompraService.getItensPorLista(this.listaId, this.currentPage, this.pageSize)
       .subscribe({
         next: (page) => {
-          console.table(page.content)
           this.items = [...this.items, ...page.content];
+
+          // Workaround: If list.vendedor is not populated by getListaById,
+          // try to get it from the first item's itemOferta.vendedor
+          if (this.list && !this.list.vendedor && this.items.length > 0) {
+            const firstItemVendedor = this.items[0].itemOferta?.vendedor;
+            if (firstItemVendedor?.id && firstItemVendedor?.nome) {
+              this.list.vendedor = {
+                id: firstItemVendedor.id,
+                nome: firstItemVendedor.nome,
+              };
+            }
+          }
+
           this.isLastPage = page.last;
           this.currentPage++;
           this.areItemsLoading = false;
         },
         error: (err) => {
-          console.error("Erro ao carregar itens da lista:", err);
           this.areItemsLoading = false;
         }
       });

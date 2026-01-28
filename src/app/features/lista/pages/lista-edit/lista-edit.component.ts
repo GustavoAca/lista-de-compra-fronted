@@ -18,7 +18,7 @@ import {
 } from '@angular/forms'; // For reactive forms
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner'; // For spinner in button
 
-import { Subject, Subscription, Observable, of } from 'rxjs';
+import { Subject, Subscription, Observable, of, throwError } from 'rxjs'; // Import throwError
 import {
   debounceTime,
   switchMap,
@@ -28,6 +28,7 @@ import {
   finalize,
   startWith,
   map,
+  catchError, // Import catchError
 } from 'rxjs/operators';
 
 import { ListaCompraService } from '../../services/lista-compra.service';
@@ -36,6 +37,7 @@ import { ItemListaModel } from '../../models/item-lista.model';
 import { ItemAlterado } from '../../models/item-alterado.model';
 import { VendedorService } from '../../services/vendedor.service'; // Import VendedorService
 import { VendedorModel } from '../../models/vendedor.model'; // Import VendedorModel
+import { ListaCompraEdicaoRequest } from '../../models/lista-compra-edicao-request.model'; // New import
 
 import { Page } from '../../../../shared/pipes/page.model';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
@@ -183,7 +185,7 @@ export class ListaEditComponent implements OnInit, OnDestroy {
       },
       error: (err: any) => {
         this.loadingInitial = false;
-        this.showError(err.error?.detail || 'Erro ao carregar a lista.');
+        this.showError(err.error?.detail || 'Erro ao carregar a lista.', 'error');
       },
     });
   }
@@ -228,7 +230,7 @@ export class ListaEditComponent implements OnInit, OnDestroy {
         },
         error: (err: any) => {
           this.showError(
-            err.error?.detail || 'Erro ao carregar itens da lista.',
+            err.error?.detail || 'Erro ao carregar itens da lista.', 'error',
           );
         },
       });
@@ -329,14 +331,12 @@ export class ListaEditComponent implements OnInit, OnDestroy {
       .pipe(
         debounceTime(3000),
         switchMap(() => this.persistPendingChanges()),
+        catchError((err) => {
+          this.showError(err.error?.detail || 'Erro ao salvar alterações automaticamente.', 'error');
+          return throwError(() => err); // Propagate the error after handling
+        })
       )
-      .subscribe({
-        error: (err: any) =>
-          this.showError(
-            err.error?.detail || 'Erro ao salvar alterações.',
-            'error', // Explicitly set type to error
-          ),
-      });
+      .subscribe(); // The error is handled by catchError, no need for error in subscribe
   }
 
   private persistPendingChanges(): Observable<any> {
@@ -487,30 +487,27 @@ export class ListaEditComponent implements OnInit, OnDestroy {
 
     this.loadingInitial = true; // Set loading state for explicit save
 
-    const updatedLista: ListaModel = {
-      ...this.lista, // Keep existing properties
+    const request: ListaCompraEdicaoRequest = {
+      id: this.listaId,
       nome: this.listaForm.get('nome')?.value,
-      // vendedor: this.listaForm.get('vendedor')?.value, // Removed vendor update
-      // If vendorId is different, update here
-      // id: this.listaId, // Ensure ID is passed
-      // version: this.lista.version, // Ensure version is passed for optimistic locking
+      version: this.lista.version,
     };
 
-    // First, update the list details (only name now)
-    this.listaCompraService.atualizarLista(updatedLista).pipe(
-      // Then, if there are pending item quantity changes, persist them
-      switchMap(() => this.persistPendingChanges().pipe(
-        tap(() => {
-          this.loadingInitial = false;
-          this.showError('Lista e alterações salvas com sucesso!', 'success');
-          // Optionally navigate back or refresh here
-          this.router.navigate(['/home']);
-        })
-      ))
-    ).subscribe({
+    this.listaCompraService.atualizarListaCompleta(request).subscribe({
+      next: (updatedLista) => {
+        this.lista = updatedLista; // Update local list with response
+        this.pendingItemChanges.clear();
+        this.initialItensState.clear();
+        this.itensLista.forEach((item) =>
+          this.initialItensState.set(item.id!, { ...item }),
+        ); // Re-initialize initial state with current items
+        this.loadingInitial = false;
+        this.showError('Lista e alterações salvas com sucesso!', 'success');
+        this.router.navigate(['/home']);
+      },
       error: (err: any) => {
         this.loadingInitial = false;
-        this.showError(err.error?.detail || 'Erro ao salvar a lista.');
+        this.showError(err.error?.detail || 'Erro ao salvar a lista.', 'error');
       }
     });
   }
@@ -558,14 +555,8 @@ export class ListaEditComponent implements OnInit, OnDestroy {
     message: string,
     type: 'error' | 'success' = 'error',
   ): void {
-    // Assuming alert-message component can differentiate error/success by 'type' property
-    // For now, only using 'error' for general 'error' messages, and 'success' for success.
-    // The alert-message component will need to be updated to handle 'success' type if it doesn't already.
-    // The current AlertMessageComponent only has 'message' and 'type' is 'error' by default.
-    // So, I'll set the error property directly and handle its display in template.
     this.error = message;
     if (type === 'success') {
-      // For success messages, we might want to clear them after a short delay
       setTimeout(() => this.clearError(), 3000);
     }
   }

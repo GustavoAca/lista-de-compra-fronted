@@ -1,6 +1,7 @@
 <div class="page-container" *ngIf="!isPageLoading; else initialLoading">
   <header class="page-header" *ngIf="list">
     <h1>{{ list.nome }}</h1>
+    <p class="seller-name-display" *ngIf="list.vendedor?.nome">Vendedor: {{ list.vendedor?.nome }}</p>
     <div class="total-value">
       <span>Valor Total da Compra:</span>
       <strong class="price">{{ list.valorTotal | currency:'BRL' }}</strong>

@@ -1,40 +1,51 @@
 <div class="item-details-container">
-  <app-loading-spinner *ngIf="loadingItens" size="sm"></app-loading-spinner>
+  @if (loading() && items().length === 0) {
+    <app-loading-spinner size="sm"></app-loading-spinner>
+  }
 
-  <app-alert-message
-    (closed)="onAlertClosed()"
-    *ngIf="deveExibirMensagem"
-    [message]="mensagemErro"
-    type="error"
-    [autoClose]="true"
-  >
-  </app-alert-message>
+  @if (hasError()) {
+    <app-alert-message
+      (closed)="onAlertClosed()"
+      [message]="error() || ''"
+      type="error"
+      [autoClose]="true"
+    >
+    </app-alert-message>
+  }
 
-  <div *ngIf="!loadingItens && !deveExibirMensagem" class="content-wrapper">
-    <app-infinite-scroll *ngIf="page && !page.empty; else noItems" [isLoading]="loadingItens" [isLastPage]="isLastPage" (scrolledToEnd)="loadItens()">
-      <div class="list-display-container">
-        <div class="actions">
-          <button mat-icon-button [routerLink]="['/lista/editar', lista.id]">
-            <mat-icon>edit</mat-icon>
-          </button>
-        </div>
-        <ul class="item-list">
-          <li *ngFor="let item of page.content">
-            <span class="item-info-wrapper">
-              <span class="item-name">{{ item.itemOferta.item.nome }}</span>
-              <span class="item-quantity">Quantidade: {{ item.quantidade }}</span>
-              <span class="item-seller"></span>
-              <span class="item-price">Preço: {{ item.itemOferta.preco | currency:'BRL' }}</span>
-              <span class="item-promotion" [class.on-promotion]="item.itemOferta.hasPromocaoAtiva">
-                Promoção: {{ item.itemOferta.hasPromocaoAtiva ? 'Sim' : 'Não' }}
-              </span>
-            </span>
-          </li>
-        </ul>
-      </div>
-    </app-infinite-scroll>
-    <ng-template #noItems>
-      <p><i>Esta lista não possui itens.</i></p>
-    </ng-template>
-  </div>
+  @if (!loading() || items().length > 0) {
+    <div class="content-wrapper">
+      @if (items().length > 0) {
+        <app-infinite-scroll 
+          [isLoading]="loading()" 
+          [isLastPage]="isLastPage()" 
+          (scrolledToEnd)="loadItens()"
+        >
+          <div class="list-display-container">
+            <div class="actions">
+              <button mat-icon-button [routerLink]="['/lista/editar', lista().id]">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </div>
+            <ul class="item-list">
+              @for (item of items(); track item.id) {
+                <li>
+                  <span class="item-info-wrapper">
+                    <span class="item-name">{{ item.itemOferta.item.nome }}</span>
+                    <span class="item-quantity">Quantidade: {{ item.quantidade }}</span>
+                    <span class="item-price">Preço: {{ item.itemOferta.preco | currency:'BRL' }}</span>
+                    <span class="item-promotion" [class.on-promotion]="item.itemOferta.hasPromocaoAtiva">
+                      Promoção: {{ item.itemOferta.hasPromocaoAtiva ? 'Sim' : 'Não' }}
+                    </span>
+                  </span>
+                </li>
+              }
+            </ul>
+          </div>
+        </app-infinite-scroll>
+      } @else if (!loading()) {
+        <p class="empty-message"><i>Esta lista não possui itens.</i></p>
+      }
+    </div>
+  }
 </div>

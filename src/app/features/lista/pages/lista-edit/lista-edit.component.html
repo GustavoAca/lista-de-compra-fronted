@@ -1,101 +1,148 @@
 <div class="lista-edit-container">
-  <app-loading-spinner *ngIf="loadingInitial" size="md"></app-loading-spinner>
-
-  <app-alert-message
-    (closed)="onAlertClosed()"
-    *ngIf="!loadingInitial && error"
-    [message]="error"
-    type="error"
-    [autoClose]="true"
-  >
-  </app-alert-message>
-
-  <mat-card *ngIf="!loadingInitial && !error && lista" class="lista-card">
-    <mat-card-content>
-      <form [formGroup]="listaForm" class="list-form">
-        <!-- Nome da lista -->
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Nome da Lista</mat-label>
-          <input
-            matInput
-            formControlName="nome"
-            placeholder="Ex: Compras do mês"
-          />
-          <mat-error *ngIf="listaForm.get('nome')?.hasError('required')">
-            O nome da lista é obrigatório.
-          </mat-error>
-        </mat-form-field>
-
-        <span class="total-value-display">
-          Total: {{ totalListaValor | currency: "BRL" }}
-        </span>
-      </form>
-
-      <!-- Lista de itens -->
-      <div
-        *ngIf="itensLista.length > 0; else noItems"
-        class="item-list-section"
-      >
-        <h3>Itens da Lista ({{ itensLista.length }} itens)</h3>
-        <app-item-list-display
-          [items]="itensLista"
-          [isEditMode]="true"
-          (quantityIncrement)="incrementarQuantidade($event)"
-          (quantityDecrement)="decrementarQuantidade($event)"
-          (itemRemove)="removerItem($event)"
-        ></app-item-list-display>
-      </div>
-
-      <ng-template #noItems>
-        <div class="empty-items-state">
-          <mat-icon>add_shopping_cart</mat-icon>
-          <p>Esta lista não possui itens. Adicione alguns!</p>
+  <!-- Header de Sincronização e Totais -->
+  <header class="edit-header">
+    <div class="header-main">
+      <button mat-icon-button (click)="router.navigate(['/home'])" class="btn-back">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      
+      <div class="header-info">
+        @if (lista()) {
+          <h1>{{ lista()?.nome }}</h1>
+        } @else {
+          <h1>Carregando lista...</h1>
+        }
+        
+        <div class="sync-indicator" [class]="syncStatus()">
+          @switch (syncStatus()) {
+            @case ('saving') {
+              <mat-spinner diameter="16"></mat-spinner>
+              <span>Salvando itens...</span>
+            }
+            @case ('synced') {
+              <mat-icon>cloud_done</mat-icon>
+              <span>Salvo na nuvem</span>
+            }
+            @case ('error') {
+              <mat-icon>cloud_off</mat-icon>
+              <span>Erro ao salvar</span>
+              <button mat-button class="btn-sync-action" (click)="retrySync()">Tentar Novamente</button>
+              <button mat-button class="btn-sync-action" (click)="rollbackChanges()">Desfazer</button>
+            }
+          }
         </div>
-      </ng-template>
-
-      <div *ngIf="error" class="error-message">
-        <mat-icon>error</mat-icon>
-        {{ error }}
       </div>
-    </mat-card-content>
-  </mat-card>
 
-  <!-- Ações (com botão de excluir) -->
-  <div class="actions" *ngIf="!loadingInitial && !error && lista">
-    <div class="actions-content">
-      <button
-        mat-stroked-button
-        color="warn"
-        class="btn-delete"
-        (click)="deleteList()"
-        type="button"
-      >
-        <mat-icon>delete</mat-icon>
-        <span class="btn-text">Excluir Lista</span>
-      </button>
-
-      <div class="spacer"></div>
-
-      <button mat-button class="btn-cancel" type="button" (click)="goBack()">
-        <mat-icon>block</mat-icon>
-        <span class="btn-text">Cancelar</span>
-      </button>
-
-      <button
-        mat-raised-button
-        color="primary"
-        class="btn-save"
-        (click)="saveList()"
-        type="button"
-      >
-        <mat-icon>check</mat-icon>
-        <span class="btn-text">Salvar Alterações</span>
-      </button>
+      <div class="header-total">
+        <span class="label">Total</span>
+        <span class="value">{{ totalListaValor() | currency: "BRL" }}</span>
+      </div>
     </div>
-  </div>
+  </header>
 
-   <app-fab-button
+  @if (loading() && itensLista().length === 0) {
+    <app-loading-spinner size="md"></app-loading-spinner>
+  }
+
+  @if (error()) {
+    <app-alert-message
+      (closed)="onAlertClosed()"
+      [message]="error() || ''"
+      type="error"
+      [autoClose]="true"
+    >
+    </app-alert-message>
+  }
+
+  @if (!loading() || itensLista().length > 0) {
+    <div class="content-scrollable">
+      <mat-card class="meta-card">
+        <mat-card-content>
+          <form [formGroup]="listaForm" class="list-form">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Nome da Lista</mat-label>
+              <input
+                matInput
+                formControlName="nome"
+                placeholder="Ex: Compras do mês"
+              />
+              @if (hasChangesInMeta()) {
+                <button 
+                  mat-icon-button 
+                  matSuffix 
+                  color="primary" 
+                  (click)="saveListMetadata()"
+                  matTooltip="Salvar novo nome"
+                >
+                  <mat-icon>check_circle</mat-icon>
+                </button>
+              }
+              @if (listaForm.get('nome')?.hasError('required')) {
+                <mat-error>O nome da lista é obrigatório.</mat-error>
+              }
+            </mat-form-field>
+          </form>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Cabeçalho de Itens e Ação em Lote -->
+      <section class="item-list-section">
+        <div class="section-header">
+          <div class="header-titles">
+            <h3>Itens da Lista ({{ totalItensCount() }})</h3>
+            @if (isSelectionMode()) {
+              <span class="selection-count">{{ selectedItems().size }} selecionados</span>
+            }
+          </div>
+          
+          @if (isSelectionMode()) {
+            <div class="bulk-actions">
+              <button mat-button (click)="clearSelection()">Cancelar</button>
+              <button mat-flat-button color="warn" (click)="removerSelecionados()">
+                <mat-icon>delete</mat-icon>
+                Remover
+              </button>
+            </div>
+          }
+        </div>
+
+        @if (itensLista().length > 0) {
+          <app-item-list-display
+            [items]="itensLista()"
+            [isEditMode]="true"
+            [selectedItems]="selectedItems()"
+            (quantityIncrement)="incrementarQuantidade($event)"
+            (quantityDecrement)="decrementarQuantidade($event)"
+            (itemRemove)="removerItem($event)"
+            (itemToggle)="toggleSelection($event)"
+          ></app-item-list-display>
+        } @else {
+          <div class="empty-items-state">
+            <mat-icon>add_shopping_cart</mat-icon>
+            <p>Sua lista está vazia.</p>
+            <button mat-stroked-button color="primary" (click)="openAddItemsModal()">
+              Adicionar itens agora
+            </button>
+          </div>
+        }
+      </section>
+
+      <!-- Ações de Rodapé -->
+      <div class="danger-zone">
+        <button
+          mat-button
+          class="btn-delete-permanent"
+          (click)="deleteList()"
+        >
+          <mat-icon>delete_forever</mat-icon>
+          Excluir esta lista permanentemente
+        </button>
+      </div>
+    </div>
+  }
+
+  <app-fab-button
     (fabClick)="openAddItemsModal()"
-    [ariaLabel]="'Criar nova lista'">
+    [ariaLabel]="'Adicionar item'">
   </app-fab-button>
 </div>

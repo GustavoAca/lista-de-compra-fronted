@@ -1,273 +1,234 @@
-/* ===========================
-   CONTAINER PRINCIPAL
-=========================== */
 .lista-edit-container {
   min-height: 100vh;
-  background-color: #f5f5f5;
-
+  background-color: #f8f9fa;
   display: flex;
   flex-direction: column;
 
-  padding: 16px;
-  padding-bottom: 96px; // espaço real do footer
-  box-sizing: border-box;
-}
+  .edit-header {
+    background-color: #fff;
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 
-/* ===========================
-   TOOLBAR
-=========================== */
-mat-toolbar {
-  box-shadow:
-    0px 2px 4px -1px rgba(0, 0, 0, 0.2),
-    0px 4px 5px 0px rgba(0, 0, 0, 0.14),
-    0px 1px 10px 0px rgba(0, 0, 0, 0.12);
+    .header-main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
 
-  .toolbar-title {
+    .header-info {
+      flex: 1;
+      min-width: 0;
+
+      h1 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1e293b;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      
+      .sync-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        transition: color 0.3s ease;
+
+        &.synced { color: #2ecc71; }
+        &.saving { color: #3498db; }
+        &.error { color: #e74c3c; }
+
+        mat-icon { font-size: 1rem; width: 1rem; height: 1rem; }
+
+        .btn-sync-action {
+          height: 24px;
+          line-height: 24px;
+          padding: 0 8px;
+          font-size: 0.7rem;
+          margin-left: 0.5rem;
+          border: 1px solid currentColor;
+          border-radius: 4px;
+          color: inherit;
+
+          &:hover {
+            background-color: rgba(231, 76, 60, 0.1);
+          }
+        }
+      }
+    }
+
+    .header-total {
+      text-align: right;
+      .label {
+        display: block;
+        font-size: 0.75rem;
+        color: #7f8c8d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #2c3e50;
+      }
+    }
+  }
+
+  .content-scrollable {
+    flex: 1;
+    padding: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
     display: flex;
     flex-direction: column;
-    margin-left: 16px;
+    gap: 1.5rem;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
 
-    span {
-      font-size: 1.25rem;
+  .meta-card {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+
+    .full-width {
+      width: 100%;
+    }
+  }
+
+  .item-list-section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+
+    .section-header {
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid #eee;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: 56px;
+
+      .header-titles {
+        display: flex;
+        flex-direction: column;
+        
+        h3 {
+          margin: 0;
+          font-size: 1rem;
+          color: #34495e;
+          font-weight: 600;
+        }
+
+        .selection-count {
+          font-size: 0.75rem;
+          color: #3f51b5;
+          font-weight: 500;
+        }
+      }
+
+      .bulk-actions {
+        display: flex;
+        gap: 0.5rem;
+        animation: slideIn 0.2s ease;
+
+        button mat-icon { font-size: 1.1rem; width: 1.1rem; height: 1.1rem; }
+      }
+    }
+  }
+
+  .empty-items-state {
+    padding: 3rem 1rem;
+    text-align: center;
+    color: #95a5a6;
+
+    mat-icon {
+      font-size: 3rem;
+      width: 3rem;
+      height: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    p { margin-bottom: 1.5rem; }
+  }
+
+  .danger-zone {
+    margin-top: 5rem;
+    margin-bottom: 3rem;
+    padding: 2rem;
+    display: flex;
+    justify-content: center;
+    border-top: 1px dashed #e2e8f0;
+
+    .btn-delete-permanent {
+      background-color: #fff1f2;
+      color: #e11d48;
+      padding: 0.75rem 2rem;
+      border-radius: 100px;
       font-weight: 500;
+      font-size: 0.9rem;
+      border: 1px solid #fecdd3;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+      mat-icon {
+        font-size: 1.1rem;
+        width: 1.1rem;
+        height: 1.1rem;
+        color: #fb7185;
+      }
+
+      &:hover {
+        background-color: #ffe4e6;
+        border-color: #fb7185;
+        color: #9f1239;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(225, 29, 72, 0.1), 0 4px 6px -2px rgba(225, 29, 72, 0.05);
+        
+        mat-icon {
+          color: #e11d48;
+        }
+      }
+
+      &:active {
+        transform: translateY(0);
+        background-color: #fecdd3;
+      }
     }
+  }
+}
 
-    p.list-name {
-      margin: 0;
-      font-size: 12px;
-      opacity: 0.8;
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@media (max-width: 600px) {
+  .lista-edit-container {
+    .edit-header {
+      padding: 0.75rem;
+      .header-total .value { font-size: 1.1rem; }
+      .header-info h1 { font-size: 1rem; }
     }
-  }
-}
-
-/* ===========================
-   LOADING
-=========================== */
-mat-progress-spinner {
-  margin: 20px auto;
-}
-
-/* ===========================
-   CARD PRINCIPAL
-=========================== */
-.lista-card {
-  max-width: 800px;
-  width: 100%;
-
-  margin: 20px auto;
-  padding: 20px;
-
-  box-sizing: border-box;
-
-  box-shadow:
-    0px 2px 4px -1px rgba(0, 0, 0, 0.2),
-    0px 4px 5px 0px rgba(0, 0, 0, 0.14),
-    0px 1px 10px 0px rgba(0, 0, 0, 0.12);
-}
-
-/* ===========================
-   FORMULÁRIO
-=========================== */
-.list-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: flex-end;
-  margin-bottom: 20px;
-}
-
-.list-form mat-form-field {
-  flex: 1 1 calc(50% - 16px);
-  min-width: 250px;
-}
-
-.total-value-display {
-  font-size: 1.5em;
-  font-weight: bold;
-  white-space: nowrap;
-
-  color: var(--primary-color, #3f51b5);
-
-  margin-left: auto;
-  flex-shrink: 0;
-}
-
-/* ===========================
-   LISTA DE ITENS
-=========================== */
-.item-list-section {
-  margin-top: 20px;
-
-  h3 {
-    margin-bottom: 10px;
-    color: var(--primary-color, #3f51b5);
-  }
-}
-
-.empty-items-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-
-  padding: 40px 16px;
-  color: #9e9e9e;
-
-  mat-icon {
-    font-size: 60px;
-    width: 60px;
-    height: 60px;
-    margin-bottom: 10px;
-  }
-
-  p {
-    font-size: 1.1em;
-  }
-}
-
-/* ===========================
-   ERROS
-=========================== */
-.error-message {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  padding: 12px;
-  margin-top: 20px;
-
-  background-color: #ffebee;
-  color: #c62828;
-  border-radius: 4px;
-}
-
-/* ===========================
-   FOOTER FIXO (ACTIONS)
-=========================== */
-.actions {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 200;
-
-  background-color: #ffffff;
-  border-top: 1px solid #e0e0e0;
-  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.15);
-
-  min-height: 80px;
-  display: flex;
-  align-items: center;
-
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.actions-content {
-  max-width: 800px;
-  width: 100%;
-  margin: 0 auto;
-
-  display: flex;
-  align-items: center;
-  gap: 12px;
-
-  padding: 16px 20px;
-  box-sizing: border-box;
-}
-
-.actions-content button {
-  height: 40px;
-  min-width: 120px;
-}
-
-.actions-content button[mat-raised-button] {
-  min-width: 180px;
-}
-
-.spacer {
-  flex: 1;
-}
-
-.btn-save {
-  font-weight: 600;
-}
-
-.btn-cancel {
-  color: #616161;
-
-  mat-icon {
-    color: #616161;
-  }
-
-  &:hover {
-    background-color: rgba(0, 0, 0, 0.04);
-  }
-}
-
-/* ===========================
-   RESPONSIVO
-=========================== */
-@media (max-width: 768px) {
-  .actions {
-    min-height: 64px; // footer mais compacto
-  }
-
-  .actions-content {
-    justify-content: space-between;
-  }
-
-  .actions-content button {
-    flex: 1;
-    max-width: none;
-
-    height: 44px;
-    min-width: 0;
-
-    padding: 0;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  // Remove comportamento especial do raised-button no mobile
-  .actions-content button[mat-raised-button] {
-    min-width: 44px;
-    box-shadow: none; // opcional, deixa mais clean
-  }
-
-  .btn-text {
-    display: none;
-  }
-
-  .actions-content mat-icon {
-    font-size: 22px;
-    margin: 0;
-  }
-
-  .spacer {
-    display: none;
-  }
-
-  .actions-content button mat-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    width: 24px;
-    height: 24px;
-    line-height: 24px;
-  }
-
-  .actions-content button {
-    line-height: normal;
-  }
-
-  .btn-delete {
-    border: none !important;
-  }
-
-  .btn-delete {
-    color: var(--mat-warn);
+    .content-scrollable {
+      padding: 1rem;
+      gap: 1rem;
+    }
   }
 }

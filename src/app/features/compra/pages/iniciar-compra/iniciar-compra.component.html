@@ -1,14 +1,14 @@
 <div class="iniciar-compra-container">
-  <app-loading-spinner *ngIf="loading"></app-loading-spinner>
-
-  <ng-container *ngIf="!loading">
+  @if (loading()) {
+    <app-loading-spinner></app-loading-spinner>
+  } @else {
     <!-- Header -->
     <div class="page-header">
       <div class="header-content">
-        <h2>{{ list.nome }}</h2>
+        <h2>{{ list()?.nome }}</h2>
         <p class="subtitle">
           <mat-icon>shopping_cart</mat-icon>
-          {{ checkedCount }} de {{ items.length }} itens no carrinho
+          {{ checkedCount() }} de {{ items().length }} itens no carrinho
         </p>
       </div>
       <button mat-icon-button (click)="router.navigate(['/home'])">
@@ -18,127 +18,119 @@
 
     <!-- Content -->
     <div class="page-content">
-      <div class="items-list" *ngIf="items.length > 0; else noItems">
-        <mat-card
-          *ngFor="let item of items; trackBy: trackByItemId"
-          [class.checked]="item.checked"
-          class="item-card"
-        >
-          <div class="item-layout">
-            <!-- Checkbox -->
-            <div class="item-main-row">
-              <mat-checkbox
-                [checked]="item.checked"
-                (change)="toggleCheck(item)"
-                color="primary"
-                class="item-checkbox"
-              >
-              </mat-checkbox>
-              <h3 [class.strikethrough]="item.checked">{{ item.name }}</h3>
-            </div>
+      @if (items().length > 0) {
+        <div class="items-list">
+          @for (item of items(); track item.id) {
+            <mat-card [class.checked]="item.checked" class="item-card">
+              <div class="item-layout">
+                <!-- Checkbox -->
+                <div class="item-main-row">
+                  <mat-checkbox
+                    [checked]="item.checked"
+                    (change)="toggleCheck(item)"
+                    color="primary"
+                    class="item-checkbox"
+                  >
+                  </mat-checkbox>
+                  <h3 [class.strikethrough]="item.checked">{{ item.name }}</h3>
+                </div>
 
-            <div class="item-details">
-              <!-- Header do item -->
-              <div class="item-header">
-                              <div class="item-info">
-                                <div class="actions-group">
-                                  <mat-chip
-                                    [highlighted]="item.onSale"
-                                    (click)="toggleSale(item)"
-                                    class="sale-chip"
-                                  >
-                                    <mat-icon matChipAvatar>local_offer</mat-icon>
-                                    {{ item.onSale ? "Em Promoção" : "Marcar Promoção" }}
-                                  </mat-chip>
-                                  <button mat-icon-button color="warn" (click)="removerItem(item)">
-                                    <mat-icon>delete</mat-icon>
-                                  </button>
-                                </div>
-                                <div class="quantity-controls">
-                                  <button
-                                    mat-icon-button
-                                    (click)="updateQuantity(item, -1)"
-                                    [disabled]="item.quantidade <= 0"
-                                    class="qty-button"
-                                  >
-                                    <mat-icon>remove</mat-icon>
-                                  </button>
-                                  <span class="quantity">
-                                    {{ item.quantidade }} {{ item.unit }}</span
-                                  >
-                                  <button
-                                    mat-icon-button
-                                    (click)="updateQuantity(item, 1)"
-                                    class="qty-button"
-                                  >
-                                    <mat-icon>add</mat-icon>
-                                  </button>
-                                </div>
-                              </div>
-              </div>
+                <div class="item-details">
+                  <div class="item-header">
+                    <div class="item-info">
+                      <div class="actions-group">
+                        <mat-chip
+                          [highlighted]="item.onSale"
+                          (click)="toggleSale(item)"
+                          class="sale-chip"
+                        >
+                          <mat-icon matChipAvatar>local_offer</mat-icon>
+                          {{ item.onSale ? "Em Promoção" : "Marcar Promoção" }}
+                        </mat-chip>
+                        <button mat-icon-button color="warn" (click)="removerItem(item)">
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </div>
+                      <div class="quantity-controls">
+                        <button
+                          mat-icon-button
+                          (click)="updateQuantity(item, -1)"
+                          [disabled]="item.quantidade <= 0"
+                          class="qty-button"
+                        >
+                          <mat-icon>remove</mat-icon>
+                        </button>
+                        <span class="quantity">
+                          {{ item.quantidade }} {{ item.unit }}</span
+                        >
+                        <button
+                          mat-icon-button
+                          (click)="updateQuantity(item, 1)"
+                          class="qty-button"
+                        >
+                          <mat-icon>add</mat-icon>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
 
-              <!-- Seção de preços -->
-              <div class="price-section">
-                <!-- Campo de preço -->
-                <mat-form-field
-                  appearance="outline"
-                  class="price-input"
-                >
-                  <mat-label>Preço</mat-label>
-                  <input
-                    matInput
-                    type="text"
-                    inputmode="decimal"
-                    [value]="item.price | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt'"
-                    (blur)="updatePrice(item, $any($event.target).value)"
-                  />
-                </mat-form-field>
+                  <!-- Seção de preços -->
+                  <div class="price-section">
+                    <mat-form-field appearance="outline" class="price-input">
+                      <mat-label>Preço</mat-label>
+                      <input
+                        matInput
+                        type="text"
+                        inputmode="decimal"
+                        [value]="item.price | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt'"
+                        (blur)="updatePrice(item, $any($event.target).value)"
+                      />
+                    </mat-form-field>
 
-                <mat-divider></mat-divider>
+                    <mat-divider></mat-divider>
 
-                <!-- Subtotal -->
-                <div class="subtotal-row">
-                  <span class="label">Subtotal:</span>
-                  <div class="subtotal-value">
-                    <strong>R$ {{ getItemSubtotal(item).toFixed(2) }}</strong>
+                    <div class="subtotal-row">
+                      <span class="label">Subtotal:</span>
+                      <div class="subtotal-value">
+                        <strong>R$ {{ (item.quantidade * item.price) | number:'1.2-2' }}</strong>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </mat-card>
-      </div>
-
-      <ng-template #noItems>
+            </mat-card>
+          }
+        </div>
+      } @else {
         <div class="empty-state">
           <mat-icon>remove_shopping_cart</mat-icon>
           <h2>Lista de compras vazia</h2>
           <p>Adicione itens à sua lista antes de iniciar uma compra.</p>
         </div>
-      </ng-template>
+      }
     </div>
 
     <!-- Footer -->
     <div class="page-footer">
       <div class="footer-content">
-      <div class="totals-summary">
-        <p>
-          Total ({{ checkedCount }} itens):
-          <strong>R$ {{ total.toFixed(2) }}</strong>
-        </p>
+        <div class="totals-summary">
+          <p>
+            Total ({{ checkedCount() }} itens):
+            <strong>{{ total() | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt' }}</strong>
+          </p>
+        </div>
+        <button
+          mat-flat-button
+          color="primary"
+          (click)="finishShopping()"
+          [disabled]="checkedCount() === 0"
+          class="finish-button"
+        >
+          Finalizar Compra
+        </button>
       </div>
-      <button
-        mat-raised-button
-        color="primary"
-        (click)="finishShopping()"
-        [disabled]="checkedCount === 0"
-        class="finish-button"
-      >
-        Finalizar Compra
-      </button>
     </div>
-    </div>
-  </ng-container>
+  }
 
   <app-fab-button
     (fabClick)="openAddItemsModal()"

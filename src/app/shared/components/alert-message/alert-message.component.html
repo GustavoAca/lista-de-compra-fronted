@@ -1,9 +1,12 @@
-<mat-card [class]="'alert-card ' + type">
+<mat-card [class]="'alert-card ' + type()">
   <mat-card-content class="alert-content">
-    <mat-icon [color]="type === 'error' ? 'warn' : 'primary'">{{ getIcon() }}</mat-icon>
-    <div class="message-text">{{ message }}</div>
-    <button mat-icon-button *ngIf="showCloseButton" (click)="onClose()">
-      <mat-icon>close</mat-icon>
-    </button>
+    <mat-icon [color]="type() === 'error' ? 'warn' : 'primary'">{{ icon() }}</mat-icon>
+    <div class="message-text">{{ message() }}</div>
+    
+    @if (showCloseButton()) {
+      <button mat-icon-button (click)="onClose()">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
   </mat-card-content>
 </mat-card>

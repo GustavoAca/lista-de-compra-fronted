@@ -1,28 +1,24 @@
-// src/app/features/compra/components/compra-item/compra-item.component.ts
-import { Component, Input, OnInit } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms'; // Import FormControl
+import { Component, OnInit, input, inject, DestroyRef } from '@angular/core';
+import { FormControl, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ItemCompra } from '@app/features/compra/models/item-compra.model';
-import {
-  MatCheckboxChange,
-  MatCheckboxModule,
-} from '@angular/material/checkbox';
-import { CommonModule } from '@angular/common'; // Import CommonModule
-import { ReactiveFormsModule } from '@angular/forms'; // Import ReactiveFormsModule
+import { CommonModule } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 // Angular Material Imports
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip'; // Added MatTooltipModule
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-compra-item',
   templateUrl: './compra-item.component.html',
   styleUrls: ['./compra-item.component.scss'],
-  standalone: true, // Mark as standalone
+  standalone: true,
   imports: [
-    // Add imports for standalone component
     CommonModule,
     ReactiveFormsModule,
     MatCardModule,
@@ -30,69 +26,65 @@ import { MatTooltipModule } from '@angular/material/tooltip'; // Added MatToolti
     MatFormFieldModule,
     MatInputModule,
     MatIconModule,
-    MatTooltipModule // Added
+    MatTooltipModule,
+    MatButtonModule
   ],
 })
 export class CompraItemComponent implements OnInit {
-  @Input() itemForm!: FormGroup; // FormGroup para o item
-  @Input() itemOriginal!: ItemCompra; // Dados originais do item para exibição
+  // Novas APIs de Input do Angular
+  itemForm = input.required<FormGroup>();
+  itemOriginal = input.required<ItemCompra>();
 
-  constructor() {}
+  private destroyRef = inject(DestroyRef);
 
   ngOnInit(): void {
-    if (!this.itemForm || !this.itemOriginal) {
-      console.error(
-        'CompraItemComponent: itemForm ou itemOriginal não foram fornecidos.',
-      );
-      return;
-    }
-
+    const form = this.itemForm();
+    
     [
       this.precoAtualControl,
       this.valorOfertaControl,
       this.valorOriginalNaLojaControl,
     ].forEach((control) => this.formatToTwoDecimals(control));
 
-    // Adiciona validação condicional para valorOferta e valorOriginalNaLoja
-    this.itemForm.get('emOfertaNaLoja')?.valueChanges.subscribe((emOferta) => {
-      const valorOfertaControl = this.itemForm.get('valorOferta');
-      const valorOriginalNaLojaControl = this.itemForm.get(
-        'valorOriginalNaLoja',
-      );
-
-      if (emOferta) {
-        valorOfertaControl?.setValidators([
-          Validators.required,
-          Validators.min(0.01),
-        ]);
-        valorOriginalNaLojaControl?.setValidators([
-          Validators.required,
-          Validators.min(0.01),
-        ]);
-      } else {
-        valorOfertaControl?.clearValidators();
-        valorOriginalNaLojaControl?.clearValidators();
-        valorOfertaControl?.patchValue(null); // Limpa o valor se não estiver em oferta
-        valorOriginalNaLojaControl?.patchValue(null);
-      }
-      valorOfertaControl?.updateValueAndValidity();
-      valorOriginalNaLojaControl?.updateValueAndValidity();
-    });
+    // Adiciona validação condicional usando pipe moderno para limpeza
+    form.get('emOfertaNaLoja')?.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((emOferta) => {
+        this.updateOfferValidators(emOferta);
+      });
 
     // Dispara a validação inicial se o formulário já estiver em oferta
-    if (this.itemForm.get('emOfertaNaLoja')?.value) {
-      this.itemForm.get('emOfertaNaLoja')?.updateValueAndValidity();
+    if (form.get('emOfertaNaLoja')?.value) {
+      this.updateOfferValidators(true);
     }
+  }
+
+  private updateOfferValidators(emOferta: boolean): void {
+    const form = this.itemForm();
+    const valorOfertaControl = form.get('valorOferta');
+    const valorOriginalNaLojaControl = form.get('valorOriginalNaLoja');
+
+    if (emOferta) {
+      const validators = [Validators.required, Validators.min(0.01)];
+      valorOfertaControl?.setValidators(validators);
+      valorOriginalNaLojaControl?.setValidators(validators);
+    } else {
+      valorOfertaControl?.clearValidators();
+      valorOriginalNaLojaControl?.clearValidators();
+      valorOfertaControl?.patchValue(null);
+      valorOriginalNaLojaControl?.patchValue(null);
+    }
+    
+    valorOfertaControl?.updateValueAndValidity();
+    valorOriginalNaLojaControl?.updateValueAndValidity();
   }
 
   normalizeQuantity(): void {
     const value = Number(this.quantidadeControl.value);
-
     if (!value || value < 1) {
       this.quantidadeControl.setValue(1);
       return;
     }
-
     this.quantidadeControl.setValue(Math.floor(value));
   }
 
@@ -109,44 +101,36 @@ export class CompraItemComponent implements OnInit {
   }
 
   get quantidadeControl(): FormControl {
-    return this.itemForm.get('quantidade') as FormControl;
+    return this.itemForm().get('quantidade') as FormControl;
   }
 
-  // Getter para acesso mais fácil aos controles no template
   get estaNoCarrinhoControl(): FormControl {
-    return this.itemForm.get('estaNoCarrinho') as FormControl;
+    return this.itemForm().get('estaNoCarrinho') as FormControl;
   }
 
   get precoAtualControl(): FormControl {
-    return this.itemForm.get('precoAtual') as FormControl;
+    return this.itemForm().get('precoAtual') as FormControl;
   }
 
   get emOfertaNaLojaControl(): FormControl {
-    return this.itemForm.get('emOfertaNaLoja') as FormControl;
+    return this.itemForm().get('emOfertaNaLoja') as FormControl;
   }
 
   get valorOfertaControl(): FormControl {
-    return this.itemForm.get('valorOferta') as FormControl;
+    return this.itemForm().get('valorOferta') as FormControl;
   }
 
   get valorOriginalNaLojaControl(): FormControl {
-    return this.itemForm.get('valorOriginalNaLoja') as FormControl;
+    return this.itemForm().get('valorOriginalNaLoja') as FormControl;
   }
 
   formatToTwoDecimals(control: FormControl | null): void {
     if (!control) return;
-
     const value = control.value;
-
     if (value === null || value === undefined || value === '') return;
-
     const numericValue = Number(value);
-
     if (isNaN(numericValue)) return;
-
     const formatted = Number(numericValue.toFixed(2));
-
-    // Evita loop desnecessário
     if (formatted !== numericValue) {
       control.setValue(formatted, { emitEvent: false });
     }

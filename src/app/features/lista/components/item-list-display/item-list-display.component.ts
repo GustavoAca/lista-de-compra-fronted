@@ -1,28 +1,34 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { ItemListaModel } from '../../models/item-lista.model';
-import { MatCardModule } from '@angular/material/card'; // Import MatCardModule
+import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 @Component({
   selector: 'app-item-list-display',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatIconModule, CurrencyPipe, MatCardModule], // Added MatCardModule
+  imports: [CommonModule, MatButtonModule, MatIconModule, CurrencyPipe, MatCardModule, MatCheckboxModule],
   templateUrl: './item-list-display.component.html',
   styleUrl: './item-list-display.component.scss'
 })
 export class ItemListDisplayComponent {
-  @Input() items: ItemListaModel[] = [];
-  @Output() quantityIncrement = new EventEmitter<ItemListaModel>();
-  @Output() quantityDecrement = new EventEmitter<ItemListaModel>();
-  @Output() itemRemove = new EventEmitter<ItemListaModel>();
-  @Input() isEditMode: boolean = false; // Added isEditMode input
+  items = input<ItemListaModel[]>([]);
+  isEditMode = input<boolean>(false);
+  selectedItems = input<Set<string>>(new Set());
+  
+  quantityIncrement = output<ItemListaModel>();
+  quantityDecrement = output<ItemListaModel>();
+  itemRemove = output<ItemListaModel>();
+  itemToggle = output<string>();
 
-  constructor() { }
+  isSelected(itemId: string): boolean {
+    return this.selectedItems().has(itemId);
+  }
 
-  trackByItemId(index: number, item: ItemListaModel): string {
-    return item.id!;
+  toggle(itemId: string): void {
+    this.itemToggle.emit(itemId);
   }
 
   increment(item: ItemListaModel): void {
@@ -35,10 +41,5 @@ export class ItemListDisplayComponent {
 
   remove(item: ItemListaModel): void {
     this.itemRemove.emit(item);
-  }
-
-  // Helper to determine which vendor ID to display
-  getVenedorId(item: ItemListaModel): string {
-    return item.itemOferta?.vendedor?.nome || 'N/A';
   }
 }

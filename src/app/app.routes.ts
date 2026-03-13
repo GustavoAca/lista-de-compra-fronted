@@ -1,34 +1,36 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './features/auth/pages/login/login.component';
-import { OauthCallbackComponent } from './features/auth/components/oauth-callback/oauth-callback.component';
-import { HomeComponent } from './features/home/pages/home/home.component';
-import { ListaEditComponent } from './features/lista/pages/lista-edit/lista-edit.component';
-import { ListaCreateComponent } from './features/lista/pages/lista-create/lista-create.component';
+import { authGuard } from './core/guards/auth.guard';
+import { autoLoginGuard } from './core/guards/auto-login.guard';
 
 export const routes: Routes = [
   {
     path: 'home',
-    component: HomeComponent,
+    loadComponent: () => import('./features/home/pages/home/home.component').then(m => m.HomeComponent),
+    canActivate: [authGuard],
     data: { title: 'Minhas Listas' }
   },
   {
     path: 'login',
-    component: LoginComponent,
+    loadComponent: () => import('./features/auth/pages/login/login.component').then(m => m.LoginComponent),
+    canActivate: [autoLoginGuard],
     data: { hideHeader: true }
   },
   {
     path: 'lista/editar/:id',
-    component: ListaEditComponent,
+    loadComponent: () => import('./features/lista/pages/lista-edit/lista-edit.component').then(m => m.ListaEditComponent),
+    canActivate: [authGuard],
     data: { title: 'Editar Lista', showBackButton: true }
   },
   {
     path: 'lista/criar',
-    component: ListaCreateComponent,
+    loadComponent: () => import('./features/lista/pages/lista-create/lista-create.component').then(m => m.ListaCreateComponent),
+    canActivate: [authGuard],
     data: { title: 'Criar Nova Lista', showBackButton: true }
   },
   {
-    path: 'compra', // New route for the compra feature
-    loadChildren: () => import('./features/compra/compra.module').then(m => m.CompraModule)
+    path: 'compra',
+    loadChildren: () => import('./features/compra/compra.routes').then(m => m.COMPRA_ROUTES),
+    canActivate: [authGuard]
   },
   {
     path: '',
@@ -37,7 +39,7 @@ export const routes: Routes = [
   },
   { 
     path: 'oauth/callback/:provider', 
-    component: OauthCallbackComponent,
+    loadComponent: () => import('./features/auth/components/oauth-callback/oauth-callback.component').then(m => m.OauthCallbackComponent),
     data: { hideHeader: true }
   }
 ];

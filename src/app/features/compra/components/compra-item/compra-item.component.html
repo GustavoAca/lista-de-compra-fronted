@@ -1,13 +1,13 @@
 <!-- src/app/features/compra/components/compra-item/compra-item.component.html -->
 <mat-card
-  [formGroup]="itemForm"
+  [formGroup]="itemForm()"
   class="compra-item-card"
   [class.item-picked]="estaNoCarrinhoControl.value"
 >
   <mat-card-content class="item-details-content">
     <div class="item-header">
       <mat-checkbox [formControl]="estaNoCarrinhoControl" color="primary">
-        <span class="item-name">{{ itemOriginal.nome }}</span>
+        <span class="item-name">{{ itemOriginal().nome }}</span>
       </mat-checkbox>
       <div class="quantity-control">
         <button
@@ -44,11 +44,13 @@
 
     <div class="item-info">
       <p class="item-vendor">
-        Vendedor: {{ itemOriginal.vendedor.nome || "N/A" }}
+        Vendedor: {{ itemOriginal().vendedor.nome || "N/A" }}
       </p>
-      <p *ngIf="itemOriginal.observacao" class="item-notes">
-        Observação: {{ itemOriginal.observacao }}
-      </p>
+      @if (itemOriginal().observacao) {
+        <p class="item-notes">
+          Observação: {{ itemOriginal().observacao }}
+        </p>
+      }
     </div>
 
     <div class="item-pricing">
@@ -63,12 +65,12 @@
           (blur)="formatToTwoDecimals(precoAtualControl)"
         />
         <span matTextPrefix>R$</span>
-        <mat-error *ngIf="precoAtualControl?.hasError('required')"
-          >Preço é obrigatório.</mat-error
-        >
-        <mat-error *ngIf="precoAtualControl?.hasError('min')"
-          >Preço deve ser positivo.</mat-error
-        >
+        @if (precoAtualControl?.hasError('required')) {
+          <mat-error>Preço é obrigatório.</mat-error>
+        }
+        @if (precoAtualControl?.hasError('min')) {
+          <mat-error>Preço deve ser positivo.</mat-error>
+        }
       </mat-form-field>
 
       <mat-checkbox
@@ -79,7 +81,7 @@
         Em oferta na loja?
       </mat-checkbox>
 
-      <ng-container *ngIf="emOfertaNaLojaControl?.value">
+      @if (emOfertaNaLojaControl?.value) {
         <mat-form-field appearance="outline" class="price-input">
           <mat-label>Valor da Oferta</mat-label>
           <input
@@ -92,12 +94,12 @@
           />
           <span matTextPrefix>R$</span>
 
-          <mat-error *ngIf="valorOfertaControl?.hasError('required')"
-            >Valor da oferta é obrigatório.</mat-error
-          >
-          <mat-error *ngIf="valorOfertaControl?.hasError('min')"
-            >Valor da oferta deve ser positivo.</mat-error
-          >
+          @if (valorOfertaControl?.hasError('required')) {
+            <mat-error>Valor da oferta é obrigatório.</mat-error>
+          }
+          @if (valorOfertaControl?.hasError('min')) {
+            <mat-error>Valor da oferta deve ser positivo.</mat-error>
+          }
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="price-input">
@@ -111,14 +113,14 @@
             (blur)="formatToTwoDecimals(valorOriginalNaLojaControl)"
           />
           <span matTextPrefix>R$</span>
-          <mat-error *ngIf="valorOriginalNaLojaControl?.hasError('required')"
-            >Valor original é obrigatório.</mat-error
-          >
-          <mat-error *ngIf="valorOriginalNaLojaControl?.hasError('min')"
-            >Valor original deve ser positivo.</mat-error
-          >
+          @if (valorOriginalNaLojaControl?.hasError('required')) {
+            <mat-error>Valor original é obrigatório.</mat-error>
+          }
+          @if (valorOriginalNaLojaControl?.hasError('min')) {
+            <mat-error>Valor original deve ser positivo.</mat-error>
+          }
         </mat-form-field>
-      </ng-container>
+      }
     </div>
   </mat-card-content>
 </mat-card>

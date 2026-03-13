@@ -1,12 +1,15 @@
 <div class="loading-overlay">
-  <mat-spinner
-    *ngIf="type == 'spinner'"
-    [diameter]="diameter"
-    class="spinner"
-    [color]="color"
-  ></mat-spinner>
+  @if (type() === 'spinner') {
+    <mat-spinner
+      [diameter]="diameter()"
+      class="spinner"
+      [color]="color()"
+    ></mat-spinner>
+  }
 
-  <div class="progress-wrapper" *ngIf="type === 'bar'">
-    <mat-progress-bar mode="query" color="primary"></mat-progress-bar>
-  </div>
+  @if (type() === 'bar') {
+    <div class="progress-wrapper">
+      <mat-progress-bar mode="query" [color]="color()"></mat-progress-bar>
+    </div>
+  }
 </div>

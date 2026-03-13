@@ -1,5 +1,5 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
+import { Component, inject, input, output } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -21,11 +21,12 @@ import { Router } from '@angular/router';
   styleUrl: './lista-card-grid.component.scss',
 })
 export class ListaCardGridComponent {
-  @Input() lists: ListaModel[] = [];
-  @Output() editList = new EventEmitter<string>();
-  @Output() startShopping = new EventEmitter<ListaModel>();
+  // Novas APIs de input e output
+  lists = input<ListaModel[]>([]);
+  editList = output<string>();
+  startShopping = output<ListaModel>();
 
-  constructor(private router: Router) {}
+  private router = inject(Router);
 
   onEditList(id: string): void {
     this.editList.emit(id);
@@ -37,9 +38,5 @@ export class ListaCardGridComponent {
 
   onViewPurchase(id: string): void {
     this.router.navigate(['/compra', 'visualizar', id]);
-  }
-
-  formatDate(date: Date): string {
-    return new Date(date).toLocaleDateString('pt-BR');
   }
 }

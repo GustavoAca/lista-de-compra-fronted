@@ -1,4 +1,4 @@
-<h2 mat-dialog-title>Adicionar Itens à Lista</h2>
+<h2 mat-dialog-title>Adicionar Itens</h2>
 
 <mat-dialog-content>
   <!-- Busca por nome do item -->
@@ -11,105 +11,96 @@
         placeholder="Digite o nome do item"
         [formControl]="itemSearchControl"
       />
-      <button
-        *ngIf="itemSearchControl.value"
-        matSuffix
-        mat-icon-button
-        aria-label="Limpar"
-        (click)="itemSearchControl.setValue('')"
-      >
-        <mat-icon>close</mat-icon>
-      </button>
+      @if (itemSearchControl.value) {
+        <button
+          matSuffix
+          mat-icon-button
+          aria-label="Limpar"
+          (click)="itemSearchControl.setValue('')"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      }
     </mat-form-field>
   </div>
 
   <div class="modal-content-wrapper">
     <!-- Loading -->
-    <app-loading-spinner *ngIf="loadingSellers || loadingItemOffers" size="md">
-    </app-loading-spinner>
+    @if (loadingSellers() || loadingOffers()) {
+      <app-loading-spinner size="md"></app-loading-spinner>
+    }
 
     <!-- Erro -->
-    <div *ngIf="errorMessage" class="error-message">
-      {{ errorMessage }}
-    </div>
+    @if (error()) {
+      <div class="error-message">
+        {{ error() }}
+      </div>
+    }
 
     <!-- Seleção de vendedor (somente modo NÃO direto) -->
-    <div *ngIf="!isDirectSellerMode" class="seller-selection-container">
-      <mat-form-field appearance="outline" class="seller-select-full-width">
-        <mat-label>Selecione um vendedor</mat-label>
-        <mat-select [formControl]="selectedSellerControl">
-          <mat-option *ngFor="let seller of sellers" [value]="seller">
-            {{ seller.nome }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
+    @if (!isDirectSellerMode()) {
+      <div class="seller-selection-container">
+        <mat-form-field appearance="outline" class="seller-select-full-width">
+          <mat-label>Selecione um vendedor</mat-label>
+          <mat-select [formControl]="selectedSellerControl">
+            @for (seller of sellers(); track seller.id) {
+              <mat-option [value]="seller">
+                {{ seller.nome }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    }
 
     <!-- Nenhum item disponível -->
-    <div
-      *ngIf="!loadingItemOffers && resolveSellerId() && itemOffers.length === 0"
-      class="no-items-message"
-    >
-      <p><i>Nenhum item disponível para este vendedor.</i></p>
-    </div>
+    @if (!loadingOffers() && currentSellerId() && itemOffers().length === 0) {
+      <div class="no-items-message">
+        <p><i>Nenhum item disponível para este vendedor.</i></p>
+      </div>
+    }
 
     <!-- Lista de itens -->
-    <app-infinite-scroll
-      *ngIf="resolveSellerId() && itemOffers.length > 0"
-      [isLoading]="loadingItemOffers"
-      [isLastPage]="isLastItemOfferPage"
-      (scrolledToEnd)="loadItemOffers()"
-    >
-      <ul class="item-list">
-        <li *ngFor="let item of itemOffers">
-          <div class="item-display-row">
-            <mat-checkbox
-              [checked]="getQuantity(item) > 0"
-              (change)="toggleItemSelection(item)"
-              class="item-checkbox-name"
-            >
-              <span class="item-name">
-                {{ item.item.nome }}
-              </span>
-            </mat-checkbox>
+    @if (currentSellerId() && itemOffers().length > 0) {
+      <app-infinite-scroll
+        [isLoading]="loadingOffers()"
+        [isLastPage]="isLastOfferPage()"
+        (scrolledToEnd)="loadItemOffers()"
+      >
+        <ul class="item-list">
+          @for (item of itemOffers(); track item.id) {
+            <li>
+              <div class="item-display-row">
+                <div class="item-name-col">
+                  <span class="item-name">{{ item.item.nome }}</span>
+                  <span class="item-price">{{ item.preco | currency: "BRL" }}</span>
+                </div>
 
-            <span class="flex-spacer"></span>
+                <span class="flex-spacer"></span>
 
-            <span class="item-details-right">
-              <span class="item-price">
-                {{ item.preco | currency: "BRL" }}
-              </span>
+                <div class="quantity-controls">
+                  <button
+                    mat-icon-button
+                    (click)="updateQuantity(item, -1)"
+                    [disabled]="getItemQuantity(item.id) === 0"
+                  >
+                    <mat-icon>remove</mat-icon>
+                  </button>
 
-              <span
-                class="item-promotion"
-                [class.on-promotion]="item.hasPromocaoAtiva"
-              >
-                Promoção:
-                {{ item.hasPromocaoAtiva ? "Sim" : "Não" }}
-              </span>
+                  <span class="quantity-value">
+                    {{ getItemQuantity(item.id) }}
+                  </span>
 
-              <span class="quantity-controls">
-                <button
-                  mat-icon-button
-                  (click)="decrementQuantity(item)"
-                  [disabled]="getQuantity(item) === 0"
-                >
-                  <mat-icon>remove</mat-icon>
-                </button>
-
-                <span class="quantity-value">
-                  {{ getQuantity(item) }}
-                </span>
-
-                <button mat-icon-button (click)="incrementQuantity(item)">
-                  <mat-icon>add</mat-icon>
-                </button>
-              </span>
-            </span>
-          </div>
-        </li>
-      </ul>
-    </app-infinite-scroll>
+                  <button mat-icon-button (click)="updateQuantity(item, 1)">
+                    <mat-icon>add</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
+      </app-infinite-scroll>
+    }
   </div>
 </mat-dialog-content>
 
@@ -119,9 +110,9 @@
   <button
     mat-flat-button
     color="primary"
-    [disabled]="selectedItems.size === 0"
+    [disabled]="selectedCount() === 0"
     (click)="onConfirm()"
   >
-    Adicionar
+    Adicionar ({{ selectedCount() }})
   </button>
 </mat-dialog-actions>

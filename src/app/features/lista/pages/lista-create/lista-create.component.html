@@ -1,104 +1,105 @@
 <div class="lista-create-container">
-  <mat-progress-spinner
-    *ngIf="loading"
-    mode="indeterminate"
-    diameter="50"
-  ></mat-progress-spinner>
+  @if (loading()) {
+    <mat-progress-spinner
+      mode="indeterminate"
+      diameter="50"
+    ></mat-progress-spinner>
+  } @else {
+    <mat-card class="lista-card">
+      <mat-card-content>
+        <form [formGroup]="listaForm" class="list-form">
+          <!-- Nome da lista -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nome da Lista</mat-label>
+            <input
+              matInput
+              formControlName="nome"
+              placeholder="Ex: Compras do mês"
+            />
+            @if (listaForm.get('nome')?.hasError('required')) {
+              <mat-error>O nome da lista é obrigatório.</mat-error>
+            }
+          </mat-form-field>
 
-  <mat-card *ngIf="!loading" class="lista-card">
-    <mat-card-content>
-      <form [formGroup]="listaForm" class="list-form">
-        <!-- Nome da lista -->
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Nome da Lista</mat-label>
-          <input
-            matInput
-            formControlName="nome"
-            placeholder="Ex: Compras do mês"
-          />
-          <mat-error *ngIf="listaForm.get('nome')?.hasError('required')">
-            O nome da lista é obrigatório.
-          </mat-error>
-        </mat-form-field>
+          <!-- Autocomplete de vendedor -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Vendedor</mat-label>
 
-        <!-- Autocomplete de vendedor -->
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Vendedor</mat-label>
+            <input
+              type="text"
+              matInput
+              placeholder="Digite para buscar um vendedor"
+              formControlName="vendedor"
+              [matAutocomplete]="auto"
+            />
 
-          <input
-            type="text"
-            matInput
-            placeholder="Digite para buscar um vendedor"
-            formControlName="vendedor"
-            [matAutocomplete]="auto"
-            [disabled]="isVendorSelectionLocked"
-          />
-
-          <mat-autocomplete
-            #auto="matAutocomplete"
-            [displayWith]="displayVendedor"
-            (optionSelected)="onVendedorSelecionado($event.option.value)"
-          >
-            <mat-option *ngIf="(vendedores$ | async)?.content?.length === 0">
-              Nenhum vendedor encontrado
-            </mat-option>
-
-            <mat-option
-              *ngFor="let vendedor of (vendedores$ | async)?.content"
-              [value]="vendedor"
+            <mat-autocomplete
+              #auto="matAutocomplete"
+              [displayWith]="displayVendedor"
+              (optionSelected)="onVendedorSelecionado($event.option.value)"
             >
-              {{ vendedor.nome }}
-            </mat-option>
-          </mat-autocomplete>
+              @if (vendedores$ | async; as vendors) {
+                @for (vendedor of vendors.content; track vendedor.id) {
+                  <mat-option [value]="vendedor">
+                    {{ vendedor.nome }}
+                  </mat-option>
+                } @empty {
+                  <mat-option disabled>Nenhum vendedor encontrado</mat-option>
+                }
+              }
+            </mat-autocomplete>
 
-          <mat-error *ngIf="listaForm.get('vendedorId')?.hasError('required')">
-            O vendedor é obrigatório.
-          </mat-error>
-        </mat-form-field>
+            @if (listaForm.get('vendedorId')?.hasError('required')) {
+              <mat-error>O vendedor é obrigatório.</mat-error>
+            }
+          </mat-form-field>
 
-        <span class="total-value-display">
-          Total: {{ totalListaValor | currency: 'BRL' }}
-        </span>
-      </form>
+          <span class="total-value-display">
+            Total: {{ totalListaValor() | currency: 'BRL' }}
+          </span>
+        </form>
 
-      <!-- Lista de itens -->
-      <div *ngIf="itensLista.length > 0; else noItems" class="item-list-section">
-        <h3>Itens da Lista ({{ totalItens }} itens)</h3>
-        <app-item-list-display
-          [items]="itensLista"
-          (quantityIncrement)="incrementarQuantidade($event)"
-          (quantityDecrement)="decrementarQuantidade($event)"
-          (itemRemove)="removerItem($event)"
-        ></app-item-list-display>
-      </div>
+        <!-- Lista de itens -->
+        @if (itensLista().length > 0) {
+          <div class="item-list-section">
+            <h3>Itens da Lista ({{ totalItens() }} itens)</h3>
+            <app-item-list-display
+              [items]="itensLista()"
+              (quantityIncrement)="incrementarQuantidade($event)"
+              (quantityDecrement)="decrementarQuantidade($event)"
+              (itemRemove)="removerItem($event)"
+            ></app-item-list-display>
+          </div>
+        } @else {
+          <div class="empty-items-state">
+            <mat-icon>add_shopping_cart</mat-icon>
+            <p>Adicione itens à sua nova lista!</p>
+          </div>
+        }
 
-      <ng-template #noItems>
-        <div class="empty-items-state">
-          <mat-icon>add_shopping_cart</mat-icon>
-          <p>Adicione itens à sua nova lista!</p>
-        </div>
-      </ng-template>
-
-      <div *ngIf="error" class="error-message">
-        <mat-icon>error</mat-icon>
-        {{ error }}
-      </div>
-    </mat-card-content>
-    <mat-card-actions class="card-actions">
-      <button
-        mat-raised-button
-        color="primary"
-        (click)="salvarLista()"
-        [disabled]="listaForm.invalid || itensLista.length === 0 || loading"
-      >
-        <mat-icon>save</mat-icon>
-        Criar Lista
-      </button>
-    </mat-card-actions>
-  </mat-card>
+        @if (error()) {
+          <div class="error-message">
+            <mat-icon>error</mat-icon>
+            {{ error() }}
+          </div>
+        }
+      </mat-card-content>
+      <mat-card-actions class="card-actions">
+        <button
+          mat-flat-button
+          color="primary"
+          (click)="salvarLista()"
+          [disabled]="listaForm.invalid || itensLista().length === 0 || loading()"
+        >
+          <mat-icon>save</mat-icon>
+          Criar Lista
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  }
 
    <app-fab-button
     (fabClick)="openAddItemModal()"
-    [ariaLabel]="'Criar nova lista'">
+    [ariaLabel]="'Adicionar item'">
   </app-fab-button>
 </div>

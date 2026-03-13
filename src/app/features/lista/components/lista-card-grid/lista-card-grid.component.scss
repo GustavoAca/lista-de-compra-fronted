@@ -5,83 +5,72 @@
 
 .lists-grid {
   display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
+  padding: 1rem;
+  box-sizing: border-box;
 }
 
 .list-card {
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
-
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
+  border-radius: 16px;
+  
   &:hover {
     transform: translateY(-4px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-
-  mat-card-subtitle {
-    font-size: 0.75rem; // menor que o padrão
-    opacity: 0.7; // visual secundário
-    margin-top: 4px;
-    color: var(--app-text-color-disabled);
-    letter-spacing: 0.02em;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
   }
 
   mat-card-header {
-    position: relative;
-    padding-right: 40px; // espaço para o ícone no canto
+    margin-bottom: 1rem;
+  }
 
-    .status-icon {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      font-size: 22px;
-      width: 22px;
-      height: 22px;
-    }
+  mat-card-subtitle {
+    font-size: 0.875rem;
+    color: var(--mat-sys-on-surface-variant);
+    margin-top: 4px;
   }
 
   .card-title-container {
     display: flex;
-    justify-content: space-between; // 👈 empurra o ícone para a direita
+    justify-content: space-between;
     align-items: center;
     width: 100%;
-  }
-
-  .status-icon {
-    font-size: 20px;
-  }
-
-  .status-icon {
-    font-size: 20px;
+    font-weight: 600;
   }
 
   .list-info {
     display: flex;
-    gap: 16px;
-    margin-bottom: 12px;
-    flex-wrap: wrap;
-    min-width: 0;
+    justify-content: space-between;
+    align-items: center;
+    margin: 1rem 0;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--mat-sys-outline-variant);
+  }
 
-    .info-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--app-text-color-secondary);
-      font-size: 14px;
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 
-      &.total {
-        color: var(--app-primary-color);
-        font-weight: 600;
-        align-items: end;
+    &.total {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--mat-sys-primary);
+
+      .currency {
+        font-size: 0.875rem;
+        font-weight: 500;
       }
+    }
 
+    &.count {
+      font-size: 0.875rem;
+      color: var(--mat-sys-on-surface-variant);
+      
       mat-icon {
         font-size: 18px;
         width: 18px;
@@ -90,43 +79,23 @@
     }
   }
 
-  .description {
-    color: var(--app-text-color-secondary);
-    font-size: 14px;
-    margin: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-  }
-
   mat-card-actions {
-    width: 100%;
+    margin-top: auto;
+    padding: 8px 16px 16px !important;
+    gap: 8px;
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center; // 👈 centraliza o grupo de botões
-    gap: 12px;
-
-    padding: 16px;
-    box-sizing: border-box;
+    justify-content: flex-end;
 
     button {
-      flex: 0 0 auto; // 👈 não estica
-      min-width: 140px; // opcional, mantém padrão visual
+      border-radius: 20px;
     }
-  }
-}
-
-@media (min-width: 601px) and (max-width: 1024px) {
-  .lists-grid {
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   }
 }
 
 @media (max-width: 600px) {
   .lists-grid {
     grid-template-columns: 1fr;
+    padding: 0.5rem;
+    gap: 1rem;
   }
 }

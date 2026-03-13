@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild, AfterViewInit, OnDestroy, inject, NgZone } from '@angular/core';
+import { Component, input, output, ViewChild, inject, NgZone, OnDestroy } from '@angular/core';
 import { CdkScrollable, ScrollingModule } from '@angular/cdk/scrolling';
 import { Subscription, debounceTime } from 'rxjs';
 import { CommonModule } from '@angular/common';
@@ -10,12 +10,12 @@ import { CommonModule } from '@angular/common';
   templateUrl: './infinite-scroll.component.html',
   styleUrl: './infinite-scroll.component.scss'
 })
-export class InfiniteScrollComponent implements AfterViewInit, OnDestroy {
-  @Input() scrollThreshold: number = 200;
-  @Input() debounceTimeMs: number = 100;
-  @Input() isLoading: boolean = false;
-  @Input() isLastPage: boolean = false;
-  @Output() scrolledToEnd = new EventEmitter<void>();
+export class InfiniteScrollComponent implements OnDestroy {
+  scrollThreshold = input<number>(200);
+  debounceTimeMs = input<number>(100);
+  isLoading = input<boolean>(false);
+  isLastPage = input<boolean>(false);
+  scrolledToEnd = output<void>();
 
   private scrollSubscription!: Subscription;
   private zone = inject(NgZone);
@@ -29,14 +29,14 @@ export class InfiniteScrollComponent implements AfterViewInit, OnDestroy {
     this.zone.runOutsideAngular(() => {
       this.scrollSubscription = scroll
         .elementScrolled()
-        .pipe(debounceTime(this.debounceTimeMs))
+        .pipe(debounceTime(this.debounceTimeMs()))
         .subscribe(() => {
           const distanceFromBottom = scroll.measureScrollOffset('bottom');
 
           if (
-            distanceFromBottom <= this.scrollThreshold &&
-            !this.isLastPage &&
-            !this.isLoading
+            distanceFromBottom <= this.scrollThreshold() &&
+            !this.isLastPage() &&
+            !this.isLoading()
           ) {
             this.zone.run(() => {
               this.scrolledToEnd.emit();
@@ -44,9 +44,6 @@ export class InfiniteScrollComponent implements AfterViewInit, OnDestroy {
           }
         });
     });
-  }
-
-  ngAfterViewInit(): void {
   }
 
   ngOnDestroy(): void {

@@ -1,8 +1,9 @@
-import { Component, OnInit, OnDestroy, inject, LOCALE_ID, Inject, ChangeDetectorRef } from '@angular/core';
-import { Observable, Subscription, of, switchMap, map, expand, reduce } from 'rxjs';
-
-import { CommonModule, CurrencyPipe, DecimalPipe, registerLocaleData } from '@angular/common'; // Added CurrencyPipe and DecimalPipe
+import { Component, OnInit, inject, LOCALE_ID, signal, computed, DestroyRef } from '@angular/core';
+import { Observable, of, switchMap, map, expand, reduce } from 'rxjs';
+import { CommonModule, CurrencyPipe, DecimalPipe, registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
 registerLocaleData(localePt);
 
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -10,26 +11,25 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatCheckboxModule } from '@angular/material/checkbox'; // New
-import { MatChipsModule } from '@angular/material/chips'; // New
-import { MatDividerModule } from '@angular/material/divider'; // New
-import { MatFormFieldModule } from '@angular/material/form-field'; // New
-import { MatInputModule } from '@angular/material/input'; // New
-import { MatDialog, MatDialogModule } from '@angular/material/dialog'; // New
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 import { ListaCompraService } from '@app/features/lista/services/lista-compra.service';
 import { ItemListaModel } from '@app/features/lista/models/item-lista.model';
 import { ListaModel } from '@app/features/lista/models/lista.model';
-// import { ShoppingItem } from '../../models/shopping-item.model'; // Removed this import as it's defined here
-import { ItemAlterado } from '@app/features/lista/models/item-alterado.model'; // New
-import { ConcluirListaRequestDTO } from '../../models/concluir-lista-request.dto'; // New
-import { ItemListaConcluirRequest } from '../../models/item-lista-concluir.model'; // New
-import { ItemOferta } from '@app/features/lista/models/item-oferta.model'; // New
+import { ItemAlterado } from '@app/features/lista/models/item-alterado.model';
+import { ConcluirListaRequestDTO } from '../../models/concluir-lista-request.dto';
+import { ItemListaConcluirRequest } from '../../models/item-lista-concluir.model';
+import { ItemOferta } from '@app/features/lista/models/item-oferta.model';
 
 import { LoadingSpinnerComponent } from '@app/shared/components/loading-spinner/loading-spinner.component';
-import { AddItemsModalComponent } from '@app/shared/components/add-items-modal/add-items-modal.component'; // New
-import { FabButtonComponent } from '@app/shared/components/fab-button/fab-button.component'; // New
-import { ConfirmationDialogComponent } from '@app/shared/components/confirmation-dialog/confirmation-dialog.component'; // New
+import { AddItemsModalComponent } from '@app/shared/components/add-items-modal/add-items-modal.component';
+import { FabButtonComponent } from '@app/shared/components/fab-button/fab-button.component';
+import { ConfirmationDialogComponent } from '@app/shared/components/confirmation-dialog/confirmation-dialog.component';
 import { ActivatedRoute, Router } from '@angular/router';
 
 interface ShoppingItem extends ItemListaModel {
@@ -38,7 +38,7 @@ interface ShoppingItem extends ItemListaModel {
   price: number;
   name: string;
   unit: string;
-  editingPrice: boolean; // New property to control price editing
+  editingPrice: boolean;
 }
 
 @Component({
@@ -54,88 +54,71 @@ interface ShoppingItem extends ItemListaModel {
     MatProgressSpinnerModule,
     MatSnackBarModule,
     LoadingSpinnerComponent,
-    MatCheckboxModule, // New
-    MatChipsModule, // New
-    MatDividerModule, // New
-    MatFormFieldModule, // New
-    MatInputModule, // New
-    MatDialogModule, // New
-    FabButtonComponent, // New
+    MatCheckboxModule,
+    MatChipsModule,
+    MatDividerModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatDialogModule,
+    FabButtonComponent,
   ],
   providers: [CurrencyPipe, DecimalPipe, { provide: LOCALE_ID, useValue: 'pt' }]
 })
-export class IniciarCompraComponent implements OnInit, OnDestroy {
-  listaId!: string;
-  list!: ListaModel; // Renamed from listaDetalhes
-  items: ShoppingItem[] = []; // New property
-  checkedCount = 0;
-  total = 0;
-  savings = 0;
-  loading = true; // Renamed from loadingInitial
+export class IniciarCompraComponent implements OnInit {
+  private route = inject(ActivatedRoute);
+  public router = inject(Router);
+  private listaCompraService = inject(ListaCompraService);
+  private snackBar = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
+  private destroyRef = inject(DestroyRef);
 
-  private subscriptions = new Subscription();
+  // Signals para Gerenciamento de Estado
+  listaId = signal<string | null>(null);
+  list = signal<ListaModel | null>(null);
+  items = signal<ShoppingItem[]>([]);
+  loading = signal(true);
 
-  constructor(
-    private route: ActivatedRoute,
-    public router: Router, // Injected as public in constructor
-    private listaCompraService: ListaCompraService,
-    private snackBar: MatSnackBar,
-    private decimalPipe: DecimalPipe,
-    private currencyPipe: CurrencyPipe,
-    private dialog: MatDialog, // New: Inject MatDialog
-    private cdr: ChangeDetectorRef, // New
-    @Inject(LOCALE_ID) private locale: string,
-  ) {}
-
-  // =======================
-  // Lifecycle
-  // =======================
+  // Signals Computados (Reatividade Automática)
+  checkedCount = computed(() => this.items().filter(item => item.checked).length);
+  total = computed(() => this.items().reduce((sum, item) => {
+    return item.checked ? sum + (item.quantidade * item.price) : sum;
+  }, 0));
 
   ngOnInit(): void {
-    this.listaId = this.route.snapshot.paramMap.get('id')!; // Use non-null assertion as route is guarded
-
-    if (!this.listaId) {
-      // Should not happen if route is correctly configured with a guard
+    const id = this.route.snapshot.paramMap.get('id');
+    if (!id) {
       this.snackBar.open('ID da lista não fornecido.', 'Fechar', { duration: 3000 });
       this.router.navigate(['/home']);
       return;
     }
-
-    this.loadShoppingList(this.listaId);
+    this.listaId.set(id);
+    this.loadShoppingList(id);
   }
-
-  ngOnDestroy(): void {
-    this.subscriptions.unsubscribe();
-  }
-
-  // =======================
-  // Data loading
-  // =======================
 
   private loadShoppingList(id: string): void {
-    this.loading = true;
+    this.loading.set(true);
     this.listaCompraService.getListaById(id).pipe(
       switchMap(lista => {
-        this.list = lista;
+        this.list.set(lista);
         return this.fetchAllItemListaModels(id);
-      })
+      }),
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: itens => {
-        this.items = itens.map(itemLista => ({
+        this.items.set(itens.map(itemLista => ({
           ...itemLista,
-          checked: false, // Default to unchecked
+          checked: false,
           onSale: itemLista.itemOferta.hasPromocaoAtiva,
           price: itemLista.itemOferta.preco,
           name: itemLista.itemOferta.item?.nome ?? 'Item sem nome',
-          unit: 'un', // Assuming 'un' if unit is not available
-          editingPrice: false, // Initialize editing state
-        }));
-        this.updateCalculations();
-        this.loading = false;
+          unit: 'un',
+          editingPrice: false,
+        })));
+        this.loading.set(false);
       },
       error: err => {
         this.snackBar.open(err.error?.detail || 'Erro ao carregar a lista de compras.', 'Fechar', { duration: 3000 });
-        this.loading = false;
+        this.loading.set(false);
         this.router.navigate(['/home']);
       }
     });
@@ -150,164 +133,84 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
     );
   }
 
-  // =======================
-  // UI Interactions
-  // =======================
-
   toggleCheck(item: ShoppingItem): void {
-    item.checked = !item.checked;
-    this.updateCalculations();
-    // Potentially update backend for item.checked state
-    this.updateItemStateInBackend(item);
+    this.items.update(prev => prev.map(i => i.id === item.id ? { ...i, checked: !i.checked } : i));
   }
 
   toggleSale(item: ShoppingItem): void {
-    item.onSale = !item.onSale;
-    this.updateCalculations();
-    // Potentially update backend for item.onSale state
-    this.updateItemStateInBackend(item);
+    this.items.update(prev => prev.map(i => i.id === item.id ? { ...i, onSale: !i.onSale } : i));
   }
 
   updatePrice(item: ShoppingItem, value: string): void {
-    // Clean the input string: remove currency symbol, replace thousand separators, and change decimal comma to dot
-    const cleanValue = value
-      .replace(new RegExp(`[^\\d,]+`, 'g'), '') // Remove everything that is not a digit or comma
-      .replace(/\./g, '') // Remove thousand separators (dots)
-      .replace(',', '.'); // Replace comma with dot for decimal
-
-    let price = parseFloat(cleanValue);
-
-    if (isNaN(price)) {
-      price = 0; // Default to 0 if parsing fails
-    }
-
-    item.price = parseFloat(price.toFixed(2)); // Ensure two decimal places for precision
-    this.updateCalculations();
-    this.updateItemStateInBackend(item);
+    const cleanValue = value.replace(/[^\d,]+/g, '').replace(/\./g, '').replace(',', '.');
+    const price = parseFloat(parseFloat(cleanValue || '0').toFixed(2));
+    this.items.update(prev => prev.map(i => i.id === item.id ? { ...i, price } : i));
   }
 
   updateQuantity(item: ShoppingItem, delta: number): void {
-    const newQuantity = item.quantidade + delta; // Using item.quantidade as per ItemListaModel
-    if (newQuantity > 0) {
-      item.quantidade = newQuantity;
-      this.updateCalculations();
-      this.updateItemStateInBackend(item);
-    }
-  }
-
-  private updateItemStateInBackend(item: ShoppingItem): void {
-    // This is a placeholder for updating the item state (checked, onSale, priceActual, quantity) in the backend.
-    // The current backend API (ListaCompraService) has `alterarItens`, which takes `ItemAlterado[]`.
-    // I need to map the changes to `ItemAlterado` and send it. This should be debounced.
-    // For simplicity, let's just log for now, or use the existing debounce logic from lista-edit if applicable.
-    // For now, I'll assume `alterarItens` can handle individual item updates.
-    const itemAlterado: ItemAlterado = {
-      id: item.id!,
-      quantidade: item.quantidade,
-      // Additional fields like priceActual, onSale status might need to be part of ItemAlterado
-      // or a new DTO for updating shopping status.
-      // For now, only quantity is directly supported by ItemAlterado.
-    };
-    // Implement debounce logic here if multiple item updates are frequent
-    // this.listaCompraService.alterarItens(this.listaId, [itemAlterado]).subscribe();
-  }
-
-
-  updateCalculations(): void {
-    this.checkedCount = this.items.filter(item => item.checked).length;
-    this.total = this.items.reduce((sum, item) => {
-      if (!item.checked) return sum;
-      return sum + (item.quantidade * item.price);
-    }, 0);
-
-    this.savings = 0; // Savings are no longer calculated
-  }
-
-  getItemSubtotal(item: ShoppingItem): number {
-    return item.quantidade * item.price;
-  }
-
-  getItemSavings(item: ShoppingItem): number {
-    return 0; // Savings are no longer calculated
+    this.items.update(prev => prev.map(i => {
+      if (i.id === item.id) {
+        const newQuantity = i.quantidade + delta;
+        return newQuantity > 0 ? { ...i, quantidade: newQuantity } : i;
+      }
+      return i;
+    }));
   }
 
   finishShopping(): void {
-    let checkedItems = this.items.filter(item => item.checked);
+    const checkedItems = this.items().filter(item => item.checked && item.itemOferta?.id);
+    const currentList = this.list();
 
-    // Filter out items that do not have valid itemOferta or itemOferta.id
-    checkedItems = checkedItems.filter(item => item.itemOferta?.id);
-
-    if (checkedItems.length === 0) {
-      this.snackBar.open('Adicione pelo menos um item ao carrinho', 'OK', {
-        duration: 3000,
-        panelClass: ['error-snackbar']
-      });
+    if (checkedItems.length === 0 || !currentList) {
+      this.snackBar.open('Adicione pelo menos um item ao carrinho', 'OK', { duration: 3000 });
       return;
     }
 
-    this.snackBar.open(
-      `Compra finalizada! ${checkedItems.length} item(ns) - R$ ${this.total.toFixed(2)}`,
-      'OK',
-      {
-        duration: 5000,
-        horizontalPosition: 'end',
-        verticalPosition: 'top',
-        panelClass: ['success-snackbar']
-      }
-    );
-
-    // Adapt to ConcluirListaRequestDTO and call listaCompraService.concluirCompra
     const itensConcluir: ItemListaConcluirRequest[] = checkedItems.map(item => ({
       id: item.id!,
       quantidade: item.quantidade,
       version: item.version,
-      listaCompraId: this.list.id, // Added missing property
-      itemOferta: { // Map to ItemOfertaConcluirRequest
-        id: item.itemOferta!.id, // Non-null assertion after filtering
-        itemId: item.itemOferta!.item!.id, // Non-null assertion after filtering
-        vendedorId: item.itemOferta!.vendedor!.id, // Non-null assertion after filtering
+      listaCompraId: currentList.id,
+      itemOferta: {
+        id: item.itemOferta!.id,
+        itemId: item.itemOferta!.item!.id,
+        vendedorId: item.itemOferta!.vendedor!.id,
         hasPromocaoAtiva: item.onSale,
         preco: item.price,
         dataInicioPromocao: item.itemOferta?.dataInicioPromocao ? new Date(item.itemOferta.dataInicioPromocao) : undefined,
         dataFinalPromocao: item.itemOferta?.dataFimPromocao ? new Date(item.itemOferta.dataFimPromocao) : undefined,
-        version: item.itemOferta?.version, // Added null check for version
+        version: item.itemOferta?.version,
       }
     }));
 
     const concluirListaDto: ConcluirListaRequestDTO = {
-      id: this.list.id,
-      valorTotal: this.total,
-      nome: this.list.nome,
+      id: currentList.id,
+      valorTotal: this.total(),
+      nome: currentList.nome,
       totalItens: checkedItems.length,
-      version: this.list.version, // Use list version
+      version: currentList.version,
       itensLista: itensConcluir,
     };
 
-    this.loading = true;
-    this.listaCompraService.concluirCompra(concluirListaDto).subscribe({
+    this.loading.set(true);
+    this.listaCompraService.concluirCompra(concluirListaDto).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.snackBar.open('Compra concluída e registrada!', 'Fechar', { duration: 3000 });
         this.router.navigate(['/home']);
       },
       error: err => {
-        this.loading = false;
+        this.loading.set(false);
         this.snackBar.open(err.error?.detail || 'Erro ao finalizar a compra.', 'Fechar', { duration: 3000 });
       }
     });
   }
 
-  // =======================
-  // Modal de adicionar itens
-  // =======================
   openAddItemsModal(): void {
-    const vendedorId = this.resolveVendedorId();
+    const firstItem = this.items().find(i => i.itemOferta?.vendedor?.id);
+    const vendedorId = firstItem?.itemOferta?.vendedor?.id;
 
     if (!vendedorId) {
-      this.snackBar.open(
-        'Não foi possível determinar o vendedor para adicionar itens.',
-        'Fechar',
-        { duration: 3000 },
-      );
+      this.snackBar.open('Não foi possível determinar o vendedor.', 'Fechar', { duration: 3000 });
       return;
     }
 
@@ -316,103 +219,60 @@ export class IniciarCompraComponent implements OnInit, OnDestroy {
       maxWidth: '800px',
       data: {
         vendedorId,
-        existingItems: this.items
-          .filter(item => item.itemOferta?.id) // Filter out items without a valid itemOferta.id
-          .map((item) => ({
-            itemOfertaId: item.itemOferta!.id, // Now it's safe to use non-null assertion
-            quantidade: item.quantidade,
-          })),
+        existingItems: this.items().filter(i => i.itemOferta?.id).map(i => ({
+          itemOfertaId: i.itemOferta!.id,
+          quantidade: i.quantidade,
+        })),
       },
     });
 
-    dialogRef.afterClosed().subscribe((result) => {
-      if (!result || result.length === 0) return;
-      this.addItemsToLista(result);
+    dialogRef.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(result => {
+      if (result?.length) this.addItemsToLista(result);
     });
   }
 
-  private addItemsToLista(
-    itens: { itemOferta: ItemOferta; quantidade: number }[],
-  ): void {
-    this.loading = true;
-    const payload = itens.map((i) => ({
-      itemOfertaId: i.itemOferta.id,
-      quantidade: i.quantidade,
-    }));
+  private addItemsToLista(itens: { itemOferta: ItemOferta; quantidade: number }[]): void {
+    const id = this.listaId();
+    if (!id) return;
 
-    this.listaCompraService
-      .adicionarItensALista(this.listaId, payload)
-      .subscribe({
-        next: (newItemsListaModel: ItemListaModel[]) => {
-          const newShoppingItems: ShoppingItem[] = newItemsListaModel.map(itemLista => ({
-            ...itemLista,
-            checked: false, // Default to unchecked
-            onSale: itemLista.itemOferta?.hasPromocaoAtiva ?? false, // Added null check
-            price: itemLista.itemOferta?.preco ?? 0, // Added null check
-            name: itemLista.itemOferta?.item?.nome ?? 'Item sem nome', // Updated null check
-            unit: 'un', // Assuming 'un' if unit is not available
-            editingPrice: false, // Initialize editing state
-          }));
-          this.items = [...this.items, ...newShoppingItems]; // Re-assign array to trigger change detection
-          this.updateCalculations();
-          this.loading = false;
-          this.cdr.detectChanges(); // Manually trigger change detection
-          this.snackBar.open('Itens adicionados com sucesso!', 'Fechar', { duration: 3000 });
-        },
-        error: (err: any) => {
-          this.loading = false;
-          this.cdr.detectChanges(); // Manually trigger change detection
-          this.snackBar.open(err.error?.detail || 'Erro ao adicionar itens.', 'Fechar', { duration: 3000 });
-        }
-      });
-  }
+    this.loading.set(true);
+    const payload = itens.map(i => ({ itemOfertaId: i.itemOferta.id, quantidade: i.quantidade }));
 
-  private resolveVendedorId(): string | null {
-    // Prioritize getting vendedorId from the first item in this.items
-    if (
-      this.items.length > 0 &&
-      this.items[0]?.itemOferta?.vendedor?.id
-    ) {
-      return this.items[0].itemOferta.vendedor.id;
-    }
-    // Fallback to the list's vendor if present (though this.list might not have it directly if only items have vendors)
-    // In this component, it's safer to rely on existing items for vendor context.
-    return null; // If no items, no vendor context
+    this.listaCompraService.adicionarItensALista(id, payload).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (newItems) => {
+        const newShoppingItems: ShoppingItem[] = newItems.map(itemLista => ({
+          ...itemLista,
+          checked: false,
+          onSale: itemLista.itemOferta?.hasPromocaoAtiva ?? false,
+          price: itemLista.itemOferta?.preco ?? 0,
+          name: itemLista.itemOferta?.item?.nome ?? 'Item sem nome',
+          unit: 'un',
+          editingPrice: false,
+        }));
+        this.items.update(prev => [...prev, ...newShoppingItems]);
+        this.loading.set(false);
+        this.snackBar.open('Itens adicionados!', 'Fechar', { duration: 3000 });
+      },
+      error: err => {
+        this.loading.set(false);
+        this.snackBar.open(err.error?.detail || 'Erro ao adicionar itens.', 'Fechar', { duration: 3000 });
+      }
+    });
   }
 
   removerItem(itemToRemove: ShoppingItem): void {
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
-      data: {
-        title: 'Confirmar Exclusão',
-        message: `Tem certeza que deseja remover o item "${itemToRemove.name}" da lista?`,
-      },
-    });
-
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        this.loading = true; // Set loading
-        var itensAlterados: ItemAlterado[] = [];
-        const itemAlterado: ItemAlterado = {
-          id: itemToRemove.id,
-          quantidade: 0,
-        };
-        itensAlterados.push(itemAlterado);
-        this.listaCompraService
-          .alterarItens(this.listaId, itensAlterados)
-          .subscribe({
-            next: () => {
-              this.items = this.items.filter(
-                (item) => item.id !== itemToRemove.id,
-              ); // Remove from local array
-              this.updateCalculations();
-              this.loading = false;
-              this.snackBar.open('Item removido com sucesso!', 'Fechar', { duration: 3000 });
-            },
-            error: (err: any) => {
-              this.loading = false;
-              this.snackBar.open(err.error?.detail || 'Erro ao remover item da lista.', 'Fechar', { duration: 3000 });
-            },
-          });
+    this.dialog.open(ConfirmationDialogComponent, {
+      data: { title: 'Excluir', message: `Remover "${itemToRemove.name}"?` },
+    }).afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(confirm => {
+      if (confirm && this.listaId()) {
+        this.loading.set(true);
+        this.listaCompraService.alterarItens(this.listaId()!, [{ id: itemToRemove.id!, quantidade: 0 }]).subscribe({
+          next: () => {
+            this.items.update(prev => prev.filter(i => i.id !== itemToRemove.id));
+            this.loading.set(false);
+          },
+          error: () => this.loading.set(false)
+        });
       }
     });
   }

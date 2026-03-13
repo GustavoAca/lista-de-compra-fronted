@@ -1,24 +1,24 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute, ParamMap, Router } from '@angular/router'; // Import Router
+import { Component, inject, signal, computed, OnInit, DestroyRef } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatToolbarModule } from '@angular/material/toolbar'; // Import MatToolbarModule
-import { MatFormFieldModule } from '@angular/material/form-field'; // For form fields
-import { MatInputModule } from '@angular/material/input'; // For input
-import { MatAutocompleteModule } from '@angular/material/autocomplete'; // For autocomplete
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import {
   ReactiveFormsModule,
   FormBuilder,
   FormGroup,
   Validators,
-  FormControl,
-} from '@angular/forms'; // For reactive forms
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner'; // For spinner in button
+} from '@angular/forms';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
-import { Subject, Subscription, Observable, of, throwError } from 'rxjs'; // Import throwError
+import { Subject, Observable, of, throwError } from 'rxjs';
 import {
   debounceTime,
   switchMap,
@@ -26,26 +26,22 @@ import {
   expand,
   takeWhile,
   finalize,
-  startWith,
-  map,
-  catchError, // Import catchError
+  catchError,
 } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ListaCompraService } from '../../services/lista-compra.service';
 import { ListaModel } from '../../models/lista.model';
 import { ItemListaModel } from '../../models/item-lista.model';
 import { ItemAlterado } from '../../models/item-alterado.model';
-import { VendedorService } from '../../services/vendedor.service'; // Import VendedorService
-import { VendedorModel } from '../../models/vendedor.model'; // Import VendedorModel
-import { ListaCompraEdicaoRequest } from '../../models/lista-compra-edicao-request.model'; // New import
+import { ListaCompraEdicaoRequest } from '../../models/lista-compra-edicao-request.model';
 
-import { Page } from '../../../../shared/pipes/page.model';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { AlertMessageComponent } from '../../../../shared/components/alert-message/alert-message.component';
 import { ItemListDisplayComponent } from '../../components/item-list-display/item-list-display.component';
 import { AddItemsModalComponent } from '../../../../shared/components/add-items-modal/add-items-modal.component';
 import { ItemOferta } from '../../models/item-oferta.model';
-import { ConfirmationDialogComponent } from '@app/shared/components/confirmation-dialog/confirmation-dialog.component'; // Import ConfirmationDialogComponent
+import { ConfirmationDialogComponent } from '@app/shared/components/confirmation-dialog/confirmation-dialog.component';
 import { FabButtonComponent } from '@app/shared/components/fab-button/fab-button.component';
 
 @Component({
@@ -61,507 +57,325 @@ import { FabButtonComponent } from '@app/shared/components/fab-button/fab-button
     MatDialogModule,
     MatCardModule,
     ItemListDisplayComponent,
-    MatToolbarModule, // Use MatToolbarModule
+    MatToolbarModule,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
     MatAutocompleteModule,
     MatProgressSpinnerModule,
+    MatTooltipModule,
     FabButtonComponent
   ],
   templateUrl: './lista-edit.component.html',
   styleUrl: './lista-edit.component.scss',
 })
-export class ListaEditComponent implements OnInit, OnDestroy {
-  // =========================
-  // Injeções
-  // =========================
+export class ListaEditComponent implements OnInit {
   private route = inject(ActivatedRoute);
-  private router = inject(Router); // Inject Router
+  public router = inject(Router);
   private listaCompraService = inject(ListaCompraService);
   private dialog = inject(MatDialog);
-  private fb = inject(FormBuilder); // Inject FormBuilder
-  // private vendedorService = inject(VendedorService); // Remove VendedorService injection
+  private fb = inject(FormBuilder);
+  private destroyRef = inject(DestroyRef);
 
-  // =========================
-  // Estado público (template)
-  // =========================
-  listaId!: string;
-  lista!: ListaModel;
-  itensLista: ItemListaModel[] = []; // Renamed from allItems
-  totalListaValor = 0;
-  loadingInitial = true;
-  error: string | null = null; // Renamed from deveExibirMensagem/mensagemErro
+  // Status de Sincronização
+  syncStatus = signal<'synced' | 'saving' | 'error'>('synced');
+  
+  // Backup para Rollback
+  private lastGoodState: ItemListaModel[] = [];
+
+  // Seleção em Lote
+  selectedItems = signal<Set<string>>(new Set());
+  isSelectionMode = computed(() => this.selectedItems().size > 0);
+
+  // Signals para Estado
+  listaId = signal<string | null>(null);
+  lista = signal<ListaModel | null>(null);
+  itensLista = signal<ItemListaModel[]>([]);
+  loading = signal(true);
+  error = signal<string | null>(null);
 
   // Form Group
-  listaForm!: FormGroup;
+  listaForm: FormGroup = this.fb.group({
+    nome: ['', [Validators.required, Validators.minLength(3)]],
+    vendedorId: [''],
+  });
 
-  // Vendedor Autocomplete - Removed
-  // vendedores$: Observable<Page<VendedorModel>> = of();
-  // isVendorSelectionLocked = false;
+  // Signals Computados
+  totalListaValor = computed(() => this.itensLista().reduce(
+    (sum, item) => sum + (item.quantidade * (item.itemOferta?.preco ?? 0)), 0
+  ));
+  
+  totalItensCount = computed(() => this.itensLista().filter(i => i.quantidade > 0).length);
+  
+  hasChangesInMeta = signal(false);
 
-  // =========================
-  // Paginação
-  // =========================
-  currentPage = 0;
-
-  // =========================
-  // Estado interno
-  // =========================
-  private initialItensState = new Map<string, ItemListaModel>();
+  // Controle de Alterações Pendentes
   private pendingItemChanges = new Map<string, number>();
   private quantityChangeSubject = new Subject<void>();
-  // private searchVendedorSubject = new Subject<string>(); // Removed
+  currentPage = 0;
 
-  // =========================
-  // Subscriptions
-  // =========================
-  private routeSubscription!: Subscription;
-  private debounceSubscription!: Subscription;
-  // private searchVendedorSubscription!: Subscription; // Removed
-
-  // =========================
-  // Lifecycle
-  // =========================
   ngOnInit(): void {
-    this.buildForm(); // Build form on init
-
-    this.observeRoute();
-    this.observeDebouncedChanges();
-    // this.observeVendedorSearch(); // Removed
-  }
-
-  ngOnDestroy(): void {
-    this.routeSubscription?.unsubscribe();
-    this.debounceSubscription?.unsubscribe();
-    // this.searchVendedorSubscription?.unsubscribe(); // Removed
-  }
-
-  // =========================
-  // Rota / Inicialização
-  // =========================
-  private observeRoute(): void {
-    this.routeSubscription = this.route.paramMap.subscribe(
-      (params: ParamMap) => {
-        const id = params.get('id');
-        if (!id) {
-          this.showError('ID da lista não fornecido.');
-          return;
-        }
-
-        this.initializeLista(id);
-      },
-    );
-  }
-
-  private initializeLista(listaId: string): void {
-    this.listaId = listaId;
-    this.resetState();
+    const id = this.route.snapshot.paramMap.get('id');
+    if (!id) {
+      this.error.set('ID da lista não fornecido.');
+      return;
+    }
+    this.listaId.set(id);
     this.loadLista();
+    this.observeDebouncedChanges();
+    
+    this.listaForm.get('nome')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(val => {
+      if (this.lista()) {
+        this.hasChangesInMeta.set(val !== this.lista()?.nome);
+      }
+    });
   }
 
-  // =========================
-  // Carregamento da lista
-  // =========================
   private loadLista(): void {
-    this.loadingInitial = true;
-    this.clearError();
+    const id = this.listaId();
+    if (!id) return;
 
-    this.listaCompraService.getListaById(this.listaId).subscribe({
+    this.loading.set(true);
+    this.listaCompraService.getListaById(id).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (lista) => {
-        this.lista = lista;
+        this.lista.set(lista);
         this.listaForm.patchValue({
           nome: lista.nome,
-          // vendedor: lista.vendedor // Removed vendor patch
-        });
-        // Remove vendor selection locking and disabling
-        // if (lista.vendedor) {
-        //   this.isVendorSelectionLocked = true;
-        //   this.listaForm.get('vendedor')?.disable();
-        // }
-        this.listaForm.get('vendedorId')?.setValue(lista.vendedor?.id);
-
-        this.loadListaItems(); // Now triggers full load
+          vendedorId: lista.vendedor?.id
+        }, { emitEvent: false });
+        this.loadListaItems();
       },
-      error: (err: any) => {
-        this.loadingInitial = false;
-        this.showError(err.error?.detail || 'Erro ao carregar a lista.', 'error');
+      error: (err) => {
+        this.loading.set(false);
+        this.error.set(err.error?.detail || 'Erro ao carregar a lista.');
       },
     });
   }
 
-  // =========================
-  // Form Building
-  // =========================
-  private buildForm(): void {
-    this.listaForm = this.fb.group({
-      nome: ['', Validators.required],
-      // vendedor: [null, Validators.required], // Removed vendor form control
-      vendedorId: ['', Validators.required], // Hidden field to store vendor ID, still required for backend
-    });
+  private loadListaItems(): void {
+    const id = this.listaId();
+    if (!id) return;
 
-    // Observe changes in the 'vendedor' control for autocomplete search - Removed
-    // this.listaForm.get('vendedor')?.valueChanges
-    //   .pipe(
-    //     startWith(''),
-    //     debounceTime(300),
-    //     map(value => typeof value === 'string' ? value : value?.nome),
-    //     tap(name => this.searchVendedorSubject.next(name)),
-    //   ).subscribe();
-  }
+    this.itensLista.set([]);
+    this.currentPage = 0;
 
-  // =========================
-  // Itens / Carregamento Completo
-  // =========================
-  loadListaItems(): void {
-    this.loadingInitial = true;
-    this.itensLista = []; // Clear previous items
-    this.currentPage = 0; // Reset page for full fetch
-
-    this._fetchPage()
+    this._fetchPage(id)
       .pipe(
-        finalize(() => (this.loadingInitial = false)), // Ensure loading is turned off
+        finalize(() => {
+          this.loading.set(false);
+          this.lastGoodState = [...this.itensLista()];
+        }),
+        takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: () => {
-          this.onAllItemsLoaded();
-          // After items load, set the vendedorId from the first item
-          this.listaForm.get('vendedorId')?.setValue(this.resolveVendedorId());
-        },
-        error: (err: any) => {
-          this.showError(
-            err.error?.detail || 'Erro ao carregar itens da lista.', 'error',
-          );
-        },
+        error: (err) => this.error.set(err.error?.detail || 'Erro ao carregar itens.'),
       });
   }
 
-  private _fetchPage(): Observable<Page<ItemListaModel>> {
-    return this.listaCompraService
-      .getItensPorLista(this.listaId, this.currentPage, 10)
-      .pipe(
-        tap((page) => {
-          this.itensLista.push(...page.content); // Use itensLista
-          this.currentPage++;
-        }),
-        expand((page) => (page.last ? of() : this._fetchPage())),
-        takeWhile((page) => !page.last, true), // Include the last page in the result stream
-      );
-  }
-
-  private onAllItemsLoaded(): void {
-    this.initialItensState.clear();
-    this.itensLista.forEach(
-      (
-        item, // Use itensLista
-      ) => this.initialItensState.set(item.id!, { ...item }),
+  private _fetchPage(id: string): Observable<any> {
+    return this.listaCompraService.getItensPorLista(id, this.currentPage, 50).pipe(
+      tap((page) => {
+        this.itensLista.update(prev => [...prev, ...page.content]);
+        this.currentPage++;
+      }),
+      expand((page) => (page.last ? of() : this._fetchPage(id))),
+      takeWhile((page) => !page.last, true)
     );
-
-    this.calculateTotalValue();
   }
 
-  // =========================
-  // Quantidade / Alterações
-  // =========================
   incrementarQuantidade(item: ItemListaModel): void {
-    item.quantidade++;
-    this.registerItemChange(item);
+    this.updateItemQuantity(item.id!, item.quantidade + 1);
   }
 
   decrementarQuantidade(item: ItemListaModel): void {
     if (item.quantidade > 0) {
-      item.quantidade--;
-      this.registerItemChange(item);
+      this.updateItemQuantity(item.id!, item.quantidade - 1);
     }
   }
 
-  // =========================
-  // Item Removal
-  // =========================
-  removerItem(itemToRemove: ItemListaModel): void {
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
-      data: {
-        title: 'Confirmar Exclusão',
-        message: `Tem certeza que deseja remover o item "${itemToRemove.itemOferta?.item?.nome}" da lista?`,
-      },
-    });
+  private updateItemQuantity(id: string, newQty: number): void {
+    if (this.pendingItemChanges.size === 0) {
+      this.lastGoodState = [...this.itensLista()];
+    }
 
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        this.loadingInitial = true; // Set loading
-        this.listaCompraService
-          .removerItemDaLista(this.listaId, itemToRemove.id!)
-          .subscribe({
-            next: () => {
-              this.itensLista = this.itensLista.filter(
-                (item) => item.id !== itemToRemove.id,
-              ); // Remove from local array
-              this.initialItensState.delete(itemToRemove.id!); // Remove from initial state
-              this.pendingItemChanges.delete(itemToRemove.id!); // Remove any pending changes
-              this.calculateTotalValue();
-              this.loadingInitial = false;
-              this.showError('Item removido com sucesso!', 'success'); // Show success message
-              // After item removal, update the vendorId in the form if the removed item was the source
-              this.listaForm
-                .get('vendedorId')
-                ?.setValue(this.resolveVendedorId());
-            },
-            error: (err: any) => {
-              this.loadingInitial = false;
-              this.showError(
-                err.error?.detail || 'Erro ao remover item da lista.',
-              );
-            },
-          });
+    this.itensLista.update(items => {
+      if (newQty === 0) {
+        return items.filter(i => i.id !== id);
+      }
+      return items.map(i => 
+        i.id === id ? { ...i, quantity: newQty, quantidade: newQty } : i
+      );
+    });
+    
+    this.pendingItemChanges.set(id, newQty);
+    this.syncStatus.set('saving');
+    this.quantityChangeSubject.next();
+  }
+
+  private observeDebouncedChanges(): void {
+    this.quantityChangeSubject.pipe(
+      debounceTime(1000),
+      switchMap(() => this.persistPendingChanges().pipe(
+        catchError(err => {
+          this.syncStatus.set('error');
+          this.error.set('Erro na sincronização. Clique em "Tentar Novamente" ou "Desfazer".');
+          return of(null);
+        })
+      )),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
+      next: (result) => {
+        if (result !== null) {
+          this.syncStatus.set('synced');
+          this.lastGoodState = [...this.itensLista()];
+          this.error.set(null);
+        }
       }
     });
   }
 
-  private registerItemChange(item: ItemListaModel): void {
-    this.pendingItemChanges.set(item.id!, item.quantidade);
-    this.calculateTotalValue();
+  private persistPendingChanges(): Observable<any> {
+    const id = this.listaId();
+    if (this.pendingItemChanges.size === 0 || !id) return of(null);
+
+    const changes: ItemAlterado[] = [];
+    this.pendingItemChanges.forEach((quantidade, id) => changes.push({ id, quantidade }));
+
+    return this.listaCompraService.alterarItens(id, changes).pipe(
+      tap(() => this.pendingItemChanges.clear())
+    );
+  }
+
+  retrySync(): void {
+    this.syncStatus.set('saving');
     this.quantityChangeSubject.next();
   }
 
-  // =========================
-  // Persistência (debounce)
-  // =========================
-  private observeDebouncedChanges(): void {
-    this.debounceSubscription = this.quantityChangeSubject
-      .pipe(
-        debounceTime(3000),
-        switchMap(() => this.persistPendingChanges()),
-        catchError((err) => {
-          this.showError(err.error?.detail || 'Erro ao salvar alterações automaticamente.', 'error');
-          return throwError(() => err); // Propagate the error after handling
-        })
-      )
-      .subscribe(); // The error is handled by catchError, no need for error in subscribe
-  }
-
-  private persistPendingChanges(): Observable<any> {
-    if (this.pendingItemChanges.size === 0) {
-      return new Observable((observer) => observer.complete());
-    }
-
-    const itensAlterados = this.buildItensAlterados();
-
-    return this.listaCompraService
-      .alterarItens(this.listaId, itensAlterados)
-      .pipe(tap(() => this.onPersistSuccess()));
-  }
-
-  private buildItensAlterados(): ItemAlterado[] {
-    const itens: ItemAlterado[] = [];
-
-    this.pendingItemChanges.forEach((quantidade, id) => {
-      itens.push({ id, quantidade });
-    });
-
-    return itens;
-  }
-
-  private onPersistSuccess(): void {
+  rollbackChanges(): void {
+    this.itensLista.set([...this.lastGoodState]);
     this.pendingItemChanges.clear();
-    // Re-initialize initial state with current items after successful save
-    this.initialItensState.clear();
-    this.itensLista.forEach((item) =>
-      this.initialItensState.set(item.id!, { ...item }),
-    );
-    this.showError('Alterações salvas automaticamente!', 'success'); // Indicate auto-save
+    this.syncStatus.set('synced');
+    this.error.set(null);
   }
 
-  // =========================
-  // Modal de adicionar itens
-  // =========================
   openAddItemsModal(): void {
-    // Get vendor ID from the first item in the list
-    const vendedorId = this.resolveVendedorId();
-
-    if (!vendedorId) {
-      this.showError(
-        'Não foi possível determinar o vendedor para adicionar itens. Adicione um item manualmente ou selecione um vendedor na criação da lista.',
-        'error',
-      );
-      return;
-    }
-
+    const vendorId = this.resolveVendedorId();
     const dialogRef = this.dialog.open(AddItemsModalComponent, {
       width: '95vw',
       maxWidth: '800px',
       data: {
-        vendedorId,
-        existingItems: this.itensLista.map((item) => ({
-          itemOfertaId: item.itemOferta.id,
-          quantidade: item.quantidade,
-        })),
+        vendedorId: vendorId,
+        existingItems: this.itensLista(),
       },
     });
 
-    dialogRef.afterClosed().subscribe((result) => {
-      if (!result || result.length === 0) return;
-      this.addItemsToLista(result);
+    dialogRef.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((result) => {
+      if (result?.length) this.addItemsToLista(result);
     });
   }
 
-  private addItemsToLista(
-    itens: { itemOferta: ItemOferta; quantidade: number }[],
-  ): void {
-    this.loadingInitial = true;
-    const payload = itens.map((i) => ({
-      itemOfertaId: i.itemOferta.id,
-      quantidade: i.quantidade,
-    }));
+  private addItemsToLista(itens: { itemOferta: ItemOferta; quantidade: number }[]): void {
+    const id = this.listaId();
+    if (!id) return;
 
-    this.listaCompraService
-      .adicionarItensALista(this.listaId, payload)
-      .subscribe({
-        next: () => {
-          this.pendingItemChanges.clear();
-          this.initialItensState.clear();
-          this.reloadItens();
-          this.loadingInitial = false;
-          this.showError('Itens adicionados com sucesso!', 'success');
-          // After adding items, re-evaluate the vendorId in the form
-          this.listaForm.get('vendedorId')?.setValue(this.resolveVendedorId());
-        },
-        error: (err: any) => {
-          this.loadingInitial = false;
-          this.showError(err.error?.detail || 'Erro ao adicionar itens.');
-        },
-      });
+    this.loading.set(true);
+    const payload = itens.map(i => ({ itemOfertaId: i.itemOferta.id, quantidade: i.quantidade }));
+
+    this.listaCompraService.adicionarItensALista(id, payload).subscribe({
+      next: () => this.loadListaItems(),
+      error: () => this.loading.set(false)
+    });
   }
 
   private resolveVendedorId(): string | null {
-    // Prioritize getting vendedorId from the first item in itensLista
-    if (
-      this.itensLista.length > 0 &&
-      this.itensLista[0]?.itemOferta?.vendedor?.id
-    ) {
-      return this.itensLista[0].itemOferta.vendedor.id;
-    }
-    // Fallback to the list's vendor if present (though UI is hidden)
-    return this.lista?.vendedor?.id || null;
+    const items = this.itensLista();
+    return items.length > 0 ? items[0]?.itemOferta?.vendedor?.id : this.lista()?.vendedor?.id || null;
   }
 
-  // =========================
-  // Ações de Botões
-  // =========================
-  goBack(): void {
-    this.router.navigate(['/home']);
+  toggleSelection(itemId: string): void {
+    this.selectedItems.update(set => {
+      const newSet = new Set(set);
+      if (newSet.has(itemId)) newSet.delete(itemId);
+      else newSet.add(itemId);
+      return newSet;
+    });
+  }
+
+  clearSelection(): void {
+    this.selectedItems.set(new Set());
+  }
+
+  removerSelecionados(): void {
+    const selectedIds = Array.from(this.selectedItems());
+    if (selectedIds.length === 0) return;
+
+    this.dialog.open(ConfirmationDialogComponent, {
+      data: { 
+        title: 'Remover em Lote', 
+        message: `Deseja remover os ${selectedIds.length} itens selecionados?` 
+      },
+    }).afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(confirm => {
+      if (confirm) {
+        if (this.pendingItemChanges.size === 0) {
+          this.lastGoodState = [...this.itensLista()];
+        }
+
+        selectedIds.forEach(id => {
+          this.pendingItemChanges.set(id, 0);
+        });
+
+        this.itensLista.update(items => items.filter(i => !this.selectedItems().has(i.id!)));
+        this.syncStatus.set('saving');
+        this.quantityChangeSubject.next();
+        this.clearSelection();
+      }
+    });
+  }
+
+  removerItem(itemToRemove: ItemListaModel): void {
+    this.updateItemQuantity(itemToRemove.id!, 0);
+  }
+
+  saveListMetadata(): void {
+    if (this.listaForm.invalid) return;
+    
+    const currentLista = this.lista();
+    if (!this.listaId() || !currentLista) return;
+
+    const request: ListaCompraEdicaoRequest = {
+      id: this.listaId()!,
+      nome: this.listaForm.get('nome')?.value,
+      version: currentLista.version,
+    };
+
+    this.loading.set(true);
+    this.listaCompraService.atualizarListaCompleta(request).subscribe({
+      next: (updated) => {
+        this.lista.set(updated);
+        this.hasChangesInMeta.set(false);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false)
+    });
   }
 
   deleteList(): void {
-    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
-      data: {
-        title: 'Confirmar Exclusão da Lista',
-        message: `Tem certeza que deseja excluir a lista "${this.lista?.nome}"? Todos os itens serão perdidos.`,
-      },
-    });
-
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        this.loadingInitial = true; // Set loading state
-        this.listaCompraService.deletarLista(this.listaId).subscribe({
-          next: () => {
-            this.loadingInitial = false;
-            this.showError('Lista excluída com sucesso!', 'success');
-            this.router.navigate(['/home']); // Navigate back to home after deletion
-          },
-          error: (err: any) => {
-            this.loadingInitial = false;
-            this.showError(err.error?.detail || 'Erro ao excluir a lista.');
-          },
+    this.dialog.open(ConfirmationDialogComponent, {
+      data: { title: 'Excluir Lista', message: 'Deseja excluir esta lista permanentemente?' },
+    }).afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(confirm => {
+      if (confirm && this.listaId()) {
+        this.loading.set(true);
+        this.listaCompraService.deletarLista(this.listaId()!).subscribe({
+          next: () => this.router.navigate(['/home']),
+          error: () => this.loading.set(false)
         });
       }
     });
   }
 
-  saveList(): void {
-    this.listaForm.markAllAsTouched(); // Trigger validation
-    // Only validate 'nome' as 'vendedorId' might not be directly manageable from UI for existing lists
-    if (this.listaForm.get('nome')?.invalid || this.itensLista.length === 0) {
-      this.showError('Verifique o nome da lista e adicione itens à lista.', 'error');
-      return;
-    }
-
-    this.loadingInitial = true; // Set loading state for explicit save
-
-    const request: ListaCompraEdicaoRequest = {
-      id: this.listaId,
-      nome: this.listaForm.get('nome')?.value,
-      version: this.lista.version,
-    };
-
-    this.listaCompraService.atualizarListaCompleta(request).subscribe({
-      next: (updatedLista) => {
-        this.lista = updatedLista; // Update local list with response
-        this.pendingItemChanges.clear();
-        this.initialItensState.clear();
-        this.itensLista.forEach((item) =>
-          this.initialItensState.set(item.id!, { ...item }),
-        ); // Re-initialize initial state with current items
-        this.loadingInitial = false;
-        this.showError('Lista e alterações salvas com sucesso!', 'success');
-        this.router.navigate(['/home']);
-      },
-      error: (err: any) => {
-        this.loadingInitial = false;
-        this.showError(err.error?.detail || 'Erro ao salvar a lista.', 'error');
-      }
-    });
-  }
-
-  // =========================
-  // Utilitários
-  // =========================
-  private calculateTotalValue(): void {
-    if (this.itensLista.length === 0) {
-      this.totalListaValor = 0;
-      return;
-    }
-
-    this.totalListaValor = this.itensLista.reduce((sum, item) => {
-      const preco = item.itemOferta?.preco ?? 0;
-      return sum + item.quantidade * preco;
-    }, 0);
-  }
-
-  private reloadItens(): void {
-    this.resetState();
-    this.loadListaItems();
-  }
-
-  private resetState(): void {
-    this.itensLista = []; // Use itensLista
-    this.pendingItemChanges.clear();
-    this.initialItensState.clear();
-    this.clearError();
-    this.currentPage = 0;
-  }
-
-  trackByItemId(_: number, item: ItemListaModel): string {
-    return item.id!;
-  }
-
-  // =========================
-  // Mensagens
-  // =========================
   onAlertClosed(): void {
-    this.clearError();
-  }
-
-  private showError(
-    message: string,
-    type: 'error' | 'success' = 'error',
-  ): void {
-    this.error = message;
-    if (type === 'success') {
-      setTimeout(() => this.clearError(), 3000);
-    }
-  }
-
-  private clearError(): void {
-    this.error = null;
+    this.error.set(null);
   }
 }

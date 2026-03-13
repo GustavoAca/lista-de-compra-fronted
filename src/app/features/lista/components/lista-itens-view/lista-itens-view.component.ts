@@ -1,11 +1,9 @@
-import { Component, inject, Input, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, input, signal, computed, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { ItemListaModel } from '../../models/item-lista.model'; // Updated import
+import { ItemListaModel } from '../../models/item-lista.model';
 import { ListaCompraService } from '../../services/lista-compra.service';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { AlertMessageComponent } from '../../../../shared/components/alert-message/alert-message.component';
-import { Page } from '../../../../shared/pipes/page.model';
-// MatPaginatorModule and PageEvent removed
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
@@ -19,79 +17,64 @@ import { ListaModel } from '../../models/lista.model';
     CommonModule,
     LoadingSpinnerComponent,
     AlertMessageComponent,
-    // MatPaginatorModule removed
     CurrencyPipe,
     MatButtonModule,
     MatIconModule,
     RouterLink,
-    InfiniteScrollComponent, // Add InfiniteScrollComponent
+    InfiniteScrollComponent,
   ],
   templateUrl: './lista-itens-view.component.html',
   styleUrl: './lista-itens-view.component.scss',
 })
 export class ListaItensViewComponent implements OnInit {
-  @Input() lista!: ListaModel; // Updated from Lista
+  // Input reativo
+  lista = input.required<ListaModel>();
 
   private listaCompraService = inject(ListaCompraService);
 
-  page?: Page<ItemListaModel>; // Updated from ItemListaDTO
-  loadingItens = false;
-  mensagemErro: string = '';
-  deveExibirMensagem = false;
+  // Signals para Gerenciamento de Estado
+  items = signal<ItemListaModel[]>([]);
+  loading = signal(false);
+  currentPage = signal(0);
+  isLastPage = signal(false);
+  error = signal<string | null>(null);
 
-  // Paginator options removed
-  currentPage: number = 0; // Current page for infinite scroll
-  isLastPage: boolean = false; // Flag to indicate if the last page has been loaded
-  loadingScroll = false; // Loading state for infinite scroll
+  // Computed
+  hasError = computed(() => !!this.error());
 
   ngOnInit(): void {
-    this.loadItens(true); // Load initial items, resetting pagination
+    this.loadItens(true);
   }
 
   loadItens(reset: boolean = false): void {
-    if (!this.lista) return;
-
     if (reset) {
-      this.currentPage = 0;
-      this.isLastPage = false;
-      this.page = undefined;
+      this.currentPage.set(0);
+      this.isLastPage.set(false);
+      this.items.set([]);
     }
 
-    if (this.isLastPage || this.loadingItens) { // Use loadingItens for initial/scroll loading
+    if (this.isLastPage() || this.loading()) {
       return;
     }
 
-    this.loadingItens = true;
-    this.deveExibirMensagem = false;
+    this.loading.set(true);
+    this.error.set(null);
 
-    // Fetch 10 items per page for infinite scroll
-    this.listaCompraService.getItensPorLista(this.lista.id!, this.currentPage, 10).subscribe({
-      next: (response: Page<ItemListaModel>) => { // Updated from ItemListaDTO
-        if (!this.page || reset) {
-          this.page = response;
-        } else {
-          this.page.content = [...this.page.content, ...response.content];
-          this.page.last = response.last;
-          this.page.totalElements = response.totalElements;
-          // Update other page properties if needed, like page.number, page.totalPages
-        }
-        this.isLastPage = response.last;
-        this.currentPage++;
-        this.loadingItens = false;
+    this.listaCompraService.getItensPorLista(this.lista().id!, this.currentPage(), 10).subscribe({
+      next: (response) => {
+        this.items.update(prev => [...prev, ...response.content]);
+        this.isLastPage.set(response.last);
+        this.currentPage.update(p => p + 1);
+        this.loading.set(false);
       },
       error: (err) => {
-        this.loadingItens = false;
-        this.deveExibirMensagem = true;
-        this.mensagemErro =
-          err.error?.detail || 'Erro ao carregar os itens da lista.';
+        this.loading.set(false);
+        this.error.set(err.error?.detail || 'Erro ao carregar os itens da lista.');
       },
     });
   }
 
-  // onPageChange removed
-
   onAlertClosed(): void {
-    this.deveExibirMensagem = false;
-    this.mensagemErro = '';
+    this.error.set(null);
   }
 }

@@ -1,9 +1,8 @@
 <div class="lists-grid">
-  <mat-card *ngFor="let list of lists" class="list-card" appearance="outlined">
+  <mat-card *ngFor="let list of lists()" class="list-card" appearance="outlined">
     <mat-card-header>
       <mat-card-title class="card-title-container">
         <span>{{ list.nome }}</span>
-
         <mat-icon
           *ngIf="list.statusLista === 'FINALIZADA'"
           class="status-icon"
@@ -12,20 +11,24 @@
         >
       </mat-card-title>
       <mat-card-subtitle>
-        Atualizada em {{ formatDate(list.createdDate) }}
+        Criada em {{ list.createdDate | date:'dd/MM/yyyy' }}
       </mat-card-subtitle>
     </mat-card-header>
 
     <mat-card-content>
       <div class="list-info">
         <div class="info-item total">
-          R$
-          <span> {{ list.valorTotal.toFixed(2) }}</span>
+          <span class="currency">R$</span>
+          <span class="value">{{ list.valorTotal | number:'1.2-2' }}</span>
+        </div>
+        <div class="info-item count">
+          <mat-icon>inventory_2</mat-icon>
+          <span>{{ list.totalItens }} itens</span>
         </div>
       </div>
     </mat-card-content>
 
-    <mat-card-actions>
+    <mat-card-actions align="end">
       <button
         mat-button
         *ngIf="list.statusLista !== 'FINALIZADA'"
@@ -35,27 +38,25 @@
         Editar
       </button>
 
-      <ng-container *ngIf="list.statusLista !== 'FINALIZADA'; else viewButton">
+      @if (list.statusLista !== 'FINALIZADA') {
         <button
-          mat-raised-button
+          mat-flat-button
           color="primary"
           (click)="onStartShopping(list)"
         >
           <mat-icon>shopping_cart</mat-icon>
-          Iniciar Compra
+          Comprar
         </button>
-      </ng-container>
-
-      <ng-template #viewButton>
+      } @else {
         <button
           mat-stroked-button
           color="primary"
           (click)="onViewPurchase(list.id)"
         >
           <mat-icon>visibility</mat-icon>
-          Visualizar Compra
+          Ver
         </button>
-      </ng-template>
+      }
     </mat-card-actions>
   </mat-card>
 </div>

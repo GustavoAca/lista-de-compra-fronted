@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { CommonModule, CurrencyPipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { ListaCompraService } from '@app/features/lista/services/lista-compra.service';
 import { ListaModel } from '@app/features/lista/models/lista.model';
@@ -8,7 +8,8 @@ import { InfiniteScrollComponent } from '@app/shared/components/infinite-scroll/
 import { LoadingSpinnerComponent } from '@app/shared/components/loading-spinner/loading-spinner.component';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { CurrencyPipe } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DestroyRef } from '@angular/core';
 
 @Component({
   selector: 'app-lista-visualizar',
@@ -25,65 +26,68 @@ import { CurrencyPipe } from '@angular/common';
   styleUrls: ['./lista-visualizar.component.scss']
 })
 export class ListaVisualizarComponent implements OnInit {
-  listaId!: string;
-  list?: ListaModel;
-  items: ItemListaModel[] = [];
+  private route = inject(ActivatedRoute);
+  private listaCompraService = inject(ListaCompraService);
+  private destroyRef = inject(DestroyRef);
 
-  isPageLoading = true;
-  areItemsLoading = false;
-  isLastPage = false;
+  // Signals
+  listaId = signal<string | null>(null);
+  list = signal<ListaModel | null>(null);
+  items = signal<ItemListaModel[]>([]);
+  loading = signal(true);
+  loadingItems = signal(false);
+  isLastPage = signal(false);
+  
   currentPage = 0;
   pageSize = 10;
 
-  constructor(
-    private route: ActivatedRoute,
-    private listaCompraService: ListaCompraService
-  ) { }
-
   ngOnInit(): void {
-    this.listaId = this.route.snapshot.paramMap.get('id')!;
-    this.listaCompraService.getListaById(this.listaId).subscribe({
+    const id = this.route.snapshot.paramMap.get('id');
+    if (!id) return;
+    
+    this.listaId.set(id);
+    this.loadLista(id);
+  }
+
+  private loadLista(id: string): void {
+    this.loading.set(true);
+    this.listaCompraService.getListaById(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (listData) => {
-        this.list = listData;
-        this.isPageLoading = false;
-        this.loadMoreItems(); // Load first page of items
+        this.list.set(listData);
+        this.loading.set(false);
+        this.loadMoreItems();
       },
-      error: (err) => {
-        this.isPageLoading = false;
-      }
+      error: () => this.loading.set(false)
     });
   }
 
   loadMoreItems(): void {
-    if (this.areItemsLoading || this.isLastPage) {
-      return;
-    }
+    const id = this.listaId();
+    if (!id || this.loadingItems() || this.isLastPage()) return;
 
-    this.areItemsLoading = true;
-    this.listaCompraService.getItensPorLista(this.listaId, this.currentPage, this.pageSize)
+    this.loadingItems.set(true);
+    this.listaCompraService.getItensPorLista(id, this.currentPage, this.pageSize)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (page) => {
-          this.items = [...this.items, ...page.content];
+          this.items.update(prev => [...prev, ...page.content]);
 
-          // Workaround: If list.vendedor is not populated by getListaById,
-          // try to get it from the first item's itemOferta.vendedor
-          if (this.list && !this.list.vendedor && this.items.length > 0) {
-            const firstItemVendedor = this.items[0].itemOferta?.vendedor;
-            if (firstItemVendedor?.id && firstItemVendedor?.nome) {
-              this.list.vendedor = {
-                id: firstItemVendedor.id,
-                nome: firstItemVendedor.nome,
-              };
+          const currentList = this.list();
+          if (currentList && !currentList.vendedor && page.content.length > 0) {
+            const firstItemVendedor = page.content[0].itemOferta?.vendedor;
+            if (firstItemVendedor?.id) {
+              this.list.set({
+                ...currentList,
+                vendedor: { id: firstItemVendedor.id, nome: firstItemVendedor.nome! }
+              });
             }
           }
 
-          this.isLastPage = page.last;
+          this.isLastPage.set(page.last);
           this.currentPage++;
-          this.areItemsLoading = false;
+          this.loadingItems.set(false);
         },
-        error: (err) => {
-          this.areItemsLoading = false;
-        }
+        error: () => this.loadingItems.set(false)
       });
   }
 }

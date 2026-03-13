@@ -56,13 +56,13 @@ mat-mdc-dialog-content { // Targeting the Angular Material dialog content
 }
 
 .error-message {
-  color: var(--app-error-color);
+  color: var(--app-error-text-color);
   text-align: center;
 }
 
 .no-items-message {
   text-align: center;
-  color: var(--app-text-color-disabled);
+  color: var(--app-text-muted);
 }
 
 // .item-list-container styles removed
@@ -74,7 +74,7 @@ mat-mdc-dialog-content { // Targeting the Angular Material dialog content
 
   li {
     padding: 10px 0;
-    border-bottom: 1px solid var(--app-text-color-disabled-light);
+    border-bottom: 1px solid var(--app-border-color);
 
     &:last-child {
       border-bottom: none;
@@ -135,7 +135,7 @@ mat-mdc-dialog-content { // Targeting the Angular Material dialog content
 
   .item-promotion {
     font-size: 0.8em;
-    color: var(--app-text-color-disabled);
+    color: var(--app-text-muted);
 
     &.on-promotion {
       color: var(--app-warning-color);

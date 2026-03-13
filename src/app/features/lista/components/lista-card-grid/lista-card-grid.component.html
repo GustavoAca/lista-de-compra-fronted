@@ -1,62 +1,45 @@
 <div class="lists-grid">
-  <mat-card *ngFor="let list of lists()" class="list-card" appearance="outlined">
-    <mat-card-header>
-      <mat-card-title class="card-title-container">
-        <span>{{ list.nome }}</span>
-        <mat-icon
-          *ngIf="list.statusLista === 'FINALIZADA'"
-          class="status-icon"
-          color="primary"
-          >check_circle</mat-icon
-        >
-      </mat-card-title>
-      <mat-card-subtitle>
-        Criada em {{ list.createdDate | date:'dd/MM/yyyy' }}
-      </mat-card-subtitle>
-    </mat-card-header>
+  @for (list of lists(); track list.id) {
+    <mat-card class="list-card" appearance="outlined">
+      <div class="card-status" [class]="list.statusLista"></div>
+      
+      <mat-card-header>
+        <mat-card-title>{{ list.nome }}</mat-card-title>
+        <mat-card-subtitle>
+          {{ list.modifiedDate ? 'Alterada em ' + (list.modifiedDate | date:'dd/MM/yy HH:mm') : 'Criada em ' + (list.createdDate | date:'dd/MM/yy') }}
+        </mat-card-subtitle>
+      </mat-card-header>
 
-    <mat-card-content>
-      <div class="list-info">
-        <div class="info-item total">
-          <span class="currency">R$</span>
-          <span class="value">{{ list.valorTotal | number:'1.2-2' }}</span>
+      <mat-card-content>
+        <div class="list-stats">
+          <div class="stat-item">
+            <span class="stat-label">Valor Estimado</span>
+            <span class="stat-value">{{ list.valorTotal | currency:'BRL' }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Itens</span>
+            <span class="stat-value">{{ list.totalItens }}</span>
+          </div>
         </div>
-        <div class="info-item count">
-          <mat-icon>inventory_2</mat-icon>
-          <span>{{ list.totalItens }} itens</span>
-        </div>
-      </div>
-    </mat-card-content>
+      </mat-card-content>
 
-    <mat-card-actions align="end">
-      <button
-        mat-button
-        *ngIf="list.statusLista !== 'FINALIZADA'"
-        (click)="onEditList(list.id)"
-      >
-        <mat-icon>edit</mat-icon>
-        Editar
-      </button>
-
-      @if (list.statusLista !== 'FINALIZADA') {
-        <button
-          mat-flat-button
-          color="primary"
-          (click)="onStartShopping(list)"
-        >
-          <mat-icon>shopping_cart</mat-icon>
-          Comprar
-        </button>
-      } @else {
-        <button
-          mat-stroked-button
-          color="primary"
-          (click)="onViewPurchase(list.id)"
-        >
-          <mat-icon>visibility</mat-icon>
-          Ver
-        </button>
-      }
-    </mat-card-actions>
-  </mat-card>
+      <mat-card-actions align="end">
+        @if (list.statusLista !== 'FINALIZADA') {
+          <button mat-button class="btn-action edit" (click)="onEditList(list.id)">
+            <mat-icon>edit</mat-icon>
+            Editar
+          </button>
+          <button mat-flat-button color="primary" class="btn-action shop" (click)="onStartShopping(list)">
+            <mat-icon>shopping_cart</mat-icon>
+            Comprar
+          </button>
+        } @else {
+          <button mat-stroked-button color="primary" class="btn-action view" (click)="onViewPurchase(list.id)">
+            <mat-icon>visibility</mat-icon>
+            Ver Detalhes
+          </button>
+        }
+      </mat-card-actions>
+    </mat-card>
+  }
 </div>

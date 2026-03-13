@@ -1,79 +1,150 @@
-:host {
-  display: block;
-}
-
 .main-header {
-  background-color: var(--app-primary-color);
-  color: var(--app-on-primary-color);
-  padding: 0 2rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  height: 60px; /* Altura fixa do header */
-}
+  background-color: var(--app-bg-surface);
+  border-bottom: 1px solid var(--app-border-color);
+  padding: 0.75rem 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: var(--app-shadow);
+  transition: all 0.3s ease;
 
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.title-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  button {
-    color: var(--app-on-primary-color);
+  .header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 1rem;
   }
 
-  .page-title {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 500;
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+    min-width: 0;
+
+    .btn-back {
+      color: var(--app-text-secondary);
+      margin-left: -0.5rem;
+    }
+
+    .title-info {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+
+      .page-title {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--app-text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .step-indicator {
+        font-size: 0.75rem;
+        color: var(--app-text-secondary);
+        font-weight: 500;
+        margin-top: 0.125rem;
+      }
+
+      .sync-indicator {
+        display: flex;
+        align-items: center;
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin-top: 0.125rem;
+
+        .sync-item {
+          display: flex;
+          align-items: center;
+          gap: 0.375rem;
+        }
+
+        mat-icon { font-size: 1rem; width: 1rem; height: 1rem; }
+
+        &.synced { color: var(--app-success-color); }
+        &.saving { color: var(--app-info-color); }
+        &.error { color: var(--app-error-text-color); }
+
+        .btn-sync-action {
+          height: 24px;
+          line-height: 24px;
+          padding: 0 8px;
+          font-size: 0.7rem;
+          margin-left: 0.5rem;
+          border: 1px solid currentColor;
+          border-radius: 4px;
+          color: inherit;
+          min-width: auto;
+
+          &:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+          }
+        }
+      }
+    }
+  }
+
+  .header-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+
+    .header-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: var(--app-bg-main);
+      padding: 0.375rem 1.25rem;
+      border-radius: 12px;
+      border: 1px solid var(--app-border-color);
+
+      .stat-label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--app-text-muted);
+        font-weight: 600;
+      }
+
+      .stat-value {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--app-text-primary);
+      }
+    }
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex: 1;
+
+    button {
+      color: var(--app-text-secondary);
+    }
   }
 }
 
-nav a {
-  color: var(--app-on-primary-color);
-  text-decoration: none;
-  margin: 0 1rem;
-  font-weight: 500;
-  transition: opacity 0.2s;
-
-  &:hover {
-    opacity: 0.8;
-  }
+.text-danger {
+  color: #ef4444;
 }
 
-.logout-button {
-  background-color: transparent;
-  color: var(--app-on-primary-color);
-  border: 1px solid var(--app-on-primary-color);
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.2s, color 0.2s;
-
-  &:hover {
-    background-color: var(--app-on-primary-color);
-    color: var(--app-primary-color);
-  }
-}
-
-@media (max-width: 768px) {
+@media (max-width: 600px) {
   .main-header {
-    padding: 0 1rem;
-  }
-
-  .title-container .page-title {
-    font-size: 1.1rem;
-  }
-
-  .logout-button {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+    
+    .header-center { display: none; } // Oculta estatísticas no mobile se o espaço for pouco
+    
+    .header-left .page-title { font-size: 1rem; }
+    
+    .header-right .logout-button span { display: none; }
+    .header-right .logout-button { padding: 0.5rem; border-radius: 50%; }
   }
 }

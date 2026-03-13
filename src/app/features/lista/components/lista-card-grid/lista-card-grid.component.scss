@@ -1,101 +1,104 @@
-:host {
-  display: block;
-  width: 100%;
-}
-
 .lists-grid {
   display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.5rem;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  width: 100%;
-  padding: 1rem;
-  box-sizing: border-box;
-}
+  padding: 0.5rem 0;
 
-.list-card {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
-  border-radius: 16px;
-  
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-  }
+  .list-card {
+    border-radius: 16px;
+    border: 1px solid var(--app-border-color);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    background: var(--app-bg-surface);
 
-  mat-card-header {
-    margin-bottom: 1rem;
-  }
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.2);
+      border-color: var(--app-text-muted);
+    }
 
-  mat-card-subtitle {
-    font-size: 0.875rem;
-    color: var(--mat-sys-on-surface-variant);
-    margin-top: 4px;
-  }
+    .card-status {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background-color: var(--app-text-muted);
 
-  .card-title-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    font-weight: 600;
-  }
+      &.AGUARDANDO { background-color: var(--app-info-color); }
+      &.EM_ANDAMENTO { background-color: var(--app-warning-color); }
+      &.FINALIZADA { background-color: var(--app-success-color); }
+    }
 
-  .list-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 1rem 0;
-    padding: 0.5rem 0;
-    border-top: 1px solid var(--mat-sys-outline-variant);
-  }
+    mat-card-header {
+      padding: 1.5rem 1.25rem 1rem;
 
-  .info-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+      mat-card-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--app-text-primary);
+        margin-bottom: 0.25rem;
+      }
 
-    &.total {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--mat-sys-primary);
-
-      .currency {
-        font-size: 0.875rem;
-        font-weight: 500;
+      mat-card-subtitle {
+        font-size: 0.8rem;
+        color: var(--app-text-secondary);
       }
     }
 
-    &.count {
-      font-size: 0.875rem;
-      color: var(--mat-sys-on-surface-variant);
-      
-      mat-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
+    .list-stats {
+      display: flex;
+      padding: 0 1.25rem 1.5rem;
+      gap: 2rem;
+
+      .stat-item {
+        display: flex;
+        flex-direction: column;
+
+        .stat-label {
+          font-size: 0.7rem;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: var(--app-text-muted);
+          font-weight: 600;
+          margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+          font-size: 1rem;
+          font-weight: 700;
+          color: var(--app-text-primary);
+        }
       }
     }
-  }
 
-  mat-card-actions {
-    margin-top: auto;
-    padding: 8px 16px 16px !important;
-    gap: 8px;
-    display: flex;
-    justify-content: flex-end;
+    mat-card-actions {
+      padding: 0.75rem 1rem;
+      background-color: var(--app-bg-surface-variant);
+      border-top: 1px solid var(--app-border-color);
+      gap: 0.5rem;
 
-    button {
-      border-radius: 20px;
+      .btn-action {
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        
+        mat-icon {
+          font-size: 1.1rem;
+          width: 1.1rem;
+          height: 1.1rem;
+        }
+
+        &.edit { color: var(--app-text-secondary); }
+      }
     }
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 480px) {
   .lists-grid {
     grid-template-columns: 1fr;
-    padding: 0.5rem;
     gap: 1rem;
   }
 }

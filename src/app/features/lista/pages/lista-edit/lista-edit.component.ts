@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, DestroyRef } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, DestroyRef, effect } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -43,6 +43,7 @@ import { AddItemsModalComponent } from '../../../../shared/components/add-items-
 import { ItemOferta } from '../../models/item-oferta.model';
 import { ConfirmationDialogComponent } from '@app/shared/components/confirmation-dialog/confirmation-dialog.component';
 import { FabButtonComponent } from '@app/shared/components/fab-button/fab-button.component';
+import { HeaderService } from '../../../../core/services/header.service';
 
 @Component({
   selector: 'app-lista-edit',
@@ -53,7 +54,6 @@ import { FabButtonComponent } from '@app/shared/components/fab-button/fab-button
     AlertMessageComponent,
     MatButtonModule,
     MatIconModule,
-    CurrencyPipe,
     MatDialogModule,
     MatCardModule,
     ItemListDisplayComponent,
@@ -76,6 +76,7 @@ export class ListaEditComponent implements OnInit {
   private dialog = inject(MatDialog);
   private fb = inject(FormBuilder);
   private destroyRef = inject(DestroyRef);
+  private headerService = inject(HeaderService);
 
   // Status de Sincronização
   syncStatus = signal<'synced' | 'saving' | 'error'>('synced');
@@ -114,6 +115,26 @@ export class ListaEditComponent implements OnInit {
   private quantityChangeSubject = new Subject<void>();
   currentPage = 0;
 
+  constructor() {
+    // Sincroniza o estado local com o Header Global
+    effect(() => {
+      this.headerService.updateEditState(
+        this.syncStatus(),
+        this.totalListaValor(),
+        this.totalItensCount()
+      );
+
+      // Sincroniza as ações de erro
+      if (this.syncStatus() === 'error') {
+        this.headerService.retryAction.set(() => this.retrySync());
+        this.headerService.rollbackAction.set(() => this.rollbackChanges());
+      } else {
+        this.headerService.retryAction.set(null);
+        this.headerService.rollbackAction.set(null);
+      }
+    });
+  }
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
@@ -126,7 +147,8 @@ export class ListaEditComponent implements OnInit {
     
     this.listaForm.get('nome')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(val => {
       if (this.lista()) {
-        this.hasChangesInMeta.set(val !== this.lista()?.nome);
+        const hasChanges = val !== this.lista()?.nome;
+        this.hasChangesInMeta.set(hasChanges);
       }
     });
   }
@@ -205,7 +227,7 @@ export class ListaEditComponent implements OnInit {
         return items.filter(i => i.id !== id);
       }
       return items.map(i => 
-        i.id === id ? { ...i, quantity: newQty, quantidade: newQty } : i
+        i.id === id ? { ...i, quantidade: newQty } : i
       );
     });
     

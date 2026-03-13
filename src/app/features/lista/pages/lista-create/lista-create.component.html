@@ -1,105 +1,178 @@
 <div class="lista-create-container">
-  @if (loading()) {
-    <mat-progress-spinner
-      mode="indeterminate"
-      diameter="50"
-    ></mat-progress-spinner>
-  } @else {
-    <mat-card class="lista-card">
-      <mat-card-content>
-        <form [formGroup]="listaForm" class="list-form">
-          <!-- Nome da lista -->
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Nome da Lista</mat-label>
-            <input
-              matInput
-              formControlName="nome"
-              placeholder="Ex: Compras do mês"
-            />
-            @if (listaForm.get('nome')?.hasError('required')) {
-              <mat-error>O nome da lista é obrigatório.</mat-error>
-            }
-          </mat-form-field>
+  
+  <!-- ETAPA 1: Selecionar Mercado -->
+  @if (currentStep() === 'market') {
+    <section class="step-container search-market">
+      <div class="step-header">
+        <h2>Onde você vai comprar?</h2>
+        <p>Busque pelo nome do mercado ou estabelecimento.</p>
+      </div>
 
-          <!-- Autocomplete de vendedor -->
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Vendedor</mat-label>
+      <div class="search-box">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-icon matPrefix>search</mat-icon>
+          <mat-label>Nome do Mercado</mat-label>
+          <input 
+            matInput 
+            [formControl]="$any(listaForm.get('vendedorSearch'))"
+            placeholder="Ex: Carrefour, Extra, Padaria do Zé..."
+          />
+        </mat-form-field>
+      </div>
 
-            <input
-              type="text"
-              matInput
-              placeholder="Digite para buscar um vendedor"
-              formControlName="vendedor"
-              [matAutocomplete]="auto"
-            />
-
-            <mat-autocomplete
-              #auto="matAutocomplete"
-              [displayWith]="displayVendedor"
-              (optionSelected)="onVendedorSelecionado($event.option.value)"
-            >
-              @if (vendedores$ | async; as vendors) {
-                @for (vendedor of vendors.content; track vendedor.id) {
-                  <mat-option [value]="vendedor">
-                    {{ vendedor.nome }}
-                  </mat-option>
-                } @empty {
-                  <mat-option disabled>Nenhum vendedor encontrado</mat-option>
-                }
-              }
-            </mat-autocomplete>
-
-            @if (listaForm.get('vendedorId')?.hasError('required')) {
-              <mat-error>O vendedor é obrigatório.</mat-error>
-            }
-          </mat-form-field>
-
-          <span class="total-value-display">
-            Total: {{ totalListaValor() | currency: 'BRL' }}
-          </span>
-        </form>
-
-        <!-- Lista de itens -->
-        @if (itensLista().length > 0) {
-          <div class="item-list-section">
-            <h3>Itens da Lista ({{ totalItens() }} itens)</h3>
-            <app-item-list-display
-              [items]="itensLista()"
-              (quantityIncrement)="incrementarQuantidade($event)"
-              (quantityDecrement)="decrementarQuantidade($event)"
-              (itemRemove)="removerItem($event)"
-            ></app-item-list-display>
-          </div>
-        } @else {
-          <div class="empty-items-state">
-            <mat-icon>add_shopping_cart</mat-icon>
-            <p>Adicione itens à sua nova lista!</p>
-          </div>
+      <div class="results-list">
+        @if (vendedores$ | async; as vendors) {
+          @for (vendedor of vendors.content; track vendedor.id) {
+            <mat-card class="vendedor-card" (click)="selecionarVendedor(vendedor)">
+              <div class="card-content">
+                <div class="vendedor-info">
+                  <span class="vendedor-name">{{ vendedor.nome }}</span>
+                </div>
+                <mat-icon color="primary">chevron_right</mat-icon>
+              </div>
+            </mat-card>
+          } @empty {
+            <div class="empty-results">
+              <mat-icon>storefront</mat-icon>
+              <p>Nenhum mercado encontrado com este nome.</p>
+            </div>
+          }
         }
-
-        @if (error()) {
-          <div class="error-message">
-            <mat-icon>error</mat-icon>
-            {{ error() }}
-          </div>
-        }
-      </mat-card-content>
-      <mat-card-actions class="card-actions">
-        <button
-          mat-flat-button
-          color="primary"
-          (click)="salvarLista()"
-          [disabled]="listaForm.invalid || itensLista().length === 0 || loading()"
-        >
-          <mat-icon>save</mat-icon>
-          Criar Lista
-        </button>
-      </mat-card-actions>
-    </mat-card>
+      </div>
+    </section>
   }
 
-   <app-fab-button
-    (fabClick)="openAddItemModal()"
-    [ariaLabel]="'Adicionar item'">
-  </app-fab-button>
+  <!-- ETAPA 2: Selecionar Itens -->
+  @if (currentStep() === 'items') {
+    <section class="step-container browsing-items">
+      <div class="step-header compact">
+        <div class="header-main">
+          <div class="selected-market-info">
+            <span class="label">Comprando no</span>
+            <h3>{{ selectedVendedor()?.nome }}</h3>
+          </div>
+        </div>
+        
+        <div class="search-box-compact">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-icon matPrefix>search</mat-icon>
+            <mat-label>Buscar produtos neste mercado...</mat-label>
+            <input 
+              matInput 
+              [formControl]="$any(listaForm.get('itemSearch'))"
+              placeholder="Ex: Arroz, Feijão, Leite..."
+            />
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div class="items-browsing-content">
+        <app-infinite-scroll
+          [isLoading]="loadingOffers()"
+          [isLastPage]="isLastOfferPage()"
+          (scrolledToEnd)="loadItemOffers()"
+        >
+          <div class="offers-grid">
+            @for (offer of itemOffers(); track offer.id) {
+              <mat-card class="offer-card" [class.selected]="getItemQuantity(offer.id) > 0">
+                <mat-card-content>
+                  <div class="offer-header">
+                    <span class="offer-name">{{ offer.item.nome }}</span>
+                    @if (offer.hasPromocaoAtiva) {
+                      <span class="promo-tag">PROMO</span>
+                    }
+                  </div>
+                  <div class="offer-price">{{ offer.preco | currency:'BRL' }}</div>
+                  
+                  <div class="offer-actions">
+                    @if (getItemQuantity(offer.id) === 0) {
+                      <button mat-stroked-button color="primary" class="btn-add" (click)="updateQuantity(offer, 1)">
+                        <mat-icon>add</mat-icon>
+                        Adicionar
+                      </button>
+                    } @else {
+                      <div class="quantity-picker">
+                        <button mat-icon-button (click)="updateQuantity(offer, -1)">
+                          <mat-icon>remove</mat-icon>
+                        </button>
+                        <span class="qty">{{ getItemQuantity(offer.id) }}</span>
+                        <button mat-icon-button (click)="updateQuantity(offer, 1)">
+                          <mat-icon>add</mat-icon>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            }
+          </div>
+        </app-infinite-scroll>
+      </div>
+
+      <div class="step-footer">
+        <button 
+          mat-flat-button 
+          color="primary" 
+          class="btn-continue" 
+          (click)="avancarParaFinalizar()"
+          [disabled]="itensArray().length === 0"
+        >
+          Revisar Lista ({{ itensArray().length }} itens)
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </div>
+    </section>
+  }
+
+  <!-- ETAPA 3: Finalizar -->
+  @if (currentStep() === 'finalize') {
+    <section class="step-container finalize-list">
+      <div class="step-header">
+        <h2>Quase lá!</h2>
+        <p>Dê um nome para sua lista e confirme os itens.</p>
+      </div>
+
+      <form [formGroup]="listaForm" class="finalize-form">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nome da Lista</mat-label>
+          <input matInput formControlName="nome" placeholder="Ex: Compras Mensais" />
+          <mat-error *ngIf="listaForm.get('nome')?.hasError('required')">O nome é obrigatório</mat-error>
+        </mat-form-field>
+      </form>
+
+      <div class="review-section">
+        <h3>Resumo da Lista</h3>
+        <div class="review-list-container">
+          <app-item-list-display
+            [items]="itensArray()"
+            [isEditMode]="true"
+            [showSelection]="false"
+            (quantityIncrement)="updateQuantity($event.itemOferta, 1)"
+            (quantityDecrement)="updateQuantity($event.itemOferta, -1)"
+            (itemRemove)="updateQuantity($event.itemOferta, -$event.quantidade)"
+          ></app-item-list-display>
+        </div>
+      </div>
+
+      <div class="finalize-actions">
+        <button 
+          mat-flat-button 
+          color="primary" 
+          class="btn-pill-action" 
+          (click)="salvarLista()"
+          [disabled]="listaForm.invalid || loading()"
+        >
+          @if (loading()) {
+            <mat-spinner diameter="20"></mat-spinner>
+          } @else {
+            <ng-container>
+              <mat-icon>check_circle</mat-icon>
+              <span>Confirmar e Criar Lista</span>
+            </ng-container>
+          }
+        </button>
+      </div>
+    </section>
+  }
+
 </div>

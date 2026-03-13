@@ -1,20 +1,25 @@
 <div class="home-container">
-  <div class="content">
-    
+  <main class="content">
+    <div class="page-intro" *ngIf="totalLists() > 0">
+      <p class="subtitle">Você tem <strong>{{ totalLists() }}</strong> {{ totalLists() === 1 ? 'lista organizada' : 'listas organizadas' }}</p>
+    </div>
     @if (loading() && lists().length === 0) {
       <div class="loading-state">
-        <mat-icon class="empty-icon">shopping_cart</mat-icon>
         <app-loading-spinner [type]="'bar'"></app-loading-spinner>
+        <p>Buscando suas listas...</p>
       </div>
     }
 
     @if (isEmpty()) {
       <div class="empty-state">
-        <mat-icon class="empty-icon">shopping_cart</mat-icon>
-        <h2>Nenhuma lista criada</h2>
-        <p>Crie sua primeira lista de compras para começar</p>
-        <button mat-flat-button color="primary" (click)="createList()">
-          Criar primeira lista
+        <div class="illustration">
+          <mat-icon>shopping_basket</mat-icon>
+        </div>
+        <h2>Sua despensa está vazia</h2>
+        <p>Crie uma lista agora e comece a economizar tempo e dinheiro.</p>
+        <button mat-flat-button color="primary" class="btn-cta" (click)="openCreateDialog()">
+          <mat-icon>add</mat-icon>
+          Criar minha primeira lista
         </button>
       </div>
     }
@@ -33,13 +38,11 @@
         </app-lista-card-grid>
       </app-infinite-scroll>
     }
-  </div>
+  </main>
 
-  @if (lists().length > 0) {
-    <app-fab-button
-      (fabClick)="createList()"
-      [icon]="'add'"
-      [ariaLabel]="'Criar nova lista'">
-    </app-fab-button>
-  }
+  <app-fab-button
+    (fabClick)="openCreateDialog()"
+    [icon]="'add'"
+    [ariaLabel]="'Criar nova lista'">
+  </app-fab-button>
 </div>

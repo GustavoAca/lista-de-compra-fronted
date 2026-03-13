@@ -16,6 +16,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 export class ItemListDisplayComponent {
   items = input<ItemListaModel[]>([]);
   isEditMode = input<boolean>(false);
+  showSelection = input<boolean>(false);
   selectedItems = input<Set<string>>(new Set());
   
   quantityIncrement = output<ItemListaModel>();

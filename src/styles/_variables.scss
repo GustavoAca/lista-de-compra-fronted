@@ -1,25 +1,46 @@
 :root {
-  // Define custom CSS variables for easier theming
-  // Base colors derived loosely from Angular Material's azure-blue theme or common Material defaults
-  --app-primary-color: #3f51b5; // Example: indigo 500
-  --app-primary-lighter-color: #c5cae9; // Example: indigo 100
-  --app-on-primary-color: #ffffff; // White text on primary
+  // Cores Base
+  --app-primary-color: #3f51b5;
+  --app-primary-lighter-color: #c5cae9;
+  --app-on-primary-color: #ffffff;
 
-  --app-accent-color: #ff4081; // Example: pink A200
-  --app-on-accent-color: #ffffff; // White text on accent
+  --app-accent-color: #ff4081;
+  --app-on-accent-color: #ffffff;
 
-  --app-warn-color: #f44336;   // Red for errors
-  --app-on-warn-color: #ffffff; // White text on warn
+  --app-warn-color: #f44336;
+  --app-on-warn-color: #ffffff;
 
-  // Semantic Colors (could be based on Material's palettes or custom)
-  --app-success-color: #388e3c; // Deep green for success
-  --app-error-text-color: #f44336;   // Red for errors (text specifically)
-  --app-info-color: #2196f3;    // Blue for info
-  --app-warning-color: #ff9800; // Orange for warnings
+  // Semânticas
+  --app-success-color: #10b981;
+  --app-error-text-color: #ef4444;
+  --app-info-color: #3b82f6;
+  --app-warning-color: #f59e0b;
 
-  // Text Colors
-  --app-text-color-primary: rgba(0, 0, 0, 0.87);
-  --app-text-color-secondary: rgba(0, 0, 0, 0.6);
-  --app-text-color-disabled: rgba(0, 0, 0, 0.38);
-  --app-text-color-disabled-light: rgba(0, 0, 0, 0.08); // Light gray for borders
+  // TEMA CLARO (Padrão)
+  --app-bg-main: #f8f9fa;
+  --app-bg-surface: #ffffff;
+  --app-bg-surface-variant: #f1f5f9;
+  
+  --app-text-primary: #1e293b;
+  --app-text-secondary: #64748b;
+  --app-text-muted: #94a3b8;
+  
+  --app-border-color: #e2e8f0;
+  --app-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  --mat-card-bg: #ffffff;
+}
+
+// TEMA ESCURO
+.dark-theme {
+  --app-bg-main: #0f172a;
+  --app-bg-surface: #1e293b;
+  --app-bg-surface-variant: #334155;
+  
+  --app-text-primary: #f8fafc;
+  --app-text-secondary: #cbd5e1;
+  --app-text-muted: #94a3b8;
+  
+  --app-border-color: #334155;
+  --app-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+  --mat-card-bg: #1e293b;
 }

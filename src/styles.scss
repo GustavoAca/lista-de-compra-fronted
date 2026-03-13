@@ -10,6 +10,155 @@ html, body {
 body {
   margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: var(--app-bg-main);
+  color: var(--app-text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+// Sobrescritas globais para Dark Mode no Material
+.dark-theme {
+  // Garante que o container de overlays (dialogs, menus) siga o tema
+  &.cdk-overlay-container, .cdk-overlay-container {
+    .mat-mdc-dialog-container .mdc-dialog__surface {
+      background-color: var(--app-bg-surface) !important;
+      color: var(--app-text-primary) !important;
+    }
+    
+    .mat-mdc-dialog-title {
+      color: var(--app-text-primary) !important;
+    }
+
+    .mat-mdc-dialog-content {
+      color: var(--app-text-secondary) !important;
+    }
+
+    .mat-mdc-menu-panel {
+      background-color: var(--app-bg-surface) !important;
+      .mat-mdc-menu-item {
+        color: var(--app-text-primary) !important;
+      }
+    }
+  }
+
+  .mat-mdc-card {
+    background-color: var(--app-bg-surface) !important;
+    color: var(--app-text-primary) !important;
+    border-color: var(--app-border-color);
+  }
+
+  // Ajuste global para botões no modo escuro
+  .mat-mdc-button, .mat-mdc-outlined-button, .mat-mdc-icon-button {
+    color: var(--app-text-primary) !important;
+  }
+
+  .mat-mdc-unelevated-button, .mat-mdc-raised-button, .mat-mdc-flat-button {
+    // Botões coloridos mantêm sua cor de fundo, mas garantimos o texto
+    &.mat-primary { color: var(--app-on-primary-color) !important; }
+    &.mat-accent { color: var(--app-on-accent-color) !important; }
+    &.mat-warn { color: var(--app-on-warn-color) !important; }
+  }
+
+  .mat-mdc-form-field-focus-overlay {
+    background-color: var(--app-bg-surface-variant);
+  }
+
+  input.mat-mdc-input-element, textarea.mat-mdc-input-element {
+    color: var(--app-text-primary) !important;
+    
+    // O placeholder só deve aparecer quando o label flutuar (estiver focado ou preenchido)
+    // No Material MDC, o placeholder padrão já tem essa lógica, mas ao forçarmos a cor, 
+    // podemos ter quebrado a opacidade padrão dele.
+    &::placeholder {
+      color: var(--app-text-muted) !important;
+      transition: opacity 0.2s ease;
+    }
+  }
+
+  // Garante que o placeholder não sobreponha o label quando o campo não está focado/preenchido
+  .mat-mdc-form-field:not(.mat-form-field-should-float) .mat-mdc-input-element::placeholder {
+    opacity: 0 !important;
+  }
+
+  .mat-mdc-select-value, .mat-mdc-select-arrow {
+    color: var(--app-text-primary) !important;
+  }
+
+  // Ajustes para Form Fields e Icons
+  .mat-mdc-form-field {
+    .mat-mdc-form-field-label, 
+    .mat-mdc-floating-label,
+    .mat-mdc-form-field-hint,
+    .mat-mdc-form-field-error {
+      color: var(--app-text-secondary) !important;
+    }
+
+    .mat-mdc-text-field-wrapper {
+      background-color: var(--app-bg-surface-variant) !important;
+    }
+
+    .mat-mdc-form-field-icon-prefix,
+    .mat-mdc-form-field-icon-suffix {
+      color: var(--app-text-muted) !important;
+    }
+  }
+
+  // Cor global de ícones no modo escuro
+  mat-icon {
+    color: var(--app-text-secondary);
+    &[color="primary"] { color: var(--app-primary-color) !important; }
+    &[color="warn"] { color: var(--app-warn-color) !important; }
+  }
+
+  // Checkboxes no Dark Mode
+  .mat-mdc-checkbox {
+    --mdc-checkbox-unselected-icon-color: var(--app-text-muted);
+    --mdc-checkbox-disabled-unselected-icon-color: var(--app-text-muted);
+    --mdc-checkbox-unselected-hover-icon-color: var(--app-text-primary);
+    
+    .mdc-checkbox__native-control:enabled:not(:checked):not(:indeterminate) ~ .mdc-checkbox__background {
+      border-color: var(--app-border-color);
+    }
+  }
+
+  // Ícones Sociais no Login (Google/Github)
+  .social-icon, .login-providers img, [src*="google"], [src*="github"] {
+    filter: brightness(0) invert(1); // Torna ícones escuros em brancos
+  }
+
+  .mat-mdc-option {
+    background-color: var(--app-bg-surface) !important;
+    color: var(--app-text-primary) !important;
+    &:hover { background-color: var(--app-bg-surface-variant) !important; }
+    &.mat-mdc-option-active { background-color: var(--app-bg-surface-variant) !important; }
+  }
+}
+
+// Utilitários Globais de Botões
+.btn-pill-action {
+  width: 100% !important;
+  max-width: 400px !important;
+  height: 56px !important;
+  border-radius: 28px !important;
+  font-weight: 700 !important;
+  font-size: 1.1rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  
+  ::ng-deep .mdc-button__label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  mat-icon {
+    margin: 0 !important;
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
 }
 
 app-root {

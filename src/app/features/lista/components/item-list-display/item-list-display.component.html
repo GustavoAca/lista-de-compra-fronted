@@ -1,46 +1,46 @@
 <div class="item-list-cards">
   @for (item of items(); track item.id) {
-    <mat-card class="item-card" [class.selected]="isSelected(item.id!)">
-      <div class="selection-container">
-        <mat-checkbox 
-          [checked]="isSelected(item.id!)"
-          (change)="toggle(item.id!)"
-          color="primary"
-        ></mat-checkbox>
-      </div>
-      
-      <div class="card-body">
-        <mat-card-header>
-          <mat-card-title>{{ item.itemOferta.item.nome || 'Produto sem nome' }}</mat-card-title>
-          <mat-card-subtitle>
-            {{ item.itemOferta.vendedor.nome }}
-          </mat-card-subtitle>
-        </mat-card-header>
+    <mat-card class="item-card" [class.selected]="showSelection() && isSelected(item.id!)">
+      <div class="item-card-inner">
+        @if (showSelection()) {
+          <div class="selection-container">
+            <mat-checkbox 
+              [checked]="isSelected(item.id!)"
+              (change)="toggle(item.id!)"
+              color="primary"
+            ></mat-checkbox>
+          </div>
+        }
         
-        <mat-card-content class="card-content-flex">
-          <div class="item-details">
-            <p class="item-price">
-              {{ item.itemOferta.preco | currency : "BRL" }}
-            </p>
-            @if (item.itemOferta.hasPromocaoAtiva) {
-              <span class="promo-badge">PROMO</span>
-            }
+        <div class="item-content">
+          <div class="item-main-info">
+            <span class="item-name">{{ item.itemOferta?.item?.nome || 'Produto sem nome' }}</span>
+            <span class="item-vendor">{{ item.itemOferta?.vendedor?.nome || 'Vendedor não informado' }}</span>
           </div>
+          
+          <div class="item-details-row">
+            <div class="price-info">
+              <span class="price">{{ item.itemOferta?.preco | currency : "BRL" }}</span>
+              @if (item.itemOferta?.hasPromocaoAtiva) {
+                <span class="promo-badge">PROMO</span>
+              }
+            </div>
 
-          <div class="quantity-controls">
-            <button mat-icon-button (click)="decrement(item)" [disabled]="item.quantidade <= 0">
-              <mat-icon>remove</mat-icon>
-            </button>
-            <span class="qty-number">{{ item.quantidade }}</span>
-            <button mat-icon-button (click)="increment(item)">
-              <mat-icon>add</mat-icon>
-            </button>
-            
-            <button mat-icon-button color="warn" class="btn-remove" (click)="remove(item)">
-              <mat-icon>delete_outline</mat-icon>
-            </button>
+            <div class="quantity-controls">
+              <button mat-icon-button (click)="decrement(item)" [disabled]="item.quantidade <= 0" aria-label="Remover um">
+                <mat-icon>remove</mat-icon>
+              </button>
+              <span class="qty-number">{{ item.quantidade }}</span>
+              <button mat-icon-button (click)="increment(item)" aria-label="Adicionar um">
+                <mat-icon>add</mat-icon>
+              </button>
+              
+              <button mat-icon-button color="warn" class="btn-remove" (click)="remove(item)" aria-label="Remover item">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
           </div>
-        </mat-card-content>
+        </div>
       </div>
     </mat-card>
   } @empty {

@@ -1,14 +1,62 @@
 <header class="main-header">
   <div class="header-content">
-    <div class="title-container">
-      <button mat-icon-button *ngIf="showBackButton" (click)="navigateBack()" aria-label="Voltar para a home">
+    <div class="header-left">
+      <button mat-icon-button *ngIf="showBackButton" (click)="navigateBack()" class="btn-back">
         <mat-icon>arrow_back</mat-icon>
       </button>
-      <h3 class="page-title">{{ pageTitle }}</h3>
+      <div class="title-info">
+        <h1 class="page-title">{{ pageTitle }}</h1>
+
+        <!-- Indicador de Passo (Opcional) -->
+        <span class="step-indicator" *ngIf="headerService.itemCount() !== null && !headerService.syncStatus()">
+          Item {{ headerService.itemCount() }} selecionados
+        </span>
+      ...
+
+        <div class="sync-indicator" *ngIf="headerService.syncStatus()" [class]="headerService.syncStatus()">
+          <ng-container [ngSwitch]="headerService.syncStatus()">
+            <div class="sync-item" *ngSwitchCase="'saving'">
+              <mat-spinner diameter="14"></mat-spinner>
+              <span>Salvando...</span>
+            </div>
+            <div class="sync-item" *ngSwitchCase="'synced'">
+              <mat-icon>cloud_done</mat-icon>
+              <span>Salvo</span>
+            </div>
+            <div class="sync-item" *ngSwitchCase="'error'">
+              <mat-icon>cloud_off</mat-icon>
+              <span>Erro</span>
+              <button mat-button class="btn-sync-action" *ngIf="headerService.retryAction()" (click)="headerService.retryAction()!()">Tentar</button>
+              <button mat-button class="btn-sync-action" *ngIf="headerService.rollbackAction()" (click)="headerService.rollbackAction()!()">Desfazer</button>
+            </div>
+          </ng-container>
+        </div>
+      </div>
     </div>
-    <nav>
-      <!-- Espaço para futuras funcionalidades -->
-    </nav>
-    <button class="logout-button" (click)="logout()">Sair</button>
+
+    <div class="header-center" *ngIf="headerService.totalValue() !== null">
+      <div class="header-stat">
+        <span class="stat-label">Total da Lista</span>
+        <span class="stat-value">{{ headerService.totalValue() | currency:'BRL' }}</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Menu de opções">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      
+      <mat-menu #menu="matMenu" xPosition="before" class="header-menu">
+        <button mat-menu-item (click)="themeService.toggleTheme()">
+          <mat-icon>{{ themeService.isDarkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+          <span>{{ themeService.isDarkMode() ? 'Modo Claro' : 'Modo Noturno' }}</span>
+        </button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="logout()">
+          <mat-icon color="warn">logout</mat-icon>
+          <span class="text-danger">Sair</span>
+        </button>
+      </mat-menu>
+    </div>
   </div>
 </header>

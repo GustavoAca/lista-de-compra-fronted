@@ -1,45 +1,4 @@
 <div class="lista-edit-container">
-  <!-- Header de Sincronização e Totais -->
-  <header class="edit-header">
-    <div class="header-main">
-      <button mat-icon-button (click)="router.navigate(['/home'])" class="btn-back">
-        <mat-icon>arrow_back</mat-icon>
-      </button>
-      
-      <div class="header-info">
-        @if (lista()) {
-          <h1>{{ lista()?.nome }}</h1>
-        } @else {
-          <h1>Carregando lista...</h1>
-        }
-        
-        <div class="sync-indicator" [class]="syncStatus()">
-          @switch (syncStatus()) {
-            @case ('saving') {
-              <mat-spinner diameter="16"></mat-spinner>
-              <span>Salvando itens...</span>
-            }
-            @case ('synced') {
-              <mat-icon>cloud_done</mat-icon>
-              <span>Salvo na nuvem</span>
-            }
-            @case ('error') {
-              <mat-icon>cloud_off</mat-icon>
-              <span>Erro ao salvar</span>
-              <button mat-button class="btn-sync-action" (click)="retrySync()">Tentar Novamente</button>
-              <button mat-button class="btn-sync-action" (click)="rollbackChanges()">Desfazer</button>
-            }
-          }
-        </div>
-      </div>
-
-      <div class="header-total">
-        <span class="label">Total</span>
-        <span class="value">{{ totalListaValor() | currency: "BRL" }}</span>
-      </div>
-    </div>
-  </header>
-
   @if (loading() && itensLista().length === 0) {
     <app-loading-spinner size="md"></app-loading-spinner>
   }
@@ -110,6 +69,7 @@
           <app-item-list-display
             [items]="itensLista()"
             [isEditMode]="true"
+            [showSelection]="true"
             [selectedItems]="selectedItems()"
             (quantityIncrement)="incrementarQuantidade($event)"
             (quantityDecrement)="decrementarQuantidade($event)"
@@ -130,12 +90,13 @@
       <!-- Ações de Rodapé -->
       <div class="danger-zone">
         <button
-          mat-button
-          class="btn-delete-permanent"
+          mat-flat-button
+          color="warn"
+          class="btn-pill-action"
           (click)="deleteList()"
         >
           <mat-icon>delete_forever</mat-icon>
-          Excluir esta lista permanentemente
+          <span>Excluir esta lista permanentemente</span>
         </button>
       </div>
     </div>
